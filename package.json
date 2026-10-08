@@ -1,0 +1,37 @@
+{
+  "name": "midis-website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "qa": "node scripts/qa.mjs",
+    "links": "node scripts/linkcheck.mjs",
+    "brand:assets": "node scripts/prepare-brand-assets.mjs",
+    "snapshot": "node scripts/content-snapshot.mjs"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "gsap": "^3.15.0",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sanitize-html": "^2.18.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/sanitize-html": "^2.16.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

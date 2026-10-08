@@ -1,0 +1,485 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   MIDIS DESIGN SYSTEM
+   --------------------------------------------------------------------------
+   Accent colour #EF8716 is MEASURED from the original MIDIS logo files, not
+   estimated. The horizontal logo is a clean two-colour PNG containing only
+   #FFFFFF and #EF8716; the icon lockup confirms the same value.
+
+   Contrast rules (computed, WCAG 2.2):
+     #EF8716 on #FFFFFF ....... 2.55:1  -> NEVER body text on light
+     #EF8716 on #17191C ....... 6.83:1  -> OK for text on dark surfaces
+     #17191C on #EF8716 ....... 6.83:1  -> buttons use CHARCOAL text, not white
+     #AA5A0A on #F7F7F5 ....... 4.69:1  -> use this for orange *text* on light
+   ========================================================================== */
+
+@theme {
+  /* Neutrals — ~85% of the visual surface */
+  --color-paper: #f7f7f5;
+  --color-surface: #ffffff;
+  --color-ink: #17191c;
+  --color-ink-soft: #2a2d31;
+  --color-line: #e8e8e6;
+  --color-line-dark: #2e3135;
+  --color-muted: #777777;
+  --color-muted-dark: #9a9a97;
+
+  /* Signature accent — the original MIDIS logo orange */
+  --color-accent: #ef8716;
+  --color-accent-ink: #aa5a0a; /* AA-safe orange TEXT on light surfaces */
+  --color-accent-soft: #fdf1e4;
+
+  /* Typography */
+  --font-display: var(--font-inter-tight), "Inter Tight", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+
+  /* Fluid display scale */
+  --text-display-xl: clamp(2.75rem, 1.2rem + 7.6vw, 9rem);
+  --text-display-lg: clamp(2.25rem, 1.1rem + 5.4vw, 6rem);
+  --text-display-md: clamp(1.875rem, 1.1rem + 3.4vw, 3.75rem);
+  --text-display-sm: clamp(1.5rem, 1.05rem + 2vw, 2.5rem);
+
+  /* Motion — one shared language */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+  --dur-fast: 220ms;
+  --dur-base: 420ms;
+  --dur-slow: 800ms;
+
+  /* Layout */
+  --spacing-gutter: 1rem;
+  /* Was 86rem, which boxed the site in on large screens. */
+  --container-site: 118rem;
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  /* Guards against any single wide child creating a horizontal scrollbar. */
+  overflow-x: clip;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 0.96;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* Visible, consistent focus ring — never removed. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Numerals in metrics must not jitter while animating. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* --------------------------------------------------------------------------
+   Scroll-reveal primitive
+   --------------------------------------------------------------------------
+   Content must never be stranded invisible. Three guards:
+
+     1. The hidden state is scoped to `html.js`, a class set by a synchronous
+        inline script in <head>. No JS -> class never added -> content is
+        simply visible, with no flash.
+     2. That same script sets `html.reveal-all` on a timeout, so if the
+        bundle fails to load or hydration throws, everything reveals anyway.
+     3. prefers-reduced-motion forces the shown state outright.
+   -------------------------------------------------------------------------- */
+
+html.js [data-reveal="pending"] {
+  opacity: 0;
+  transform: translate3d(0, 1.75rem, 0);
+}
+
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--dur-slow) var(--ease-out-expo),
+    transform var(--dur-slow) var(--ease-out-expo);
+}
+
+/* Failsafe: applied by the head script if hydration never completes. */
+html.reveal-all [data-reveal] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion — full parity, no content hidden
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  [data-reveal="pending"],
+  [data-reveal="shown"] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Utilities
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   Full-width layout system
+   --------------------------------------------------------------------------
+   Section backgrounds already span the viewport; what used to box the site in
+   was this container's 86rem cap, which left wide margins on large screens.
+
+   It now scales with the viewport via fluid padding and a much higher cap, so
+   the site reads edge-to-edge without the text itself ever stretching —
+   readable measure is enforced per text block (max-w-2xl / prose widths), not
+   by squeezing the whole page.
+   -------------------------------------------------------------------------- */
+
+@utility container-site {
+  width: 100%;
+  margin-inline: auto;
+  max-width: var(--container-site);
+  /* 1.25rem on a 320px phone, scaling to 6rem on a 1920px desktop. */
+  padding-inline: clamp(1.25rem, 4.5vw, 6rem);
+}
+
+/* Visual sections that should genuinely touch both edges — full-bleed
+   imagery, hero media, showcase strips. Padding only, no cap. */
+@utility container-bleed {
+  width: 100%;
+  padding-inline: clamp(1.25rem, 4.5vw, 6rem);
+}
+
+/* Breaks a child out of the container to the full viewport width without
+   causing horizontal overflow (no 100vw, which includes the scrollbar). */
+@utility full-bleed {
+  width: 100%;
+  margin-inline: calc(50% - 50vw);
+  max-width: 100vw;
+}
+
+/* Readable measure for long-form text inside a wide container. */
+@utility measure {
+  max-width: 68ch;
+}
+
+/* Hairline rule that reads correctly on both paper and ink sections. */
+@utility rule {
+  border-top: 1px solid var(--color-line);
+}
+
+@utility rule-dark {
+  border-top: 1px solid var(--color-line-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Headline word reveal
+   Gated on `html.js` so a JS-less visitor sees the headline immediately,
+   fully set, with no animation and no hidden text.
+   -------------------------------------------------------------------------- */
+
+.word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+html.js .word > span {
+  display: inline-block;
+  transform: translate3d(0, 110%, 0);
+  animation: word-rise 1.05s var(--ease-out-expo) forwards;
+  animation-delay: var(--word-delay, 0ms);
+}
+
+@keyframes word-rise {
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .word > span {
+    transform: none;
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Motion profile adaptations
+   --------------------------------------------------------------------------
+   `data-motion` is published on <html> by MotionProfileAttribute. Touch,
+   small and low-powered devices get genuinely different motion — shorter
+   travel and quicker settling — rather than the desktop animation replayed
+   at a smaller size.
+   -------------------------------------------------------------------------- */
+
+html[data-motion="reduced"] [data-reveal="pending"] {
+  /* Less distance to cover, so content settles sooner on a phone. */
+  transform: translate3d(0, 0.75rem, 0);
+}
+
+html[data-motion="reduced"] [data-reveal="shown"] {
+  transition-duration: var(--dur-base);
+}
+
+/* Word-by-word headline reveal is a desktop flourish. On smaller or
+   lower-powered devices the whole line rises at once — same intent, a
+   fraction of the work. */
+html[data-motion="reduced"] .word > span {
+  animation-duration: 0.6s;
+  animation-delay: 0ms;
+}
+
+/* Hover-scale on imagery is pointless without a pointer and costs compositing
+   on exactly the devices that can least afford it. */
+html[data-motion="reduced"] .group:hover img {
+  transform: none;
+}
+
+/* ==========================================================================
+   PREMIUM SURFACE TREATMENT
+   ========================================================================== */
+
+/* A very fine grain over the whole page. At 3.5% opacity it is invisible as
+   texture but stops large flat areas reading as flat digital colour — the
+   difference between "a web page" and "a printed surface". Fixed and
+   pointer-events-none so it never affects layout or interaction. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Static anyway, but drop it on low-power profiles to save a composite layer. */
+  html[data-motion="reduced"] body::after {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Editorial link underline — sweeps in from the left rather than appearing.
+   -------------------------------------------------------------------------- */
+
+@utility link-sweep {
+  position: relative;
+  text-decoration: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -0.15em;
+    height: 1px;
+    width: 100%;
+    background-color: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-base) var(--ease-out-expo);
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Section divider — a hairline that draws itself as it enters view.
+   -------------------------------------------------------------------------- */
+
+.divider-draw {
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+html:not(.js) .divider-draw,
+html[data-motion="minimal"] .divider-draw {
+  transform: scaleX(1);
+}
+
+/* --------------------------------------------------------------------------
+   Depth: a soft elevation that reads as light rather than a drop shadow.
+   The brief rules out heavy shadows, so this is deliberately faint.
+   -------------------------------------------------------------------------- */
+
+@utility surface-raise {
+  box-shadow:
+    0 1px 2px rgba(23, 25, 28, 0.04),
+    0 8px 24px -12px rgba(23, 25, 28, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Accent glow used behind hero and CTA areas. Kept under 10% so the 85%
+   neutral balance holds.
+   -------------------------------------------------------------------------- */
+
+@utility accent-glow {
+  background: radial-gradient(circle, #ef8716 0%, transparent 68%);
+}
+
+/* --------------------------------------------------------------------------
+   Headline optical refinement at display sizes.
+   -------------------------------------------------------------------------- */
+
+h1,
+h2 {
+  /* Stops the first character sitting visually indented at large sizes. */
+  text-indent: -0.015em;
+}
+
+/* Tabular figures everywhere numbers are compared or animated. */
+.tabular,
+[data-counter] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   Hero entrance
+   Gated on html.js so a JS-less visitor sees the hero fully composed with no
+   animation and nothing hidden.
+   -------------------------------------------------------------------------- */
+
+html.js [data-hero-stagger] {
+  opacity: 0;
+  transform: translate3d(0, 1.25rem, 0);
+  animation: hero-rise 1s var(--ease-out-expo) forwards;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+@keyframes hero-rise {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Travelling pulse in the scroll cue. */
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  60%,
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+.animate-scroll-cue {
+  animation: scroll-cue 2.4s var(--ease-in-out-quint) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-hero-stagger] {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .animate-scroll-cue {
+    animation: none;
+    transform: translateY(0);
+  }
+}
+
+/* The cue is a continuous loop — drop it on low-power profiles. */
+html[data-motion="reduced"] .animate-scroll-cue {
+  animation-duration: 3.2s;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile drawer item entrance
+   -------------------------------------------------------------------------- */
+
+html.js [data-mobile-item="in"] {
+  opacity: 0;
+  transform: translate3d(0, 0.75rem, 0);
+  animation: hero-rise 0.55s var(--ease-out-expo) forwards;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-mobile-item="in"] {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mega-menu column entrance — columns settle in sequence rather than as a
+   single block, which reads as considered rather than abrupt.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .mega-col {
+    opacity: 0;
+    transform: translate3d(0, 0.5rem, 0);
+    transition:
+      opacity var(--dur-base) var(--ease-out-expo),
+      transform var(--dur-base) var(--ease-out-expo);
+    transition-delay: var(--col-delay, 0ms);
+  }
+
+  [data-mega-open="true"] .mega-col {
+    opacity: 1;
+    transform: none;
+  }
+}
