@@ -4,6 +4,7 @@ import { FeaturedWork, Results, Testimonials, TrustStrip } from "@/components/ho
 import { Method, Problems, WhyMidis } from "@/components/home/Narrative";
 import { IndustriesSection, ServicesSection, TeamSection } from "@/components/home/Offerings";
 import { AuditSection, FaqSection, FinalCta } from "@/components/home/Conversion";
+import { GlobalReach } from "@/components/home/GlobalReach";
 import { InsightsSection } from "@/components/home/Insights";
 import { faqs } from "@/content/company";
 import { site } from "@/content/site";
@@ -54,11 +55,12 @@ export default function HomePage() {
       {/* 9  */} <WhyMidis />
       {/* 10 */} <Testimonials />
       {/* 11 */} <TeamSection />
-      {/* 12 */} <AuditSection />
-      {/* 13 */} <InsightsSection />
-      {/* 14 */} <FaqSection />
-      {/* 15 */} <FinalCta />
-      {/* 16 — footer lives in the root layout, shared across every page */}
+      {/* 12 */} <GlobalReach />
+      {/* 13 */} <AuditSection />
+      {/* 14 */} <InsightsSection />
+      {/* 15 */} <FaqSection />
+      {/* 16 */} <FinalCta />
+      {/* 17 — footer lives in the root layout, shared across every page */}
 
       <noscript>
         <p className="sr-only">

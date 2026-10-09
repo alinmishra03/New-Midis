@@ -753,3 +753,152 @@ html.js .announce-bar {
     animation: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Global reach map  (components/home/WorldMap)
+   --------------------------------------------------------------------------
+   Country hover is styling, never state: 176 shapes repaint on the
+   compositor instead of re-rendering a React tree every time the pointer
+   crosses a border. Only the tooltip is driven from JavaScript.
+   -------------------------------------------------------------------------- */
+
+.world-country {
+  fill: rgb(255 255 255 / 0.1);
+  stroke: rgb(255 255 255 / 0.2);
+  stroke-width: 0.4;
+  stroke-linejoin: round;
+  transition: fill var(--dur-fast) var(--ease-out-expo);
+}
+
+.world-country:hover {
+  fill: rgb(255 255 255 / 0.28);
+}
+
+/* The home base. Not interactive-looking on hover — it is already the one
+   thing on the map that stands out. */
+.world-india {
+  fill: var(--color-accent);
+  stroke: var(--color-accent);
+  stroke-width: 0.4;
+  stroke-linejoin: round;
+}
+
+.world-dot {
+  fill: var(--color-accent);
+}
+
+.world-pulse {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.2;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.world-home:focus {
+  outline: none;
+}
+
+.world-home:focus-visible .world-india {
+  stroke: var(--color-surface);
+  stroke-width: 1.6;
+}
+
+/* One slow breath rather than a blink. Paused for anyone on the reduced
+   motion profile, where a permanently animating element is exactly the cost
+   that profile exists to avoid. */
+@keyframes world-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  70% {
+    transform: scale(3.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(3.4);
+    opacity: 0;
+  }
+}
+
+.world-pulse {
+  animation: world-pulse 3.6s var(--ease-out-expo) infinite;
+}
+
+html[data-motion="reduced"] .world-pulse {
+  animation: none;
+  opacity: 0.4;
+}
+
+/* The map settles in when its chunk arrives, which is already scroll-timed. */
+@keyframes world-settle {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.75rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.world-map {
+  animation: world-settle var(--dur-slow) var(--ease-out-expo) both;
+}
+
+/* Follows the pointer, so it is positioned from JS but styled here. The
+   translate keeps it clear of the cursor and centred on it. */
+.world-tip {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  transform: translate(-50%, -140%);
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background-color: var(--color-ink);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--color-surface);
+  pointer-events: none;
+  animation: world-tip-in var(--dur-fast) var(--ease-out-expo) both;
+}
+
+.world-tip-note {
+  color: var(--color-accent);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes world-tip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -125%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -140%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-pulse {
+    animation: none;
+    opacity: 0.4;
+  }
+
+  .world-map,
+  .world-tip {
+    animation: none;
+  }
+
+  .world-country {
+    transition: none;
+  }
+}
