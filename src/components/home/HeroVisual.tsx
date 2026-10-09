@@ -172,7 +172,7 @@ export function HeroVisual() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-[42vh] w-full select-none sm:h-[46vh]"
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-[22vh] w-full select-none sm:h-[38vh] lg:h-[46vh]"
     />
   );
 }

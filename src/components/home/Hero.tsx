@@ -44,7 +44,15 @@ export function Hero() {
       />
 
       <div className="container-site relative">
-        <div className="flex min-h-[calc(100svh-5rem)] flex-col justify-center pb-[44vh] pt-16 sm:pb-[46vh] lg:pb-[40vh] lg:pt-20">
+        {/*
+          The reserved band at the foot of the hero holds the growth chart
+          (HeroVisual). At 44vh on a phone the fold landed where that chart's
+          bars are still only a few pixels tall, so the bottom third of the
+          first screen read as blank. The reservation is much smaller on
+          mobile and grows back on wider screens, where there is height to
+          spend and the chart earns it.
+        */}
+        <div className="flex min-h-[calc(100svh-5rem-var(--announce-h))] flex-col justify-center pb-[24vh] pt-10 sm:pb-[40vh] sm:pt-16 lg:pb-[40vh] lg:pt-20">
           <div data-hero-stagger style={{ "--hero-delay": "80ms" } as React.CSSProperties} className="flex items-center gap-3">
             <span className="h-px w-8 bg-accent" aria-hidden="true" />
             <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">

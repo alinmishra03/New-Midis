@@ -49,6 +49,13 @@
 
   /* Layout */
   --spacing-gutter: 1rem;
+  /*
+   * Height of the announcement bar, published so full-height sections can
+   * subtract the chrome that is actually above them. The hero used to
+   * subtract a hardcoded 5rem for the header alone, which left it a bar's
+   * worth too tall the moment the bar was added.
+   */
+  --announce-h: 2.8125rem;
   /* Was 86rem, which boxed the site in on large screens. */
   --container-site: 118rem;
 }
@@ -900,5 +907,13 @@ html[data-motion="reduced"] .world-pulse {
 
   .world-country {
     transition: none;
+  }
+}
+
+/* The announcement bar is shorter from md up; keep the published height in
+   step so the hero's viewport maths stays correct at every width. */
+@media (min-width: 48rem) {
+  :root {
+    --announce-h: 2.5625rem;
   }
 }
