@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState, type CSSProperties } from "react";
 import { WhatsAppIcon } from "@/components/ui/SocialIcons";
 import { useConsent } from "@/lib/use-consent";
 import { site } from "@/content/site";
@@ -11,26 +12,27 @@ import { site } from "@/content/site";
  * the phone number precisely so a line is never assumed to be WhatsApp-
  * enabled just because it is the one on the contact page.
  *
- * TWO DELIBERATE PIECES OF BEHAVIOUR:
+ * THE COOKIE BANNER
  *
- * 1. It waits for the cookie banner. That banner is `fixed inset-x-0
- *    bottom-0` at z-60 — the same corner, full width, and a different height
- *    on every breakpoint. Offsetting the button above it would mean
- *    hard-coding a height that is wrong the moment the banner's copy
- *    changes, so the button simply does not appear until the visitor has
- *    answered. That is one dismissal, once, and it is the only way the two
- *    genuinely cannot collide.
+ * That banner is `fixed inset-x-0 bottom-0` at z-60 — the same corner, full
+ * width, and a different height at every breakpoint. The button used to
+ * wait for it to be dismissed, which was the wrong trade: the banner does
+ * not time out, so a visitor who simply ignores it never saw the button at
+ * all. It now rides above the banner instead, offset by the banner's
+ * measured height and dropping back into the corner once it goes.
  *
- * 2. It sits at z-35, below the mobile drawer at z-40. A floating button
- *    hovering on top of an open navigation menu is the usual outcome here,
- *    and the lower index means the drawer covers it instead. Everything in
- *    the page flow is unpositioned, so z-35 is still above all content.
+ * The height is measured rather than hard-coded because the banner's is set
+ * by its copy and wraps differently at every width — any constant written
+ * here would be wrong the first time that copy changed. If the banner is
+ * ever restructured and cannot be found, the offset stays zero and the
+ * button simply sits in its usual place.
  *
- * Nothing about it is rendered on the server: the consent state is
- * localStorage, so `useConsent` reports "unset" during SSR and the button
- * fades in after hydration. It is an affordance, not content, and the
- * contact details are reachable from the announcement bar and the footer
- * regardless.
+ * THE MOBILE DRAWER
+ *
+ * The button sits at z-35, below the drawer at z-40. A floating button
+ * hovering on top of an open navigation menu is the usual outcome here; the
+ * lower index means the drawer covers it instead. Everything in the page
+ * flow is unpositioned, so z-35 is still above all content.
  */
 
 /* WhatsApp's own green. Scoped to this button rather than added to the
@@ -40,16 +42,50 @@ const WHATSAPP_GREEN_DARK = "#1DA851";
 
 const MESSAGE = "Hello MIDIS, I'd like to discuss a project with your team.";
 
+/** The banner names itself through this id for its own aria-labelledby. */
+const CONSENT_BANNER = '[aria-labelledby="consent-title"]';
+
 export function FloatingWhatsApp() {
   const consent = useConsent();
+  const [bannerHeight, setBannerHeight] = useState(0);
 
-  /* The cookie banner owns this corner until it is answered. */
-  if (consent === "unset") return null;
+  useEffect(() => {
+    /* Only the unanswered banner occupies the corner. */
+    if (consent !== "unset") return;
+
+    const banner = document.querySelector<HTMLElement>(CONSENT_BANNER);
+    if (!banner) return;
+
+    /*
+     * ResizeObserver reports the current size as soon as it starts
+     * observing, so the first measurement arrives through the same callback
+     * as every later one — no synchronous setState in the effect body, and
+     * no separate code path for the initial read. The banner reflows when
+     * the viewport changes width and its copy rewraps, which is why it is
+     * watched rather than measured once.
+     */
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const box = entry.borderBoxSize?.[0];
+        setBannerHeight(Math.ceil(box ? box.blockSize : entry.contentRect.height));
+      }
+    });
+    observer.observe(banner);
+
+    return () => observer.disconnect();
+  }, [consent]);
+
+  /* Derived rather than stored: once the banner is answered there is
+     nothing to clear up, and the button drops back on the next render. */
+  const lift = consent === "unset" ? bannerHeight : 0;
 
   const href = `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(MESSAGE)}`;
 
   return (
-    <div className="floating-whatsapp pointer-events-none fixed bottom-0 right-0 z-[35] p-5 sm:p-6">
+    <div
+      className="floating-whatsapp pointer-events-none fixed bottom-0 right-0 z-[35]"
+      style={{ "--wa-lift": `${lift}px` } as CSSProperties}
+    >
       <a
         href={href}
         target="_blank"

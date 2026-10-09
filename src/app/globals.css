@@ -928,7 +928,12 @@ html[data-motion="reduced"] .world-pulse {
 
 .floating-whatsapp {
   padding-right: max(1.25rem, env(safe-area-inset-right));
-  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  /* --wa-lift is the measured height of the cookie banner, or 0 once it has
+     gone. Padding rather than transform: the entrance animation below owns
+     this element's transform and settles on `none`, and an animation beats
+     an inline style, so an inline translate would be thrown away. */
+  padding-bottom: calc(max(1.25rem, env(safe-area-inset-bottom)) + var(--wa-lift, 0px));
+  transition: padding-bottom var(--dur-base) var(--ease-out-expo);
   animation: floating-whatsapp-in var(--dur-slow) var(--ease-out-expo) both;
   animation-delay: 240ms;
 }
@@ -936,7 +941,7 @@ html[data-motion="reduced"] .world-pulse {
 @media (min-width: 40rem) {
   .floating-whatsapp {
     padding-right: max(1.5rem, env(safe-area-inset-right));
-    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    padding-bottom: calc(max(1.5rem, env(safe-area-inset-bottom)) + var(--wa-lift, 0px));
   }
 }
 
@@ -982,6 +987,7 @@ html[data-motion="reduced"] .world-pulse {
 @media (prefers-reduced-motion: reduce) {
   .floating-whatsapp {
     animation: none;
+    transition: none;
   }
 
   .floating-whatsapp-tip {
