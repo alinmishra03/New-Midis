@@ -138,13 +138,13 @@ export function AnnouncementBar() {
           </p>
 
           {/* -------------------------------------------- contact actions */}
-          <div className="flex w-full items-center justify-between gap-1 md:w-auto md:justify-end md:gap-1.5">
+          <div className="flex w-full items-center justify-center gap-2 md:w-auto md:justify-end md:gap-1.5">
             <a
               href={`https://wa.me/${site.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Message ${site.name} on WhatsApp`}
-              className={`${linkBase} h-9 gap-2 px-2.5 md:h-8`}
+              className={`${linkBase} h-9 w-9 border border-surface/15 md:h-8 md:w-auto md:gap-2 md:border-transparent md:px-2.5`}
             >
               <WhatsAppIcon className="h-4 w-4" />
               <span className="sr-only text-xs font-medium xl:not-sr-only">WhatsApp</span>
@@ -153,7 +153,7 @@ export function AnnouncementBar() {
             <a
               href={`mailto:${site.email}`}
               aria-label={`Email ${site.name} at ${site.email}`}
-              className={`${linkBase} h-9 gap-2 px-2.5 md:h-8`}
+              className={`${linkBase} h-9 w-9 border border-surface/15 md:h-8 md:w-auto md:gap-2 md:border-transparent md:px-2.5`}
             >
               <MailIcon className="h-4 w-4" />
               <span className="sr-only text-xs font-medium xl:not-sr-only">{site.email}</span>
