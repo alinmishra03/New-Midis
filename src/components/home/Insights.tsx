@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight, Button } from "@/components/ui/Button";
-import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { formatDate, getArticles } from "@/lib/cms";
 import { hasEvidence } from "@/lib/utils";
@@ -28,9 +28,9 @@ export async function InsightsSection() {
         }
       />
 
-      <div className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
-        {articles.map((a, i) => (
-          <Reveal key={a.slug} delay={(i % 3) * 90}>
+      <StaggerGroup as="ul" step={85} className="mt-14 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+        {articles.map((a) => (
+          <li key={a.slug}>
             <Link href={`/insights/${a.slug}`} className="group block">
               {a.image && (
                 <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-line">
@@ -66,9 +66,9 @@ export async function InsightsSection() {
                 <ArrowRight />
               </span>
             </Link>
-          </Reveal>
+          </li>
         ))}
-      </div>
+      </StaggerGroup>
     </Section>
   );
 }

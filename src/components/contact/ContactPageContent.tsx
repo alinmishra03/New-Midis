@@ -57,18 +57,28 @@ export function ContactPageContent({
         crumbs={crumbs}
       />
 
-      <Section tone="surface" className="!pt-0" aria-labelledby="contact-heading">
+      {/* A modest top pad rather than none at all, so the white panel has
+          some air above the first label instead of the form butting straight
+          into the colour change at the hero's edge. */}
+      <Section
+        tone="surface"
+        className="!pt-[clamp(2.5rem,4.5vw,4.5rem)]"
+        aria-labelledby="contact-heading"
+      >
         <h2 id="contact-heading" className="sr-only">
           Contact MIDIS
         </h2>
 
-        <div className="grid gap-14 lg:grid-cols-[1.35fr_0.65fr] lg:gap-20">
-          <Reveal>
+      {/* The aside is capped rather than proportional: a fractional track
+          let it stretch past a comfortable measure on wide screens, and the
+          shorter form no longer needs to be given two thirds of the row. */}
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)] lg:gap-16 xl:gap-20">
+          <Reveal className="min-w-0">
             <ContactForm defaultIntent={isCall ? "call" : undefined} />
           </Reveal>
 
-          <Reveal delay={120} className="space-y-6">
-            <div className="rounded-2xl border border-line bg-paper p-7">
+          <Reveal delay={120} className="min-w-0 space-y-5">
+            <div className="rounded-2xl border border-line bg-paper p-6 sm:p-7">
               <h3 className="text-lg font-semibold tracking-tight text-ink">
                 Prefer to talk right now?
               </h3>
@@ -114,7 +124,7 @@ export function ContactPageContent({
               <address className="text-base not-italic leading-relaxed text-ink">
                 {site.address.street}
                 <br />
-                {site.address.locality}, {site.address.region}
+                {site.address.locality}, {site.address.region} {site.address.postalCode}
                 <br />
                 {site.address.countryName}
               </address>

@@ -144,7 +144,7 @@ export function FinalCta() {
 
           <div className="mt-11 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button href="/contact" variant="primary" size="lg" magnetic>
-              Start a project
+              Tell us about the project
               <ArrowRight />
             </Button>
             <Button href="/contact/call" variant="outline-light" size="lg">

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { WorkGrid } from "@/components/work/WorkGrid";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
@@ -77,22 +76,6 @@ crumbs={[{ label: "Our Work", href: "/work" }]}
           </Reveal>
         )}
       </Section>
-
-      <CtaBand
-        eyebrow={hasPortfolio ? "Your project next" : "Ask us directly"}
-        title={
-          hasPortfolio
-            ? "Let's create one we're both proud of."
-            : "Ask to see work relevant to your project."
-        }
-        body={
-          hasPortfolio
-            ? "Tell us where the business is now and what the site needs to achieve."
-            : "Tell us what you're planning and we'll show you the most relevant things we've built, and put you in touch with the clients behind them."
-        }
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "Book a strategy call", href: "/contact/call" }}
-      />
     </>
   );
 }

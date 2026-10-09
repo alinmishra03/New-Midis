@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
 import { Analytics, ConsentBanner } from "@/components/analytics/Analytics";
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
+import { RouteTransition } from "@/components/motion/RouteTransition";
 import { Cursor } from "@/components/ui/Cursor";
 import { MotionProfileAttribute } from "@/components/ui/MotionProfileAttribute";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
@@ -79,6 +81,7 @@ function OrganizationSchema() {
           streetAddress: site.address.street,
           addressLocality: site.address.locality,
           addressRegion: site.address.region,
+          postalCode: site.address.postalCode,
           addressCountry: site.address.country,
         },
         sameAs: site.socials.map((s) => s.url),
@@ -129,9 +132,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <OrganizationSchema />
+        <RouteTransition />
         <MotionProfileAttribute />
         <ScrollProgress />
         <Cursor />
+        <AnnouncementBar />
         <Header />
         <main id="main" className="flex-1">
           {children}

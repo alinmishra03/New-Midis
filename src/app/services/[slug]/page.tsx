@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { FaqList, faqSchema } from "@/components/ui/FaqList";
 import { PageHero } from "@/components/ui/PageHero";
-import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { getIndustry } from "@/content/industries";
 import { getService, services } from "@/content/services";
@@ -118,13 +117,13 @@ crumbs={[
             </div>
           </div>
 
-          <div className="max-w-2xl space-y-6">
+          <StaggerGroup className="max-w-2xl space-y-6" step={80}>
             {(service.body ?? []).map((para, i) => (
-              <Reveal key={i} delay={i * 60}>
-                <p className="text-base leading-relaxed text-muted sm:text-lg">{para}</p>
-              </Reveal>
+              <p key={i} className="text-base leading-relaxed text-muted sm:text-lg">
+                {para}
+              </p>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </Section>
 
@@ -137,9 +136,13 @@ crumbs={[
             title="Sectors we apply this in."
           />
 
-          <ul className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-3">
-            {industries.map((ind, i) => (
-              <Reveal key={ind.slug} as="li" delay={i * 70} className="bg-paper">
+          <StaggerGroup
+            as="ul"
+            step={70}
+            className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-3"
+          >
+            {industries.map((ind) => (
+              <li key={ind.slug} className="bg-paper">
                 <Link
                   href={`/industries/${ind.slug}`}
                   className="group flex h-full flex-col p-8 transition-colors hover:bg-surface"
@@ -153,9 +156,9 @@ crumbs={[
                     <ArrowRight />
                   </span>
                 </Link>
-              </Reveal>
+              </li>
             ))}
-          </ul>
+          </StaggerGroup>
         </Section>
       )}
 
@@ -184,9 +187,13 @@ crumbs={[
             title="Often paired with."
           />
 
-          <ul className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2 lg:grid-cols-4">
-            {related.map((r, i) => (
-              <Reveal key={r.slug} as="li" delay={(i % 4) * 60} className="bg-paper">
+          <StaggerGroup
+            as="ul"
+            step={60}
+            className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {related.map((r) => (
+              <li key={r.slug} className="bg-paper">
                 <Link
                   href={`/services/${r.slug}`}
                   className="group flex h-full flex-col p-7 transition-colors hover:bg-surface"
@@ -195,19 +202,11 @@ crumbs={[
                   <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">{r.problem}</p>
                   <ArrowRight className="mt-5 text-muted transition-colors group-hover:text-accent-ink" />
                 </Link>
-              </Reveal>
+              </li>
             ))}
-          </ul>
+          </StaggerGroup>
         </Section>
       )}
-
-      <CtaBand
-        eyebrow="Next step"
-        title={`Talk to us about ${service.title.toLowerCase()}.`}
-        body="Tell us what you're trying to achieve. If this isn't the right service for it, we'll say so."
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "See all services", href: "/services" }}
-      />
     </>
   );
 }

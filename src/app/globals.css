@@ -483,3 +483,273 @@ html.js [data-mobile-item="in"] {
     transform: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Footer
+   --------------------------------------------------------------------------
+   Two footer-only flourishes. Both are additive: the footer is fully
+   readable, and every link reachable, with the animation never running.
+   -------------------------------------------------------------------------- */
+
+/* Dividers draw themselves in from the left as their block reveals. Scoped to
+   `html.js` and released by the `reveal-all` failsafe, so a stalled bundle can
+   never leave a rule collapsed. */
+.footer-rule {
+  transform-origin: left center;
+}
+
+html.js [data-reveal="pending"] .footer-rule {
+  transform: scaleX(0);
+}
+
+[data-reveal="shown"] .footer-rule {
+  transform: scaleX(1);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+}
+
+html.reveal-all .footer-rule {
+  transform: none !important;
+}
+
+/* A single accent highlight travelling along the CTA divider. One compositor
+   transform, no layout work. */
+@keyframes footer-sheen {
+  0% {
+    transform: translate3d(-120%, 0, 0);
+  }
+  100% {
+    transform: translate3d(320%, 0, 0);
+  }
+}
+
+.footer-sheen {
+  animation: footer-sheen 9s var(--ease-in-out-quint) infinite;
+}
+
+/* Continuous motion is exactly what the `reduced` profile exists to drop —
+   touch, small and low-powered devices get the divider without the travel. */
+html[data-motion="reduced"] .footer-sheen {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-rule {
+    transform: none !important;
+  }
+
+  .footer-sheen {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Staggered group entrance  (components/motion/StaggerGroup)
+   --------------------------------------------------------------------------
+   The delays are nth-child rules rather than inline styles, so a grid costs
+   one IntersectionObserver and no per-child JavaScript. Enumerated to 16,
+   which covers every group on the site; a 17th child simply arrives with the
+   16th rather than breaking.
+
+   Same three guards as the reveal primitive: hidden only under `html.js`,
+   released by `html.reveal-all`, and bypassed entirely under reduced motion.
+   -------------------------------------------------------------------------- */
+
+html.js [data-stagger] > * {
+  opacity: 0;
+  transform: translate3d(0, var(--stagger-shift, 1.25rem), 0);
+}
+
+[data-stagger="in"] > * {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--dur-slow) var(--ease-out-expo),
+    transform var(--dur-slow) var(--ease-out-expo);
+}
+
+[data-stagger] > *:nth-child(1) { transition-delay: calc(var(--stagger-step, 70ms) * 0); }
+[data-stagger] > *:nth-child(2) { transition-delay: calc(var(--stagger-step, 70ms) * 1); }
+[data-stagger] > *:nth-child(3) { transition-delay: calc(var(--stagger-step, 70ms) * 2); }
+[data-stagger] > *:nth-child(4) { transition-delay: calc(var(--stagger-step, 70ms) * 3); }
+[data-stagger] > *:nth-child(5) { transition-delay: calc(var(--stagger-step, 70ms) * 4); }
+[data-stagger] > *:nth-child(6) { transition-delay: calc(var(--stagger-step, 70ms) * 5); }
+[data-stagger] > *:nth-child(7) { transition-delay: calc(var(--stagger-step, 70ms) * 6); }
+[data-stagger] > *:nth-child(8) { transition-delay: calc(var(--stagger-step, 70ms) * 7); }
+[data-stagger] > *:nth-child(9) { transition-delay: calc(var(--stagger-step, 70ms) * 8); }
+[data-stagger] > *:nth-child(10) { transition-delay: calc(var(--stagger-step, 70ms) * 9); }
+[data-stagger] > *:nth-child(11) { transition-delay: calc(var(--stagger-step, 70ms) * 10); }
+[data-stagger] > *:nth-child(12) { transition-delay: calc(var(--stagger-step, 70ms) * 11); }
+[data-stagger] > *:nth-child(13) { transition-delay: calc(var(--stagger-step, 70ms) * 12); }
+[data-stagger] > *:nth-child(14) { transition-delay: calc(var(--stagger-step, 70ms) * 13); }
+[data-stagger] > *:nth-child(15) { transition-delay: calc(var(--stagger-step, 70ms) * 14); }
+[data-stagger] > *:nth-child(n + 16) { transition-delay: calc(var(--stagger-step, 70ms) * 15); }
+
+html.reveal-all [data-stagger] > * {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Shorter travel and a quicker sequence where the device cannot afford it. */
+html[data-motion="reduced"] [data-stagger] {
+  --stagger-shift: 0.75rem;
+  --stagger-step: 40ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-stagger] > *,
+  [data-stagger="in"] > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Directional clip wipe  (components/motion/ClipWipe)
+   --------------------------------------------------------------------------
+   Nothing moves — the clip edge travels across content that is already in
+   place. `clip-path` animates on the compositor, so this stays cheap even on
+   a large block.
+   -------------------------------------------------------------------------- */
+
+html.js [data-wipe] {
+  clip-path: inset(0 0 100% 0);
+}
+
+html.js [data-wipe][data-wipe-from="top"] { clip-path: inset(100% 0 0 0); }
+html.js [data-wipe][data-wipe-from="left"] { clip-path: inset(0 100% 0 0); }
+html.js [data-wipe][data-wipe-from="right"] { clip-path: inset(0 0 0 100%); }
+
+[data-wipe="in"] {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path var(--dur-slow) var(--ease-out-expo);
+}
+
+html.reveal-all [data-wipe] {
+  clip-path: none !important;
+}
+
+html[data-motion="reduced"] [data-wipe="in"] {
+  transition-duration: var(--dur-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-wipe],
+  [data-wipe="in"] {
+    clip-path: none !important;
+    transition: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Self-drawing rule  (components/motion/DrawLine)
+   --------------------------------------------------------------------------
+   A scale on a one-pixel element, so it animates on the compositor. Purely
+   decorative, always aria-hidden, and released by the same failsafe as every
+   other primitive here.
+   -------------------------------------------------------------------------- */
+
+html.js [data-draw] {
+  transform: scale3d(1, 0, 1);
+}
+
+html.js [data-draw][data-draw-axis="horizontal"] {
+  transform: scale3d(0, 1, 1);
+}
+
+[data-draw][data-draw-axis="vertical"] {
+  transform-origin: top center;
+}
+
+[data-draw][data-draw-axis="horizontal"] {
+  transform-origin: left center;
+}
+
+[data-draw="in"] {
+  transform: none;
+  transition: transform calc(var(--dur-slow) * 1.4) var(--ease-out-expo);
+}
+
+html.reveal-all [data-draw] {
+  transform: none !important;
+}
+
+html[data-motion="reduced"] [data-draw="in"] {
+  transition-duration: var(--dur-slow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-draw],
+  [data-draw="in"] {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Sticky card stack  (components/motion/StickyStack)
+   --------------------------------------------------------------------------
+   The pinning is `position: sticky`, set inline per card so each one stops
+   slightly lower than the last. Only two things are needed here: the cards
+   must paint in document order so a later card covers an earlier one, and
+   the effect must switch off where it would trap content.
+   -------------------------------------------------------------------------- */
+
+[data-sticky-stack] > li {
+  /* Later cards sit above earlier ones. 1 is enough; a stacking context is
+     created by `position: sticky` regardless. */
+  z-index: 1;
+}
+
+[data-sticky-stack] > li > * {
+  /* Cards must be opaque or the stack reads as a blur of overlapping text. */
+  background-color: var(--color-surface);
+}
+
+/*
+ * Sticky pinning needs vertical room to be legible, and on a short viewport
+ * it means a card can cover the one the visitor is reading. Below that height
+ * — and for anyone who asked for less motion — the stack becomes an ordinary
+ * list, which is what the markup is anyway.
+ */
+@media (max-height: 44rem), (max-width: 48rem) {
+  [data-sticky-stack] > li {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sticky-stack] > li {
+    position: static;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Announcement bar  (components/layout/AnnouncementBar)
+   --------------------------------------------------------------------------
+   One settling fade on first paint. Opacity and a two-pixel lift only, so it
+   cannot shift layout, and it runs once rather than on every route change
+   because the bar lives in the root layout and never remounts.
+   -------------------------------------------------------------------------- */
+
+@keyframes announce-settle {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -2px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html.js .announce-bar {
+  animation: announce-settle var(--dur-base) var(--ease-out-expo) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .announce-bar {
+    animation: none;
+  }
+}

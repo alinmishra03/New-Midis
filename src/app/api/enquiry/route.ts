@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { site } from "@/content/site";
+import {
+  CONTACT_INVALID_MESSAGE,
+  CONTACT_MAX_LENGTH,
+  CONTACT_REQUIRED_MESSAGE,
+  classifyContact,
+  type ContactKind,
+} from "@/lib/contact-value";
 
 /**
  * Enquiry submission proxy.
@@ -16,11 +23,38 @@ import { site } from "@/content/site";
  * live endpoint during the audit — note the trailing spaces in some enum
  * values; they are part of the stored value and must be sent verbatim.
  *
- * The richer fields this form collects (company, website, budget, timeline)
- * have no column in that schema, so they are appended to `message` as a
- * structured block. Nothing the client types is discarded.
+ * The form collects one combined contact value that may be either an email
+ * address or a phone number, and it is routed to whichever column fits: an
+ * address to `email`, a number to `phoneNumber`. A phone-only enquiry
+ * therefore carries no `email`, so that value is also written into
+ * `message` — the lead's only means of contact cannot then be lost to a
+ * column Strapi decides to ignore.
+ *
+ * UNVERIFIED: whether Strapi marks `email` as required. Establishing it means
+ * POSTing to the live production CMS, so it has not been assumed either way.
+ * If it is required, phone-only submissions are rejected upstream and this
+ * route reports that honestly — a 502 and "email us instead" — rather than
+ * showing success for a lead that never landed.
+ *
+ * The other fields this form collects (website, service) have no column in
+ * that schema, so they are appended to `message` as a structured block.
+ * Nothing the client types is discarded.
  */
 
+/*
+ * The live `services` enumeration, quoted verbatim from the ValidationError
+ * Strapi returns when given a value outside it:
+ *
+ *   "services must be one of the following values: Web development ,
+ *    Graphic designing , Digital Marketing, Seo Optimisation,
+ *    Content Writing , Brand Identity, "
+ *
+ * Two things in there are easy to get wrong. The trailing spaces in some
+ * values are part of the stored value and must be sent as-is. And the list
+ * ends with the EMPTY STRING, not with "Other" — "Other" is rejected, which
+ * is why it is not here. The empty value is the correct catch-all, and the
+ * visitor's actual request is never lost: it is written into `message`.
+ */
 const STRAPI_SERVICE_VALUES = [
   "Web development ",
   "Graphic designing ",
@@ -28,8 +62,11 @@ const STRAPI_SERVICE_VALUES = [
   "Seo Optimisation",
   "Content Writing ",
   "Brand Identity",
-  "Other",
+  "",
 ] as const;
+
+/** The catch-all Strapi actually accepts for anything unmapped. */
+const STRAPI_SERVICE_FALLBACK = "" as const;
 
 type StrapiService = (typeof STRAPI_SERVICE_VALUES)[number];
 
@@ -37,12 +74,15 @@ const ALLOWED_SERVICES: ReadonlySet<string> = new Set(STRAPI_SERVICE_VALUES);
 
 /**
  * Guards against a mapping drifting out of sync with the CMS enumeration.
- * Strapi rejects the whole submission on an unknown enum value, so an unknown
- * value falls back to "Other" and the precise request survives in `message`.
+ * Strapi rejects the WHOLE submission on an unknown enum value — it is not
+ * lenient and it does not ignore the field — so anything unmapped becomes the
+ * empty value it does accept, and the precise request survives in `message`.
  */
 function toStrapiService(value: string | undefined): StrapiService {
   const mapped = SERVICE_MAP[value ?? ""];
-  return mapped && ALLOWED_SERVICES.has(mapped) ? mapped : "Other";
+  return mapped !== undefined && ALLOWED_SERVICES.has(mapped)
+    ? mapped
+    : STRAPI_SERVICE_FALLBACK;
 }
 
 /** Maps the form's service options onto the values Strapi will accept. */
@@ -57,8 +97,9 @@ const SERVICE_MAP: Record<string, StrapiService> = {
   "Graphic design": "Graphic designing ",
   "Content writing": "Content Writing ",
   "Branding": "Brand Identity",
-  "AI & automation": "Other",
-  "Something else": "Other",
+  /* No column fits these two, so they ride along in `message` instead. */
+  "AI & automation": STRAPI_SERVICE_FALLBACK,
+  "Something else": STRAPI_SERVICE_FALLBACK,
 };
 
 export const SERVICE_OPTIONS = Object.keys(SERVICE_MAP);
@@ -77,20 +118,21 @@ const optionalText = (max: number) =>
 
 const EnquirySchema = z.object({
   name: text(z.string().trim().min(2, "Please enter your name").max(120)),
-  email: text(
+  /**
+   * One field accepting either an email address or a phone number, validated
+   * with the same rule the browser uses (lib/contact-value) so a value the
+   * form accepted is never rejected here for a different reason.
+   */
+  contact: text(
     z
       .string()
       .trim()
-      .min(1, "Please enter your email address")
-      .email("Please enter a valid email address")
-      .max(200),
+      .min(1, CONTACT_REQUIRED_MESSAGE)
+      .max(CONTACT_MAX_LENGTH, CONTACT_INVALID_MESSAGE)
+      .refine((v) => classifyContact(v) !== null, CONTACT_INVALID_MESSAGE),
   ),
-  phone: optionalText(40),
-  company: optionalText(160),
   website: optionalText(300),
   service: optionalText(80),
-  budget: optionalText(80),
-  timeline: optionalText(80),
   message: text(
     z.string().trim().min(10, "Please tell us a little about the project").max(5000),
   ),
@@ -125,13 +167,17 @@ function rateLimited(ip: string): boolean {
   return entry.count > MAX_PER_WINDOW;
 }
 
-function buildMessage(d: z.infer<typeof EnquirySchema>): string {
+function buildMessage(
+  d: z.infer<typeof EnquirySchema>,
+  contactKind: ContactKind,
+  contactValue: string,
+): string {
   const extras = [
-    d.company && `Business: ${d.company}`,
+    /* Phone-only enquiries carry no address in `email`, so the number is
+       repeated here as the backstop that keeps the lead contactable. */
+    contactKind === "phone" && `Contact number: ${contactValue}`,
     d.website && `Website: ${d.website}`,
     d.service && `Service requested: ${d.service}`,
-    d.budget && `Budget: ${d.budget}`,
-    d.timeline && `Timeline: ${d.timeline}`,
   ].filter(Boolean);
 
   return extras.length ? `${d.message}\n\n---\n${extras.join("\n")}` : d.message;
@@ -174,13 +220,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  /* Non-null: the schema already refused anything classifyContact rejects. */
+  const contact = classifyContact(data.contact)!;
+
   const body = {
     data: {
       name: data.name,
-      email: data.email,
-      phoneNumber: data.phone || "Not provided",
+      /* Omitted rather than invented for a phone-only enquiry. A synthetic
+         address would sit in the team's inbox looking like a real one. */
+      ...(contact.kind === "email" ? { email: contact.value } : {}),
+      phoneNumber: contact.kind === "phone" ? contact.value : "Not provided",
       services: toStrapiService(data.service),
-      message: buildMessage(data),
+      message: buildMessage(data, contact.kind, contact.value),
     },
   };
 

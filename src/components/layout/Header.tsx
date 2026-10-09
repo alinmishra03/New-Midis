@@ -18,6 +18,13 @@ const visibleNav = nav.filter((item) => item.href !== "/work" || hasPortfolio);
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  /*
+   * Where the drawer starts. Null until first measured, which keeps the
+   * server output and the first client render identical — the fallback
+   * below matches the pinned-header case the markup was written for.
+   */
+  const [drawerTop, setDrawerTop] = useState<number | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
@@ -60,6 +67,24 @@ export function Header() {
     };
   }, [mobileOpen]);
 
+  /*
+   * The drawer hangs off the bottom of the header rather than a fixed
+   * offset, because the announcement bar above means the header is only at
+   * y=80 once the page has scrolled past it.
+   */
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const measure = () => {
+      const el = headerRef.current;
+      if (el) setDrawerTop(Math.round(el.getBoundingClientRect().bottom));
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [mobileOpen]);
+
   function openWithCancel(label: string) {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     setOpenMenu(label);
@@ -74,6 +99,7 @@ export function Header() {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
         "sticky top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-[var(--dur-base)]",
         scrolled || openMenu
@@ -83,7 +109,7 @@ export function Header() {
     >
       <div className="container-site">
         <div className="flex h-20 items-center justify-between gap-6">
-          <LogoLink priority />
+          <LogoLink variant="lockup" priority />
 
           {/* ------------------------------------------------ desktop nav */}
           <nav aria-label="Main" className="hidden lg:block">
@@ -241,11 +267,12 @@ export function Header() {
       <div
         id="mobile-nav"
         className={cn(
-          "fixed inset-x-0 top-20 bottom-0 z-40 overflow-y-auto overscroll-contain bg-paper lg:hidden",
+          "fixed inset-x-0 bottom-0 z-40 overflow-y-auto overscroll-contain bg-paper lg:hidden",
           "transition-[opacity,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)]",
           mobileOpen ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0",
         )}
         aria-hidden={!mobileOpen}
+        style={{ top: drawerTop ?? "5rem" }}
       >
         <nav aria-label="Mobile" className="container-site py-8">
           <ul className="divide-y divide-line">

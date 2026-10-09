@@ -1,4 +1,5 @@
 import { industryContent } from "./industry-content";
+import { industryProfiles } from "./industry-profiles";
 import type { Industry } from "./types";
 
 /**
@@ -143,7 +144,8 @@ export function getIndustry(slug: string): Industry | undefined {
   if (!base) return undefined;
 
   const extra = industryContent[slug];
-  return extra ? { ...base, ...extra } : base;
+  const profile = industryProfiles[slug];
+  return { ...base, ...(extra ?? {}), ...(profile ?? {}) };
 }
 
 export function getAllIndustries(): Industry[] {
@@ -158,5 +160,18 @@ if (missingIndustryContent.length > 0) {
   throw new Error(
     `industries.ts: missing page content for ${missingIndustryContent.join(", ")}. ` +
       `Add entries to industry-content.ts or remove them from the catalogue.`,
+  );
+}
+
+/* The same guard for the structured profile. Half a sector page is worse
+   than a sector that is honestly not listed yet, so this fails the build
+   rather than rendering a page with empty sections. */
+const missingIndustryProfile = industries
+  .filter((i) => !industryProfiles[i.slug])
+  .map((i) => i.slug);
+if (missingIndustryProfile.length > 0) {
+  throw new Error(
+    `industries.ts: missing profile data for ${missingIndustryProfile.join(", ")}. ` +
+      `Add entries to industry-profiles.ts or remove them from the catalogue.`,
   );
 }

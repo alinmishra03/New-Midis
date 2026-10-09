@@ -1,4 +1,4 @@
-import { Reveal } from "@/components/ui/Reveal";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import type { Faq } from "@/content/types";
 
 /**
@@ -9,10 +9,9 @@ export function FaqList({ faqs, tone = "light" }: { faqs: readonly Faq[]; tone?:
   const border = tone === "dark" ? "border-line-dark" : "border-line";
 
   return (
-    <div className={`border-t ${border}`}>
-      {faqs.map((f, i) => (
-        <Reveal key={f.question} delay={Math.min(i, 6) * 40}>
-          <details className={`group border-b ${border}`}>
+    <StaggerGroup step={45} className={`border-t ${border}`}>
+      {faqs.map((f) => (
+        <details key={f.question} className={`group border-b ${border}`}>
             <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left [&::-webkit-details-marker]:hidden">
               <h3
                 className={`text-base font-medium tracking-tight sm:text-lg ${
@@ -43,10 +42,9 @@ export function FaqList({ faqs, tone = "light" }: { faqs: readonly Faq[]; tone?:
                 {f.answer}
               </p>
             </div>
-          </details>
-        </Reveal>
+        </details>
       ))}
-    </div>
+    </StaggerGroup>
   );
 }
 

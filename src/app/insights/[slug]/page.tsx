@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TrackView } from "@/components/analytics/Track";
 import { ArrowRight } from "@/components/ui/Button";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { PageHero } from "@/components/ui/PageHero";
 import { Parallax } from "@/components/ui/Parallax";
 import { Reveal } from "@/components/ui/Reveal";
@@ -173,14 +172,6 @@ crumbs={[
           </ul>
         </Section>
       )}
-
-      <CtaBand
-        eyebrow="Next step"
-        title="Want this applied to your site?"
-        body="Run a free audit against your own site, or tell us what you're trying to fix."
-        primary={{ label: "Get a free website audit", href: "/tools/website-audit" }}
-        secondary={{ label: "Start a project", href: "/contact" }}
-      />
     </>
   );
 }

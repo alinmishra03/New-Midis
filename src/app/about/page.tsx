@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CtaBand } from "@/components/ui/CtaBand";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
@@ -18,9 +18,9 @@ export default function AboutPage() {
     <>
       <PageHero
         eyebrow="About MIDIS"
-        headlineLines={["Not just another", "digital agency."]}
-        accentWords={["agency."]}
-        intro="Everyone says they can build websites and run ads. Here is what actually makes us different, and how we think about the work."
+        headlineLines={["Who we are,", "and how we work."]}
+        accentWords={["work."]}
+        intro="Everyone says they can build websites and run ads. This page covers how the work actually runs, what we measure, and who you would be dealing with."
         visualSeed="about"
         variant="depth"
 crumbs={[{ label: "About", href: "/about" }]}
@@ -33,13 +33,13 @@ crumbs={[{ label: "About", href: "/about" }]}
             <SectionHeader id="story-heading" eyebrow="Our story" title="Why we exist." />
           </div>
 
-          <div className="max-w-2xl space-y-6">
+          <StaggerGroup className="max-w-2xl space-y-6" step={80}>
             {aboutNarrative.map((para, i) => (
-              <Reveal key={i} delay={i * 60}>
-                <p className="text-base leading-relaxed text-muted sm:text-lg">{para}</p>
-              </Reveal>
+              <p key={i} className="text-base leading-relaxed text-muted sm:text-lg">
+                {para}
+              </p>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </Section>
 
@@ -52,22 +52,22 @@ crumbs={[{ label: "About", href: "/about" }]}
           intro="Four things clients tell us make the difference."
         />
 
-        <div className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2">
-          {aboutPrinciples.map((p, i) => (
-            <Reveal key={p.title} delay={(i % 2) * 80} className="rule pt-6">
+        <StaggerGroup as="ul" step={80} className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2">
+          {aboutPrinciples.map((p) => (
+            <li key={p.title} className="rule pt-6">
               <h3 className="text-xl font-semibold tracking-tight text-ink">{p.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">{p.body}</p>
-            </Reveal>
+            </li>
           ))}
-        </div>
+        </StaggerGroup>
       </Section>
 
       {/* ------------------------------------------------------ leadership */}
       <Section tone="surface" aria-labelledby="leadership-heading">
         <SectionHeader
           id="leadership-heading"
-          eyebrow="The visionaries"
-          title="Driving the future of MIDIS."
+          eyebrow="The directors"
+          title="Who runs MIDIS."
         />
 
         <div className="mt-14 space-y-16 lg:space-y-20">
@@ -147,23 +147,19 @@ crumbs={[{ label: "About", href: "/about" }]}
           intro="You're not outsourcing tasks. You're building a partnership."
         />
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-4">
-          {whatYouGain.map((g, i) => (
-            <Reveal key={g.title} delay={(i % 4) * 70} className="bg-ink p-8">
+        <StaggerGroup
+          as="ul"
+          step={70}
+          className="mt-14 grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {whatYouGain.map((g) => (
+            <li key={g.title} className="bg-ink p-8">
               <h3 className="text-lg font-semibold tracking-tight text-surface">{g.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-surface/60">{g.body}</p>
-            </Reveal>
+            </li>
           ))}
-        </div>
+        </StaggerGroup>
       </Section>
-
-      <CtaBand
-        eyebrow="Let's talk"
-        title="Let's start a conversation."
-        body="At the end of the day you don't just need a website or a campaign. You need a partner who understands where you're trying to get to."
-        primary={{ label: "Book a free consultation", href: "/contact/call" }}
-        secondary={{ label: "See how we work", href: "/process" }}
-      />
     </>
   );
 }

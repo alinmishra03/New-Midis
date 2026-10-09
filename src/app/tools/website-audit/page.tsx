@@ -1,8 +1,8 @@
 import { Suspense } from "react";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { TrackView } from "@/components/analytics/Track";
 import { AuditResults } from "@/components/tools/AuditResults";
 import { ArrowRight, Button } from "@/components/ui/Button";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
@@ -171,7 +171,7 @@ export default async function WebsiteAuditPage({
                 eyebrow="What you get"
                 title="Real measurements, not a sales pitch."
               />
-              <ul className="mt-10 space-y-5">
+              <StaggerGroup as="ul" step={70} className="mt-10 space-y-5">
                 {[
                   {
                     title: "Performance",
@@ -189,13 +189,13 @@ export default async function WebsiteAuditPage({
                     title: "Best practices",
                     body: "Security, deprecated APIs and the technical hygiene that quietly degrades a site over time.",
                   },
-                ].map((item, i) => (
-                  <Reveal key={item.title} delay={i * 60} className="rule pt-5">
+                ].map((item) => (
+                  <li key={item.title} className="rule pt-5">
                     <h3 className="text-lg font-semibold tracking-tight text-ink">{item.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted">{item.body}</p>
-                  </Reveal>
+                  </li>
                 ))}
-              </ul>
+              </StaggerGroup>
             </div>
 
             <Reveal delay={120} className="lg:pt-16">
@@ -232,14 +232,6 @@ export default async function WebsiteAuditPage({
           </div>
         </Section>
       )}
-
-      <CtaBand
-        eyebrow="Beyond the score"
-        title="A number tells you what. We'll tell you why."
-        body="Lighthouse measures how your site is built. Whether it earns enquiries is a different question — and usually the more valuable one."
-        primary={{ label: "Book a strategy call", href: "/contact/call" }}
-        secondary={{ label: "See our services", href: "/services" }}
-      />
     </>
   );
 }

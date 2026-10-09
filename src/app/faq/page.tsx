@@ -1,4 +1,3 @@
-import { CtaBand } from "@/components/ui/CtaBand";
 import { FaqList, faqSchema } from "@/components/ui/FaqList";
 import { PageHero } from "@/components/ui/PageHero";
 import { Section } from "@/components/ui/Section";
@@ -35,14 +34,6 @@ crumbs={[{ label: "FAQ", href: "/faq" }]}
           <FaqList faqs={faqs} />
         </div>
       </Section>
-
-      <CtaBand
-        eyebrow="Still deciding?"
-        title="Ask us the question that isn't here."
-        body="Most projects start with someone describing a problem rather than requesting a service. That's a good place to begin."
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "Book a strategy call", href: "/contact/call" }}
-      />
     </>
   );
 }

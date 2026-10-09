@@ -161,7 +161,9 @@ export function ConsentReset() {
         // Declining after accepting must actually stop collection.
         window.location.reload();
       }}
-      className="text-xs text-surface/45 transition-colors hover:text-accent"
+      /* Matches the footer bottom bar it renders in: AA contrast (6.06:1)
+         and a >=24px tap target. */
+      className="inline-block py-1.5 text-xs text-surface/55 underline-offset-4 transition-colors duration-[var(--dur-fast)] hover:text-accent hover:underline"
     >
       Cookie settings
     </button>

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,19 +39,29 @@ export function SplitHeadline({
       {lineWords.map((words, li) => (
         <span key={li} className="block">
           {words.map((word, wi) => (
-            <span key={`${li}-${wi}`} className="word">
-              <span
-                style={
-                  {
-                    "--word-delay": `${initialDelay + (wordsBefore(li) + wi) * stagger}ms`,
-                  } as React.CSSProperties
-                }
-                className={accents.has(normalise(word)) ? "text-accent" : undefined}
-              >
-                {word}
+            /*
+             * The space between two words is an ordinary space and a sibling
+             * of `.word`, never a child of it. `.word` is an inline-block
+             * with `overflow: hidden`, so whitespace at the end of one is
+             * collapsed away and the words run together; and a non-breaking
+             * space here would remove the only point at which the headline
+             * is allowed to wrap.
+             */
+            <Fragment key={`${li}-${wi}`}>
+              <span className="word">
+                <span
+                  style={
+                    {
+                      "--word-delay": `${initialDelay + (wordsBefore(li) + wi) * stagger}ms`,
+                    } as React.CSSProperties
+                  }
+                  className={accents.has(normalise(word)) ? "text-accent" : undefined}
+                >
+                  {word}
+                </span>
               </span>
-              {wi < words.length - 1 ? " " : null}
-            </span>
+              {wi < words.length - 1 ? " " : null}
+            </Fragment>
           ))}
         </span>
       ))}

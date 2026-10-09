@@ -40,96 +40,129 @@ export function MaskedLines({
     let cancelled = false;
     let cleanup: (() => void) | null = null;
 
-    loadGsap().then(({ gsap, ScrollTrigger }) => {
+    loadGsap().then(({ gsap }) => {
       if (cancelled || !ref.current) return;
 
-    /* Split into lines by wrapping each word, measuring its offsetTop, then
-       grouping words that share a top edge. Avoids a paid splitting plugin
-       and reflows correctly because it runs after layout. */
-    const original = el.innerHTML;
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-    const textNodes: Text[] = [];
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
-      if (node.textContent?.trim()) textNodes.push(node as Text);
-    }
+      /* Split into lines by wrapping each word, measuring its offsetTop, then
+         grouping words that share a top edge. Avoids a paid splitting plugin
+         and reflows correctly because it runs after layout. */
+      const original = el.innerHTML;
+      const restore = () => {
+        el.innerHTML = original;
+      };
 
-    for (const textNode of textNodes) {
-      const frag = document.createDocumentFragment();
-      const parts = textNode.textContent!.split(/(\s+)/);
-      for (const part of parts) {
-        if (!part.trim()) {
-          frag.appendChild(document.createTextNode(part));
-          continue;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const textNodes: Text[] = [];
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        if (node.textContent?.trim()) textNodes.push(node as Text);
+      }
+
+      /* Each word becomes an inline-block so its box can be measured. The
+         whitespace between words stays as its own text node *between* those
+         boxes — never inside one, where it would be collapsed away — so the
+         words keep their natural spacing and their natural wrap points. */
+      for (const textNode of textNodes) {
+        const frag = document.createDocumentFragment();
+        const parts = textNode.textContent!.split(/(\s+)/);
+        for (const part of parts) {
+          if (!part) continue;
+          if (!part.trim()) {
+            frag.appendChild(document.createTextNode(part));
+            continue;
+          }
+          const span = document.createElement("span");
+          span.textContent = part;
+          span.style.display = "inline-block";
+          span.dataset.word = "";
+          frag.appendChild(span);
         }
-        const span = document.createElement("span");
-        span.textContent = part;
-        span.style.display = "inline-block";
-        span.dataset.word = "";
-        frag.appendChild(span);
+        textNode.parentNode?.replaceChild(frag, textNode);
       }
-      textNode.parentNode?.replaceChild(frag, textNode);
-    }
 
-    const words = Array.from(el.querySelectorAll<HTMLElement>("[data-word]"));
-    if (words.length === 0) return;
-
-    // Group words into visual lines by their vertical offset.
-    const lines: HTMLElement[][] = [];
-    let currentTop: number | null = null;
-    for (const word of words) {
-      const top = Math.round(word.offsetTop);
-      if (currentTop === null || Math.abs(top - currentTop) > 4) {
-        lines.push([word]);
-        currentTop = top;
-      } else {
-        lines[lines.length - 1].push(word);
+      const words = Array.from(el.querySelectorAll<HTMLElement>("[data-word]"));
+      if (words.length === 0) {
+        restore();
+        return;
       }
-    }
 
-    /* Wrap each line in a mask. Done in a document fragment pass so the DOM
-       is only written once. */
-    const maskedLines: HTMLElement[] = [];
-    for (const line of lines) {
-      const mask = document.createElement("span");
-      mask.style.display = "block";
-      mask.style.overflow = "hidden";
-      // Descenders would otherwise be clipped by the mask edge.
-      mask.style.paddingBottom = "0.12em";
-      mask.style.marginBottom = "-0.12em";
+      // Group words into visual lines by their vertical offset.
+      const lines: HTMLElement[][] = [];
+      let currentTop: number | null = null;
+      for (const word of words) {
+        const top = Math.round(word.offsetTop);
+        if (currentTop === null || Math.abs(top - currentTop) > 4) {
+          lines.push([word]);
+          currentTop = top;
+        } else {
+          lines[lines.length - 1].push(word);
+        }
+      }
 
-      const inner = document.createElement("span");
-      inner.style.display = "block";
-      inner.style.willChange = "transform";
+      /* Wrap each line in a mask.
+       *
+       * The line is lifted with a Range rather than by moving the word spans
+       * one at a time. That matters for two reasons: the inter-word
+       * whitespace nodes travel with the words (moving only the spans leaves
+       * every space behind, which is what jams a headline into one long
+       * word), and `extractContents` clones any inline wrapper the range
+       * only partially covers — so an accent `<span>` around part of a line
+       * keeps colouring exactly the words it coloured before. */
+      const maskedLines: HTMLElement[] = [];
+      for (const line of lines) {
+        const range = document.createRange();
+        range.setStartBefore(line[0]);
+        range.setEndAfter(line[line.length - 1]);
+        const contents = range.extractContents();
 
-      line[0].parentNode?.insertBefore(mask, line[0]);
-      for (const word of line) inner.appendChild(word);
-      // Re-insert the spaces GSAP would otherwise collapse.
-      mask.appendChild(inner);
-      maskedLines.push(inner);
-    }
+        const mask = document.createElement("span");
+        mask.style.display = "block";
+        mask.style.overflow = "hidden";
+        // Descenders would otherwise be clipped by the mask edge.
+        mask.style.paddingBottom = "0.12em";
+        mask.style.marginBottom = "-0.12em";
 
-    gsap.set(maskedLines, { yPercent: 115 });
+        const inner = document.createElement("span");
+        inner.style.display = "block";
+        inner.style.willChange = "transform";
+        inner.appendChild(contents);
 
-    const tween = gsap.to(maskedLines, {
-      yPercent: 0,
-      duration: 1.15,
-      ease: "expo.out",
-      stagger,
-      delay,
-      scrollTrigger: {
-        trigger: el,
-        start: "top 85%",
-        once: true,
-      },
-    });
+        mask.appendChild(inner);
+        // The range collapsed to where the line was, so the mask lands there.
+        range.insertNode(mask);
+        maskedLines.push(inner);
+      }
+
+      gsap.set(maskedLines, { yPercent: 115 });
+
+      const tween = gsap.to(maskedLines, {
+        yPercent: 0,
+        duration: 1.15,
+        ease: "expo.out",
+        stagger,
+        delay,
+        scrollTrigger: {
+          trigger: el,
+          start: "top 85%",
+          once: true,
+        },
+      });
 
       cleanup = () => {
+        /* This instance's own trigger and tween, and nothing else.
+         *
+         * A global ScrollTrigger.refresh() used to sit here, and it was the
+         * cause of pages opening part-way down: refresh() snapshots the
+         * current scroll position and restores it afterwards, so every
+         * heading unmounting during a route change put the previous page's
+         * scroll position back, a few milliseconds after the router had
+         * correctly moved to the top. Measurements that genuinely need
+         * refreshing after a route change are handled once, centrally, by
+         * RouteTransition. */
         tween.scrollTrigger?.kill();
         tween.kill();
         // Restore the original markup so re-renders start from clean text.
-        el.innerHTML = original;
-        ScrollTrigger.refresh();
+        restore();
       };
     });
 

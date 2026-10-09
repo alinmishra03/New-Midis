@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { RevealImage } from "@/components/motion/RevealImage";
 import { ArrowRight, Button } from "@/components/ui/Button";
-import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { leadership, team } from "@/content/company";
 import { industries } from "@/content/industries";
@@ -48,9 +48,9 @@ export function IndustriesSection() {
         intro="A SaaS product and a healthcare practice are not solving the same problem. We start from what's specific to your sector rather than a template."
       />
 
-      <ul className="mt-14 rule">
-        {industries.map((ind, i) => (
-          <Reveal key={ind.slug} as="li" delay={i * 40} className="border-b border-line">
+      <StaggerGroup as="ul" step={45} className="mt-14 rule">
+        {industries.map((ind) => (
+          <li key={ind.slug} className="border-b border-line">
             <Link
               href={`/industries/${ind.slug}`}
               className="group flex flex-col gap-3 py-7 transition-colors sm:flex-row sm:items-center sm:justify-between sm:gap-10"
@@ -72,9 +72,9 @@ export function IndustriesSection() {
                 <ArrowRight className="shrink-0 text-muted transition-colors group-hover:text-accent-ink" />
               </div>
             </Link>
-          </Reveal>
+          </li>
         ))}
-      </ul>
+      </StaggerGroup>
     </Section>
   );
 }
@@ -99,9 +99,13 @@ export function TeamSection() {
         }
       />
 
-      <ul className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
-        {everyone.map((m, i) => (
-          <Reveal key={m.name} as="li" delay={(i % 5) * 60}>
+      <StaggerGroup
+        as="ul"
+        step={55}
+        className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-5"
+      >
+        {everyone.map((m) => (
+          <li key={m.name}>
             <RevealImage className="relative aspect-[4/5] rounded-lg bg-line">
               <Image
                 src={m.photo}
@@ -125,9 +129,9 @@ export function TeamSection() {
                 LinkedIn
               </a>
             )}
-          </Reveal>
+          </li>
         ))}
-      </ul>
+      </StaggerGroup>
     </Section>
   );
 }

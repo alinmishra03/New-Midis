@@ -1,9 +1,8 @@
 import Link from "next/link";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { PageHero } from "@/components/ui/PageHero";
-import { Reveal } from "@/components/ui/Reveal";
-import { Section } from "@/components/ui/Section";
+import { Section, SectionHeader } from "@/components/ui/Section";
 import { getAllIndustries } from "@/content/industries";
 import { buildMetadata } from "@/lib/seo";
 
@@ -26,17 +25,22 @@ export default function IndustriesPage() {
         intro="A SaaS product and a healthcare practice are not solving the same problem, and a template that serves both equally serves neither well. These pages set out what's actually different."
         visualSeed="industries-hub"
         variant="weave"
-crumbs={[{ label: "Industries", href: "/industries" }]}
+        crumbs={[{ label: "Industries", href: "/industries" }]}
       />
 
+      {/* ---------------------------------------------------- sector cards */}
       <Section tone="surface" aria-labelledby="sectors-heading">
         <h2 id="sectors-heading" className="sr-only">
           Sectors we work in
         </h2>
 
-        <ul className="grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2">
-          {industries.map((ind, i) => (
-            <Reveal key={ind.slug} as="li" delay={(i % 2) * 70} className="bg-surface">
+        <StaggerGroup
+          as="ul"
+          className="grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2"
+          step={80}
+        >
+          {industries.map((ind) => (
+            <li key={ind.slug} className="bg-surface">
               <Link
                 href={`/industries/${ind.slug}`}
                 className="group flex h-full flex-col p-8 transition-colors duration-[var(--dur-base)] hover:bg-paper lg:p-10"
@@ -66,23 +70,90 @@ crumbs={[{ label: "Industries", href: "/industries" }]}
                   ))}
                 </ul>
 
-                <span className="mt-7 inline-flex items-center gap-2 text-sm font-medium text-ink">
+                {ind.buyers && ind.buyers.length > 0 && (
+                  <p className="rule mt-6 pt-4 text-xs leading-relaxed text-muted">
+                    <span className="font-medium text-ink">Who decides: </span>
+                    {ind.buyers.map((b) => b.role).join(" · ")}
+                  </p>
+                )}
+
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-ink">
                   Read more
                   <ArrowRight />
                 </span>
               </Link>
-            </Reveal>
+            </li>
           ))}
-        </ul>
+        </StaggerGroup>
       </Section>
 
-      <CtaBand
-        eyebrow="Not listed?"
-        title="We've probably solved something similar."
-        body="Sector experience helps, but the underlying questions are consistent. Tell us what your business needs the site to do."
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "See all services", href: "/services" }}
-      />
+      {/* ------------------------------------------------------ at a glance */}
+      <Section tone="paper" aria-labelledby="glance-heading">
+        <SectionHeader
+          id="glance-heading"
+          eyebrow="Side by side"
+          title="The same decision, answered differently."
+          intro="Every sector arrives at a website with a different shape of problem — a different group of people to convince, and a different sensible default to build on. This is where those answers diverge."
+        />
+
+        <div className="mt-12 overflow-hidden rounded-xl border border-line">
+          {/* Column headings, hidden on mobile where each row stacks and
+              carries its own labels instead. */}
+          <div
+            aria-hidden="true"
+            className="hidden bg-surface px-7 py-4 md:grid md:grid-cols-[1fr_1.6fr_1.2fr] md:gap-8"
+          >
+            {["Sector", "Who has to say yes", "Usually built on"].map((h) => (
+              <p
+                key={h}
+                className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted"
+              >
+                {h}
+              </p>
+            ))}
+          </div>
+
+          <StaggerGroup as="ul" step={60}>
+            {industries.map((ind) => (
+              <li
+                key={ind.slug}
+                className="border-t border-line bg-paper px-7 py-6 transition-colors hover:bg-surface md:grid md:grid-cols-[1fr_1.6fr_1.2fr] md:items-baseline md:gap-8"
+              >
+                <h3 className="text-base font-semibold tracking-tight text-ink">
+                  <Link
+                    href={`/industries/${ind.slug}`}
+                    className="group/row inline-flex items-center gap-2 transition-colors hover:text-accent-ink"
+                  >
+                    {ind.name}
+                    <ArrowRight className="h-3.5 w-3.5 text-muted transition-colors group-hover/row:text-accent-ink" />
+                  </Link>
+                </h3>
+
+                <p className="mt-2 text-sm leading-relaxed text-muted md:mt-0">
+                  <span className="font-medium uppercase tracking-[0.14em] text-[0.625rem] text-muted md:hidden">
+                    Who has to say yes
+                    <br />
+                  </span>
+                  {(ind.buyers ?? []).map((b) => b.role).join(" · ")}
+                </p>
+
+                <p className="mt-2 text-sm leading-relaxed text-ink md:mt-0">
+                  <span className="font-medium uppercase tracking-[0.14em] text-[0.625rem] text-muted md:hidden">
+                    Usually built on
+                    <br />
+                  </span>
+                  {ind.platform?.label}
+                </p>
+              </li>
+            ))}
+          </StaggerGroup>
+        </div>
+
+        <p className="mt-7 max-w-2xl text-sm leading-relaxed text-muted">
+          A default is a starting point, not a rule. Each sector page sets out the reasoning behind
+          its recommendation — and the circumstances where we would argue against it.
+        </p>
+      </Section>
     </>
   );
 }

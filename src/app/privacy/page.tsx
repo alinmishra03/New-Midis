@@ -39,8 +39,9 @@ crumbs={[{ label: "Privacy Policy", href: "/privacy" }]}
           <Clause title="Who we are">
             <p>
               {legal.legalEntityName} is a website design and development agency based at{" "}
-              {site.address.street}, {site.address.locality}, {site.address.region},{" "}
-              {site.address.countryName}. For anything in this policy, contact{" "}
+              {site.address.street}, {site.address.locality}, {site.address.region}{" "}
+              {site.address.postalCode}, {site.address.countryName}. For anything in this policy,
+              contact{" "}
               <a
                 href={`mailto:${legal.privacyContactEmail}`}
                 className="text-accent-ink underline underline-offset-4"

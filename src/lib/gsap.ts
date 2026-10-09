@@ -24,6 +24,18 @@ type GsapBundle = {
 };
 
 let loader: Promise<GsapBundle> | null = null;
+let loaded: GsapBundle | null = null;
+
+/**
+ * The bundle if it is already in memory, otherwise null — never a load.
+ *
+ * Lets a caller that only wants to poke an existing ScrollTrigger (a route
+ * change refreshing stale measurements, say) do nothing at all on a page that
+ * has no animations, rather than pulling 45 KB in to refresh nothing.
+ */
+export function loadedGsap(): GsapBundle | null {
+  return loaded;
+}
 
 export function loadGsap(): Promise<GsapBundle> {
   if (loader) return loader;
@@ -44,7 +56,8 @@ export function loadGsap(): Promise<GsapBundle> {
        thrashing during a drag-resize or a mobile URL-bar show/hide. */
     ScrollTrigger.config({ ignoreMobileResize: true });
 
-    return { gsap, ScrollTrigger };
+    loaded = { gsap, ScrollTrigger };
+    return loaded;
   })();
 
   return loader;

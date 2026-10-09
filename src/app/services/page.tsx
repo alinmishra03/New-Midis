@@ -1,8 +1,7 @@
 import Link from "next/link";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { PageHero } from "@/components/ui/PageHero";
-import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { getAllServices, serviceGroups } from "@/content/services";
 import { buildMetadata } from "@/lib/seo";
@@ -23,7 +22,7 @@ export default function ServicesPage() {
         eyebrow="What we do"
         headlineLines={["Everything you need", "to build, launch", "and grow."]}
         accentWords={["grow."]}
-        intro="Website design and development is our core offering. Everything else exists to make what we build perform once it's live — you can take one service or an end-to-end stack."
+        intro="Design and development is the core of what we do. The rest of this list exists to make what we build perform once it is live, and you can take one piece of it or the whole thing."
         visualSeed="services-hub"
         variant="signal"
 crumbs={[{ label: "Services", href: "/services" }]}
@@ -45,14 +44,13 @@ crumbs={[{ label: "Services", href: "/services" }]}
               title={group.label}
             />
 
-            <ul className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2 lg:grid-cols-3">
-              {inGroup.map((s, i) => (
-                <Reveal
-                  key={s.slug}
-                  as="li"
-                  delay={(i % 3) * 70}
-                  className={gi % 2 === 0 ? "bg-surface" : "bg-paper"}
-                >
+            <StaggerGroup
+              as="ul"
+              step={65}
+              className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {inGroup.map((s) => (
+                <li key={s.slug} className={gi % 2 === 0 ? "bg-surface" : "bg-paper"}>
                   <Link
                     href={`/services/${s.slug}`}
                     className="group flex h-full flex-col p-8 transition-colors duration-[var(--dur-base)] hover:bg-paper/60"
@@ -67,20 +65,12 @@ crumbs={[{ label: "Services", href: "/services" }]}
                       <ArrowRight />
                     </span>
                   </Link>
-                </Reveal>
+                </li>
               ))}
-            </ul>
+            </StaggerGroup>
           </Section>
         );
       })}
-
-      <CtaBand
-        eyebrow="Not sure where to start?"
-        title="Tell us the problem, not the service."
-        body="Most clients arrive describing a symptom rather than a solution. Tell us what isn't working and we'll tell you what would actually fix it."
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "Book a strategy call", href: "/contact/call" }}
-      />
     </>
   );
 }

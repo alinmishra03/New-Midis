@@ -133,7 +133,7 @@ export const leadership: readonly TeamMember[] = [
     photo: "/team/sagar-bakshi.webp",
     photoWidth: 3329,
     photoHeight: 3332,
-    bio: "Sagar leads strategy, operations and digital growth at MIDIS. With a focus on AI-driven solutions, automation and brand building, he helps businesses scale smarter while turning complex challenges into clear, actionable strategies. He brings hands-on experience from multiple e-commerce ventures, spanning home decor, wellness and streetwear brands.",
+    bio: "Sagar leads strategy, operations and digital growth at MIDIS, with a particular focus on AI, automation and brand building. He brings hands-on experience from several e-commerce ventures across home decor, wellness and streetwear.",
   },
   {
     name: "Gaurav Sharma",
@@ -144,14 +144,14 @@ export const leadership: readonly TeamMember[] = [
     photo: "/team/gaurav-sharma-trimmed.png",
     photoWidth: 739,
     photoHeight: 923,
-    bio: "Gaurav drives MIDIS's vision, strategy and innovation. With expertise across digital solutions, branding, marketing and web development, he focuses on making sure every project delivers measurable results. He also plays a pivotal role at Mining Discovery, overseeing content strategy, platform growth and insights delivery for the global mining industry.",
+    bio: "Gaurav sets the direction at MIDIS and works across branding, marketing and web development. He also works with Mining Discovery, overseeing content strategy, platform growth and insights delivery for the global mining industry.",
   },
 ];
 
 export const team: readonly TeamMember[] = [
-  { name: "Alin Mishra", role: "Shopify Developer", photo: "/team/7.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Shivani", role: "Frontend Developer", photo: "/team/9.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Ojaswini Saini", role: "Graphic Designer", photo: "/team/8.webp", photoWidth: 1920, photoHeight: 2400 },
+  { name: "Alin Mishra", role: "Web Developer", photo: "/team/7.webp", photoWidth: 1920, photoHeight: 2400 },
+  { name: "Shivani Dixit", role: "Frontend Developer", photo: "/team/9.webp", photoWidth: 1920, photoHeight: 2400 },
+  { name: "Ojasvinny Saini", role: "Graphic Designer", photo: "/team/8.webp", photoWidth: 1920, photoHeight: 2400 },
   { name: "Swayam Gandhi", role: "Backend Developer", photo: "/team/4.webp", photoWidth: 1920, photoHeight: 2400 },
   { name: "Rahul Gehlot", role: "Graphic Designer", photo: "/team/3.webp", photoWidth: 1920, photoHeight: 2400 },
   { name: "Navkirat Bhogal", role: "SEO Expert", photo: "/team/5.webp", photoWidth: 1920, photoHeight: 2400 },
@@ -245,9 +245,9 @@ export const faqs: readonly Faq[] = [
 
 export const aboutNarrative: readonly string[] = [
   "If you have been looking around for a digital agency, you already know the challenge: everyone says they can build websites, run ads and deliver growth. The promises start to sound identical.",
-  "At MIDIS we look at things differently. We are not here to deliver a service and move on — we are here to build a brand presence that lasts. A website that is not just attractive but fast. Content that is not just search-friendly but genuinely worth reading. Campaigns that do not just collect clicks but bring customers who stay.",
+  "What we do about that is fairly unglamorous. We agree what the site has to achieve before anyone opens a design tool. Each stage of the work has outputs written down in advance, so you can see where a project actually is rather than waiting for a reveal. And we measure the finished site against the goals we set at the start, which is the only way to find out whether it did its job.",
   "We have worked with businesses in different corners of the world. Some were startups trying to get noticed. Others were established companies looking for smarter growth. Different goals, different markets — but the same outcome: measurable results that make sense for the business.",
-  "We do not chase vanity metrics. We build systems that help you grow month after month.",
+  "We would rather report a number that changed what the business can do than one that looks impressive in a slide.",
 ];
 
 export const aboutPrinciples = [

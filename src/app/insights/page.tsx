@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
@@ -104,9 +104,13 @@ crumbs={[{ label: "Insights", href: "/insights" }]}
 
             {/* ------------------------------------------------- the rest */}
             {hasEvidence(rest) && (
-              <ul className="rule mt-16 grid gap-x-8 gap-y-14 pt-16 sm:grid-cols-2 lg:grid-cols-3">
-                {rest.map((a, i) => (
-                  <Reveal key={a.slug} as="li" delay={(i % 3) * 80}>
+              <StaggerGroup
+                as="ul"
+                step={75}
+                className="rule mt-16 grid gap-x-8 gap-y-14 pt-16 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {rest.map((a) => (
+                  <li key={a.slug}>
                     <Link href={`/insights/${a.slug}`} className="group block">
                       {a.image && (
                         <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-line">
@@ -136,21 +140,13 @@ crumbs={[{ label: "Insights", href: "/insights" }]}
                         </p>
                       )}
                     </Link>
-                  </Reveal>
+                  </li>
                 ))}
-              </ul>
+              </StaggerGroup>
             )}
           </>
         )}
       </Section>
-
-      <CtaBand
-        eyebrow="Got a question?"
-        title="Ask us the thing you can't find an answer to."
-        body="If it's a good question, it probably becomes the next article."
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "Get a free website audit", href: "/tools/website-audit" }}
-      />
     </>
   );
 }

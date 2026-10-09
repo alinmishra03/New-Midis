@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TrackView } from "@/components/analytics/Track";
 import { ArrowRight } from "@/components/ui/Button";
-import { CtaBand } from "@/components/ui/CtaBand";
 import { PageHero } from "@/components/ui/PageHero";
 import { Parallax } from "@/components/ui/Parallax";
 import { Reveal } from "@/components/ui/Reveal";
@@ -327,14 +326,6 @@ crumbs={[
           </ul>
         </Section>
       )}
-
-      <CtaBand
-        eyebrow="Your project"
-        title="Let's build something your business can grow with."
-        body="Tell us where the business is now and what you need the site to do."
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "See all work", href: "/work" }}
-      />
     </>
   );
 }

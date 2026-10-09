@@ -7,6 +7,12 @@
  * supporting context to be supplied alongside every number.
  */
 
+import type {
+  IndustryBuyer,
+  IndustryPlatform,
+  IndustryTimeline,
+} from "./industry-profiles";
+
 export type ServiceGroup = "strategy-design" | "development" | "ecommerce" | "growth" | "ai";
 
 export interface Service {
@@ -53,6 +59,18 @@ export interface Industry {
   intro?: string[];
   faqs?: Faq[];
   relatedServices?: string[];
+  /*
+   * Structured decision data, merged in from content/industry-profiles.ts.
+   * Optional on the type so a sector can exist in the catalogue before its
+   * profile is written, but the drift guard in industries.ts refuses to let
+   * one ship without it.
+   */
+  buyers?: IndustryBuyer[];
+  integrations?: string[];
+  platform?: IndustryPlatform;
+  metrics?: string[];
+  timeline?: IndustryTimeline;
+  rebuildSignals?: string[];
   seo: SeoMeta;
 }
 
@@ -60,6 +78,13 @@ export interface Faq {
   question: string;
   answer: string;
 }
+
+export type {
+  IndustryBuyer,
+  IndustryPlatform,
+  IndustryTimeline,
+  IndustryProfile,
+} from "./industry-profiles";
 
 export interface ProcessStep {
   number: string;

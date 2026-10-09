@@ -22,9 +22,13 @@ export const site = {
   whatsapp: "919779320626",
 
   address: {
-    street: "1st Floor, E 279, Industrial Area, Sector 75",
-    locality: "S.A.S Nagar (Mohali)",
+    street: "Plot No. A-28(C, Phase 7, Industrial Area, Sector 73",
+    locality: "Sahibzada Ajit Singh Nagar",
     region: "Punjab",
+    /* The address carries a PIN code, which the previous one did not. It is
+       its own field rather than being folded into `region`, so schema.org
+       gets a real `postalCode` and the region stays just the region. */
+    postalCode: "160055",
     country: "IN",
     countryName: "India",
   },

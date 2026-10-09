@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CtaBand } from "@/components/ui/CtaBand";
+import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
@@ -38,9 +38,9 @@ function TeamSchema({ people }: { people: readonly TeamMember[] }) {
   );
 }
 
-function MemberCard({ member, index }: { member: TeamMember; index: number }) {
+function MemberCard({ member }: { member: TeamMember }) {
   return (
-    <Reveal as="li" delay={(index % 4) * 70}>
+    <li>
       <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-line">
         <Image
           src={member.photo}
@@ -71,7 +71,7 @@ function MemberCard({ member, index }: { member: TeamMember; index: number }) {
           LinkedIn
         </a>
       )}
-    </Reveal>
+    </li>
   );
 }
 
@@ -134,20 +134,16 @@ crumbs={[{ label: "Our Team", href: "/team" }]}
           title="The people doing the work."
         />
 
-        <ul className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
-          {team.map((member, i) => (
-            <MemberCard key={member.name} member={member} index={i} />
+        <StaggerGroup
+          as="ul"
+          step={60}
+          className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4"
+        >
+          {team.map((member) => (
+            <MemberCard key={member.name} member={member} />
           ))}
-        </ul>
+        </StaggerGroup>
       </Section>
-
-      <CtaBand
-        eyebrow="Work with us"
-        title="Talk to the people who'll build it."
-        body="No pitch team that hands you over to someone else afterwards. The people you meet are the people who do the work."
-        primary={{ label: "Start a project", href: "/contact" }}
-        secondary={{ label: "About MIDIS", href: "/about" }}
-      />
     </>
   );
 }
