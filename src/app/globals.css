@@ -917,3 +917,75 @@ html[data-motion="reduced"] .world-pulse {
     --announce-h: 2.5625rem;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Floating WhatsApp button  (components/ui/FloatingWhatsApp)
+   --------------------------------------------------------------------------
+   Padding carries the safe-area inset so the button clears a phone's home
+   indicator and rounded corners, falling back to the plain value where
+   env() is unsupported.
+   -------------------------------------------------------------------------- */
+
+.floating-whatsapp {
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  animation: floating-whatsapp-in var(--dur-slow) var(--ease-out-expo) both;
+  animation-delay: 240ms;
+}
+
+@media (min-width: 40rem) {
+  .floating-whatsapp {
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Arrives once, settling up into place rather than announcing itself. */
+@keyframes floating-whatsapp-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.75rem, 0) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.floating-whatsapp-tip {
+  position: absolute;
+  right: calc(100% + 0.75rem);
+  top: 50%;
+  translate: 0 -50%;
+  white-space: nowrap;
+  border-radius: 9999px;
+  background-color: var(--color-ink);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-surface);
+  opacity: 0;
+  /* Starts slightly inside its final position so it eases outward. */
+  transform: translateX(0.35rem);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-fast) var(--ease-out-expo),
+    transform var(--dur-fast) var(--ease-out-expo);
+}
+
+.group\/wa:hover .floating-whatsapp-tip,
+.group\/wa:focus-visible .floating-whatsapp-tip {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-whatsapp {
+    animation: none;
+  }
+
+  .floating-whatsapp-tip {
+    transition: none;
+    transform: none;
+  }
+}

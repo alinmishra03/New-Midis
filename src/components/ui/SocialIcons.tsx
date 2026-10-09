@@ -33,6 +33,21 @@ export const SOCIAL_ICON_PATHS: Record<string, ReactNode> = {
   ),
 };
 
+/**
+ * WhatsApp, kept here with the other brand marks rather than redrawn at each
+ * call site. Not part of SOCIAL_ICON_PATHS because WhatsApp is not one of
+ * the profiles in site.socials — it is a contact channel, and the two lists
+ * are consumed in different places.
+ */
+export function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className={className} fill="currentColor">
+      <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.1s-.7 1-.9 1.2c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.4-.5-.6-.5H7.9c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.5 1.9.8 2.7.9 3.6.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3Z" />
+      <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z" />
+    </svg>
+  );
+}
+
 /** Renders one brand glyph, or nothing if the name has no mark defined. */
 export function SocialIcon({ name, className }: { name: string; className?: string }) {
   const path = SOCIAL_ICON_PATHS[name];

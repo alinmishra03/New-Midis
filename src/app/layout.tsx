@@ -5,6 +5,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { RouteTransition } from "@/components/motion/RouteTransition";
 import { Cursor } from "@/components/ui/Cursor";
+import { FloatingWhatsApp } from "@/components/ui/FloatingWhatsApp";
 import { MotionProfileAttribute } from "@/components/ui/MotionProfileAttribute";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { Footer } from "@/components/layout/Footer";
@@ -142,6 +143,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <Footer />
+        <FloatingWhatsApp />
         <ConsentBanner />
         <Analytics />
       </body>
