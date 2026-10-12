@@ -4,7 +4,7 @@ import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { RevealImage } from "@/components/motion/RevealImage";
 import { ArrowRight, Button } from "@/components/ui/Button";
 import { Section, SectionHeader } from "@/components/ui/Section";
-import { leadership, team } from "@/content/company";
+import { team } from "@/content/company";
 import { industries } from "@/content/industries";
 import { featuredServiceSlugs, getService } from "@/content/services";
 import { ServiceRows } from "./ServiceRows";
@@ -91,8 +91,6 @@ export function IndustriesSection() {
 /* ---------------------------------------------------------- §11 The team */
 
 export function TeamSection() {
-  const everyone = [...leadership, ...team];
-
   return (
     <Section tone="paper" aria-labelledby="team-heading">
       <SectionHeader
@@ -108,19 +106,31 @@ export function TeamSection() {
         }
       />
 
+      {/*
+        The eight people who do the work. Leadership is deliberately not here:
+        the section's promise is that you work with the designers and
+        developers rather than through a manager, and two director cards at
+        the front of the grid argued against it. Both still appear on /about
+        and in full on /team, which the "Meet the team" button leads to.
+
+        Two columns on a phone, four from the sm breakpoint. Eight divides
+        exactly by both, so no breakpoint leaves a part-filled final row —
+        the previous 3- and 5-column steps were chosen for ten cards and
+        would now orphan two and three respectively.
+      */}
       <StaggerGroup
         as="ul"
         step={55}
-        className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-5"
+        className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4"
       >
-        {everyone.map((m) => (
+        {team.map((m) => (
           <li key={m.name}>
             <RevealImage className="relative aspect-[4/5] rounded-lg bg-line">
               <Image
                 src={m.photo}
                 alt={`${m.name}, ${m.role} at MIDIS`}
                 fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                sizes="(max-width: 640px) 50vw, 25vw"
                 className="object-cover object-top grayscale transition-all duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] hover:grayscale-0"
               />
             </RevealImage>
