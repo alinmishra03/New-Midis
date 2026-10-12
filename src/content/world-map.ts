@@ -22,6 +22,33 @@ export const INDIA_CENTROID = { x: 716.4, y: 160.6 } as const;
 
 export const INDIA_ID = "356";
 
+export interface PresenceCountry {
+  /** Numeric ISO 3166-1 code — the join key against WORLD_SHAPES. */
+  id: string;
+  /** Natural Earth's own name for the country. */
+  name: string;
+  /** Anchor point inside the country's largest landmass, in viewBox units. */
+  x: number;
+  y: number;
+  /** Set on the country MIDIS operates from. */
+  home?: boolean;
+}
+
+/**
+ * The countries MIDIS works in, supplied by MIDIS on 2026-10-12.
+ *
+ * This is the one claim on the map, and it is a statement about the business
+ * rather than something derived from the geography. India is first and is
+ * flagged as home.
+ */
+export const PRESENCE_COUNTRIES: readonly PresenceCountry[] = [
+  {"id":"356","name":"India","x":716.4,"y":160.6,"home":true},
+  {"id":"840","name":"United States of America","x":251.2,"y":103.3},
+  {"id":"826","name":"United Kingdom","x":494.1,"y":57.7},
+  {"id":"124","name":"Canada","x":282,"y":50.9},
+  {"id":"036","name":"Australia","x":861.6,"y":340.2},
+];
+
 export const WORLD_SHAPES: readonly WorldShape[] = [
   {"id":"004","name":"Afghanistan","d":"M669.6,108.7L671,108.7L673.1,109.4L674,109.9L675.5,108.8L676.6,109.4L677,107.9L678.5,108L678.7,107.5L678.6,106.1L679.3,104.9L680.9,105.7L681,106.7L681.8,106.9L682.4,109.7L683.8,110.8L684.5,110.1L685.5,109.8L686.6,108.3L688.4,108.5L691.1,108.5L691.8,109.5L690.5,109.9L689.4,110.5L686.6,110.9L684,111.6L683,113.1L684,114.5L684.8,116.2L683.9,117.6L684.4,119L684.1,120.2L681.6,120.1L683.2,122.4L681.8,123.3L681.2,125.4L681.9,127.5L681.1,128.4L680.1,128.1L678.2,128.6L678.1,129.5L676.2,129.5L675.2,131.5L675.8,134.5L672.6,136L670.7,135.7L670.4,136.5L668.7,136L666.1,136.5L661.3,134.7L663,131.5L662.3,129.3L660.2,128.7L659.5,126.5L658,123.7L658.7,121.8L657.4,121.3L657.5,118.8L657.5,114.5L660.5,115.8L662.3,115.4L662.5,113.8L664.4,113.3L665.5,112.3L665.3,109.6L667.2,108.9L667.3,107.7L668.8,108.6Z"},
   {"id":"008","name":"Albania","d":"M552.5,97.2L552.5,98L551.7,98.5L551.7,99.6L550.7,101.2L550.2,100.9L550.1,100.2L548.6,99.1L548.2,97.5L548.2,95.3L548.5,94.3L548,93.8L547.8,92.8L548.7,91.2L548.9,91.8L549.5,91.5L550.1,92.4L550.8,92.7L551,93.9L550.8,95L551.3,96.4Z"},

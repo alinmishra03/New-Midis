@@ -55,7 +55,8 @@
    * subtract a hardcoded 5rem for the header alone, which left it a bar's
    * worth too tall the moment the bar was added.
    */
-  --announce-h: 2.8125rem;
+  /* Two rows below sm (h-16 + 1px border); one row above. */
+  --announce-h: 4.0625rem;
   /* Was 86rem, which boxed the site in on large screens. */
   --container-site: 118rem;
 }
@@ -452,6 +453,145 @@ html[data-motion="reduced"] .animate-scroll-cue {
 }
 
 /* --------------------------------------------------------------------------
+   Hero showcase  (components/home/HeroShowcase)
+   --------------------------------------------------------------------------
+   Two kinds of movement on the same elements, so they are kept on two
+   different properties: pointer parallax writes `translate`, the idle float
+   owns `transform`. Sharing one property would mean the animation
+   overwriting the inline value every frame — the same trap the floating
+   WhatsApp button hit.
+   -------------------------------------------------------------------------- */
+
+.hero-layer {
+  translate: var(--px, 0px) var(--py, 0px);
+}
+
+.hero-float {
+  animation: hero-float 7s var(--ease-in-out-quint) infinite;
+}
+
+/* Offset so the two cards are never at the same point in their cycle. */
+.hero-float-slow {
+  animation: hero-float 9.5s var(--ease-in-out-quint) -3.2s infinite;
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -0.5rem, 0);
+  }
+}
+
+/* The bar field draws up once as the hero settles. Gated on html.js so a
+   visitor without JavaScript gets the finished chart, not an empty axis. */
+html.js .hero-bar {
+  transform-origin: bottom;
+  transform: scaleY(0);
+  animation: hero-bar-rise 0.9s var(--ease-out-expo) both;
+}
+
+@keyframes hero-bar-rise {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Headline emphasis
+   --------------------------------------------------------------------------
+   A colour reveal, not an underline.
+
+   The underline this started as was an ::after on the accented span, and it
+   drew across the whole headline rather than under the two words. The reason
+   is worth recording, because it applies to anything positioned against text
+   inside MaskedLines: that component wraps each visual line in a
+   display:block mask, and when a line begins at the span's first character
+   the mask is inserted INSIDE the span. An inline box containing a block
+   child is split into anonymous fragments, so the span's containing block
+   becomes the full width of the line box — measured at 1310px under a
+   heading whose accented words were 300px wide.
+
+   Animating colour avoids the question entirely: nothing is positioned, no
+   box is involved, and it is the alternative the brief offers. One pass, no
+   loop, no flashing.
+   -------------------------------------------------------------------------- */
+
+.hero-mark {
+  color: var(--color-accent);
+}
+
+/* Starts in ink and warms to the accent once the lines have landed. Gated on
+   html.js, so without it the words are simply already accented. */
+html.js .hero-mark {
+  animation: hero-mark-reveal 0.7s var(--ease-out-expo) 1.05s both;
+}
+
+@keyframes hero-mark-reveal {
+  from {
+    color: var(--color-ink);
+  }
+  to {
+    color: var(--color-accent);
+  }
+}
+
+/*
+ * Pointer response on the accented words.
+ *
+ * Brightness rather than colour, and not because brightness looks better: an
+ * animation with a `both` fill keeps its final value in the cascade over an
+ * ordinary declaration, so a `:hover { color: … }` here would simply never
+ * apply once the reveal above has finished. `filter` is untouched by those
+ * keyframes, so it is free to change.
+ *
+ * Gated on a real hovering pointer, so a touch device never gets an effect
+ * it cannot leave. Nothing moves: no transform, no layout, no reflow.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .hero-mark {
+    transition: filter var(--dur-base) var(--ease-out-expo);
+  }
+
+  .hero-mark:hover {
+    filter: brightness(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mark {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-float,
+  .hero-float-slow {
+    animation: none;
+  }
+
+  html.js .hero-bar {
+    animation: none;
+    transform: none;
+  }
+
+  /* The words are accented from the start rather than warming into it. */
+  html.js .hero-mark {
+    animation: none;
+    color: var(--color-accent);
+  }
+}
+
+/* The float is a continuous loop, which is exactly what the cheaper profile
+   exists to avoid. */
+html[data-motion="reduced"] .hero-float,
+html[data-motion="reduced"] .hero-float-slow {
+  animation: none;
+}
+
+/* --------------------------------------------------------------------------
    Mobile drawer item entrance
    -------------------------------------------------------------------------- */
 
@@ -781,13 +921,70 @@ html.js .announce-bar {
   fill: rgb(255 255 255 / 0.28);
 }
 
-/* The home base. Not interactive-looking on hover — it is already the one
-   thing on the map that stands out. */
-.world-india {
+/* The five countries that carry the section's claim. One rule for all of
+   them, India included, so the home base cannot drift out of step with
+   the rest. */
+.world-presence {
   fill: var(--color-accent);
   stroke: var(--color-accent);
   stroke-width: 0.4;
   stroke-linejoin: round;
+  transition:
+    fill var(--dur-fast) var(--ease-out-expo),
+    stroke var(--dur-fast) var(--ease-out-expo);
+}
+
+/* Brightened, not recoloured: the accent mixed a fifth of the way towards
+   white. The flat value above it is the fallback where color-mix is not
+   supported. */
+.world-presence:hover,
+.world-presence-group:focus-visible .world-presence {
+  fill: #f29f45;
+  stroke: #f29f45;
+  fill: color-mix(in srgb, var(--color-accent) 80%, #ffffff);
+  stroke: color-mix(in srgb, var(--color-accent) 80%, #ffffff);
+}
+
+/* --------------------------------------------------------------------------
+   Connection arcs
+   --------------------------------------------------------------------------
+   Thin and low-opacity so they read as context rather than as data. Each is
+   generated with pathLength="1", so one dash length draws any arc whatever
+   its real length — no per-path measurement in JavaScript.
+   -------------------------------------------------------------------------- */
+
+.world-route {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  opacity: 0.28;
+  stroke-dasharray: 1;
+  animation: world-route-draw 1.6s var(--ease-out-expo) both;
+}
+
+/* Staggered so they arrive in sequence rather than together. The map only
+   mounts once the section is near the viewport, so this plays on entry
+   without needing a second observer. */
+.world-route:nth-child(1) { animation-delay: 220ms; }
+.world-route:nth-child(2) { animation-delay: 400ms; }
+.world-route:nth-child(3) { animation-delay: 580ms; }
+.world-route:nth-child(4) { animation-delay: 760ms; }
+
+@keyframes world-route-draw {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 0.28;
+  }
+}
+
+html[data-motion="reduced"] .world-route {
+  animation-duration: 0.9s;
+  animation-delay: 0ms;
 }
 
 .world-dot {
@@ -802,11 +999,11 @@ html.js .announce-bar {
   transform-box: fill-box;
 }
 
-.world-home:focus {
+.world-presence-group:focus {
   outline: none;
 }
 
-.world-home:focus-visible .world-india {
+.world-presence-group:focus-visible .world-presence {
   stroke: var(--color-surface);
   stroke-width: 1.6;
 }
@@ -854,15 +1051,63 @@ html[data-motion="reduced"] .world-pulse {
   animation: world-settle var(--dur-slow) var(--ease-out-expo) both;
 }
 
-/* Follows the pointer, so it is positioned from JS but styled here. The
-   translate keeps it clear of the cursor and centred on it. */
+/* --------------------------------------------------------------------------
+   Country tooltip
+   --------------------------------------------------------------------------
+   Positioned from JS at a point in the frame, then offset here. Two nested
+   elements because there are two jobs: the outer span is placed with the
+   `translate` property, which leaves `transform` free for the inner span's
+   entrance animation. Driving both from `transform` meant the keyframes had
+   to restate the offset, so every new offset needed its own keyframes.
+
+   The outer span flips away from the frame's edges so the pill cannot
+   escape it — and the frame sits inside the page container, so staying in
+   the frame is staying in the viewport. "United States of America" is
+   around 190px at this size against a ~280px frame on a 320px phone,
+   which is why the flip starts a fifth of the way in rather than at the
+   very edge.
+   -------------------------------------------------------------------------- */
+
 .world-tip {
   position: absolute;
   z-index: 2;
+  pointer-events: none;
+}
+
+.world-tip[data-anchor="center"] {
+  translate: -50% -100%;
+}
+
+/* Near the left edge the pill starts at the point and runs right. */
+.world-tip[data-anchor="start"] {
+  translate: -0.5rem -100%;
+}
+
+/* Near the right edge it ends at the point and runs left. */
+.world-tip[data-anchor="end"] {
+  translate: calc(-100% + 0.5rem) -100%;
+}
+
+/* Near the top edge it hangs below the point instead of above it. */
+.world-tip[data-below="true"][data-anchor="center"] {
+  translate: -50% 0;
+}
+
+.world-tip[data-below="true"][data-anchor="start"] {
+  translate: -0.5rem 0;
+}
+
+.world-tip[data-below="true"][data-anchor="end"] {
+  translate: calc(-100% + 0.5rem) 0;
+}
+
+.world-tip-body {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  transform: translate(-50%, -140%);
+  /* Clears the pointer. A margin rather than part of the offset, so it
+     reverses on its own when the pill flips below. */
+  margin-bottom: 0.7rem;
   white-space: nowrap;
   border-radius: 9999px;
   border: 1px solid rgb(255 255 255 / 0.12);
@@ -871,8 +1116,13 @@ html[data-motion="reduced"] .world-pulse {
   font-size: 0.75rem;
   line-height: 1.2;
   color: var(--color-surface);
-  pointer-events: none;
   animation: world-tip-in var(--dur-fast) var(--ease-out-expo) both;
+}
+
+.world-tip[data-below="true"] .world-tip-body {
+  margin-bottom: 0;
+  margin-top: 0.9rem;
+  animation-name: world-tip-in-below;
 }
 
 .world-tip-note {
@@ -886,11 +1136,22 @@ html[data-motion="reduced"] .world-pulse {
 @keyframes world-tip-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -125%);
+    transform: translateY(0.3rem);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -140%);
+    transform: none;
+  }
+}
+
+@keyframes world-tip-in-below {
+  from {
+    opacity: 0;
+    transform: translateY(-0.3rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -901,17 +1162,31 @@ html[data-motion="reduced"] .world-pulse {
   }
 
   .world-map,
-  .world-tip {
+  .world-tip-body {
     animation: none;
   }
 
-  .world-country {
+  /* The arcs still appear, they just appear already drawn. */
+  .world-route {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .world-country,
+  .world-presence {
     transition: none;
   }
 }
 
-/* The announcement bar is shorter from md up; keep the published height in
-   step so the hero's viewport maths stays correct at every width. */
+/* The bar drops to a single row at sm and gets shorter again at md. Keeping
+   the published height in step is what keeps the hero's viewport maths
+   correct at every width. */
+@media (min-width: 40rem) {
+  :root {
+    --announce-h: 2.8125rem;
+  }
+}
+
 @media (min-width: 48rem) {
   :root {
     --announce-h: 2.5625rem;
@@ -993,5 +1268,136 @@ html[data-motion="reduced"] .world-pulse {
   .floating-whatsapp-tip {
     transition: none;
     transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Plan details dialog  (components/home/PricingGrid)
+   --------------------------------------------------------------------------
+   A native <dialog> opened with showModal(), so the focus trap, Escape
+   handling, background inertness and focus restoration are the browser's
+   rather than ours. The default UA box is reset to a full-viewport flex
+   container for two reasons: it lets the panel sit as a sheet on a phone and
+   centred on a desktop, and it makes the area around the panel part of the
+   dialog element, which is what gives us a click target for dismissing it.
+   ::backdrop cannot be clicked.
+   -------------------------------------------------------------------------- */
+
+.plan-dialog {
+  /* Must match EXIT_MS in components/home/PricingGrid. */
+  --plan-dialog-exit: 180ms;
+  /* The UA stylesheet sets max-width/height to fit-content and a margin of
+     auto; all of it has to go before the element can fill the viewport. */
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.plan-dialog[open] {
+  display: flex;
+  /* Bottom sheet on a phone, where the thumb is; centred from 640px up. */
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.plan-dialog[open]::backdrop {
+  background-color: rgb(23 25 28 / 0.55);
+  animation: plan-backdrop-in var(--dur-fast) linear both;
+}
+
+.plan-dialog-panel {
+  box-shadow: 0 24px 70px -30px rgb(23 25 28 / 0.45);
+  animation: plan-sheet-in var(--dur-base) var(--ease-out-expo) both;
+}
+
+@media (min-width: 40rem) {
+  .plan-dialog[open] {
+    align-items: center;
+    padding: 1.5rem;
+  }
+
+  .plan-dialog-panel {
+    animation-name: plan-panel-in;
+  }
+}
+
+/* Exit. The attribute is set for --plan-dialog-exit before close() is
+   called; Escape bypasses this and closes immediately, which is what
+   pressing Escape should feel like. */
+.plan-dialog[open][data-closing] {
+  pointer-events: none;
+}
+
+.plan-dialog[open][data-closing]::backdrop {
+  animation: plan-backdrop-out var(--plan-dialog-exit) linear both;
+}
+
+.plan-dialog[open][data-closing] .plan-dialog-panel {
+  animation: plan-panel-out var(--plan-dialog-exit) var(--ease-out-expo) both;
+}
+
+@keyframes plan-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes plan-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Rises from the bottom edge as a sheet. */
+@keyframes plan-sheet-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.5rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Settles into the centre, with the same restraint as the page reveals. */
+@keyframes plan-panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.75rem, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes plan-panel-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 0.5rem, 0) scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-dialog[open]::backdrop,
+  .plan-dialog-panel {
+    animation: none;
   }
 }

@@ -2,9 +2,26 @@
  * Verified MIDIS company facts.
  *
  * Every value here was extracted from the live midis.in site during the
- * Phase 1 audit. Nothing in this file is invented. If a field cannot be
- * verified it is omitted rather than guessed.
+ * Phase 1 audit, or supplied directly by MIDIS with the date recorded.
+ * Nothing in this file is invented. If a field cannot be verified it is
+ * omitted rather than guessed.
  */
+
+/**
+ * The Indian line, declared once.
+ *
+ * `site.phone` and `site.phoneE164` are read by the organisation schema, the
+ * footer, the contact page and the enquiry confirmation, all of which want a
+ * single primary number — so both of those keep pointing here while
+ * `phoneNumbers` carries the full published list. One source, so the bar and
+ * the schema cannot end up quoting different digits.
+ */
+const INDIA_LINE = {
+  region: "IN",
+  regionName: "India",
+  display: "+91 97793 20626",
+  e164: "+919779320626",
+} as const;
 
 export const site = {
   name: "MIDIS",
@@ -16,10 +33,36 @@ export const site = {
   tagline: "Strategy, design, development and digital growth for ambitious businesses.",
 
   email: "hello@midis.in",
-  phone: "+91 97793 20626",
+  /** Primary line. See INDIA_LINE above for why it is not written twice. */
+  phone: INDIA_LINE.display,
   /** E.164, for tel: and wa.me links. */
-  phoneE164: "+919779320626",
+  phoneE164: INDIA_LINE.e164,
+
+  /**
+   * Every published line, in the order the announcement bar shows them.
+   * The US number was supplied by MIDIS on 2026-10-12.
+   *
+   * `region` is a compact label for the dialling code, not a claim about an
+   * office: the registered address below is the only location MIDIS states.
+   */
+  phoneNumbers: [
+    {
+      region: "US",
+      regionName: "United States",
+      display: "+1 (862) 295-0117",
+      e164: "+18622950117",
+    },
+    INDIA_LINE,
+  ],
+
+  /**
+   * WhatsApp is recorded separately from `phone` on purpose: a line is never
+   * assumed to be WhatsApp-enabled because it appears on the contact page,
+   * and the US number above is NOT assumed to be reachable this way.
+   */
   whatsapp: "919779320626",
+  /** Prefilled opener, shared by every WhatsApp entry point. */
+  whatsappMessage: "Hello MIDIS, I'd like to discuss a project with your team.",
 
   address: {
     street: "Plot No. A-28(C, Phase 7, Industrial Area, Sector 73",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { ArrowRight, Button } from "@/components/ui/Button";
 import { site } from "@/content/site";
 import {
@@ -8,23 +8,13 @@ import {
   CONTACT_REQUIRED_MESSAGE,
   classifyContact,
 } from "@/lib/contact-value";
+import {
+  SERVICE_OPTIONS,
+  SERVICE_QUERY_KEY,
+  serviceOptionForSlug,
+} from "@/lib/service-options";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
-
-const SERVICE_OPTIONS = [
-  "Website design",
-  "Website development",
-  "Website redesign",
-  "UI/UX design",
-  "E-commerce development",
-  "Search engine optimisation",
-  "Google & Meta Ads",
-  "Graphic design",
-  "Content writing",
-  "Branding",
-  "AI & automation",
-  "Something else",
-];
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -111,6 +101,41 @@ function Field({
   );
 }
 
+/**
+ * The service the URL asked for, as a value the select can hold, or "".
+ *
+ * Read through useSyncExternalStore — the same approach lib/use-consent takes
+ * — rather than `useSearchParams`, because the note on ContactPageContent
+ * still holds: /contact is the page that matters most for conversion and is
+ * worth keeping prerendered, and `useSearchParams` opts a statically rendered
+ * component out of that unless it is wrapped in Suspense. This has a defined
+ * server snapshot, so the field renders empty on the server and resolves
+ * during hydration with no effect and no cascading render.
+ */
+function useRequestedService(): string {
+  const requested = useSyncExternalStore(
+    subscribeToLocation,
+    readRequestedService,
+    getServerRequestedService,
+  );
+
+  /* Returns null for anything unrecognised, so a crafted ?service= can never
+     put an arbitrary string into a submitted field. */
+  return serviceOptionForSlug(requested) ?? "";
+}
+
+/* The parameter only changes with a history navigation. */
+function subscribeToLocation(onChange: () => void) {
+  window.addEventListener("popstate", onChange);
+  return () => window.removeEventListener("popstate", onChange);
+}
+
+function readRequestedService(): string {
+  return new URLSearchParams(window.location.search).get(SERVICE_QUERY_KEY) ?? "";
+}
+
+const getServerRequestedService = (): string => "";
+
 export function ContactForm({ defaultIntent }: { defaultIntent?: string }) {
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -118,6 +143,38 @@ export function ContactForm({ defaultIntent }: { defaultIntent?: string }) {
   /* Fires once, when someone actually starts filling the form in — the
      denominator for the enquiry completion rate. */
   const startedRef = useRef(false);
+
+  /*
+   * PRESELECTING THE SERVICE
+   *
+   * The homepage pricing cards and the service pages link here as
+   * `/contact?service=<slug>`, so the visitor does not have to restate what
+   * they were just reading about.
+   *
+   * Read from `window.location` in an effect rather than through
+   * `useSearchParams`, because the comment on ContactPageContent is still
+   * true: /contact is the page that matters most for conversion and it is
+   * worth keeping prerendered. `useSearchParams` in a statically rendered
+   * route opts the component out of prerendering unless it is wrapped in a
+   * Suspense boundary; this reads the same value after hydration and costs
+   * the page nothing.
+   *
+   * `serviceOptionForSlug` returns null for anything it does not recognise,
+   * so a crafted `?service=` cannot push an arbitrary string into a
+   * submitted field — the select simply stays unset.
+   */
+  const requestedService = useRequestedService();
+  /*
+   * null until the visitor touches the select, so the URL stays in charge
+   * until they say otherwise, and resetting after a submission is a matter
+   * of forgetting their choice rather than restoring the old one. Deriving
+   * the value also means no setState in an effect.
+   */
+  const [chosenService, setChosenService] = useState<string | null>(null);
+  const service = chosenService ?? requestedService;
+  /* Only while the value is still the URL's, not once they have chosen it
+     themselves — even if they chose the same thing. */
+  const showPrefillHint = chosenService === null && requestedService !== "";
 
   function handleFirstInput() {
     if (startedRef.current) return;
@@ -177,6 +234,10 @@ export function ContactForm({ defaultIntent }: { defaultIntent?: string }) {
         trackEvent("enquiry_success", { form: isCall ? "strategy_call" : "project" });
         setStatus("success");
         form.reset();
+        /* `form.reset()` cannot clear a controlled select, so the one field
+           React owns is reset here — back to whatever the URL asked for, so
+           a second enquiry from a service page starts where the first did. */
+        setChosenService(null);
         return;
       }
 
@@ -306,13 +367,28 @@ export function ContactForm({ defaultIntent }: { defaultIntent?: string }) {
         </Field>
 
         {!isCall && (
-          <Field label="What do you need?" htmlFor="service" optional>
+          <Field
+            label="What do you need?"
+            htmlFor="service"
+            optional
+            /* Says so when the choice was made for them, so a preselected
+               value never looks like something they picked and forgot. */
+            hint={
+              showPrefillHint
+                ? "Prefilled from the service you were looking at — change it if that's not right."
+                : undefined
+            }
+          >
             <select
               id="service"
               name="service"
-              defaultValue=""
+              value={service}
+              onChange={(event) => setChosenService(event.target.value)}
               disabled={submitting}
               style={SELECT_CHEVRON}
+              aria-describedby={
+                showPrefillHint ? "service-hint" : undefined
+              }
               className={cn(selectBase, "border-line")}
             >
               <option value="">Select a service</option>

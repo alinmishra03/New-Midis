@@ -51,9 +51,19 @@ export function IndustriesSection() {
       <StaggerGroup as="ul" step={45} className="mt-14 rule">
         {industries.map((ind) => (
           <li key={ind.slug} className="border-b border-line">
+            {/*
+              Columns rather than justify-between. Pushing the heading and
+              the description to opposite ends of the row left a void
+              between them and set every description ragged against the
+              arrow, so each one started at a different place down the list.
+              A grid gives the descriptions a shared left edge and the same
+              width, which is the pattern ServiceRows already uses. The
+              description column simply drops out below lg, where it is
+              hidden, leaving heading and arrow.
+            */}
             <Link
               href={`/industries/${ind.slug}`}
-              className="group flex flex-col gap-3 py-7 transition-colors sm:flex-row sm:items-center sm:justify-between sm:gap-10"
+              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 py-7 transition-colors lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_auto] lg:gap-x-12"
             >
               <div className="flex items-baseline gap-5">
                 <span
@@ -65,12 +75,11 @@ export function IndustriesSection() {
                 </h3>
               </div>
 
-              <div className="flex items-center gap-6 pl-13 sm:pl-0">
-                <p className="hidden max-w-md text-sm leading-relaxed text-muted lg:block">
-                  {ind.challenges[0]}
-                </p>
-                <ArrowRight className="shrink-0 text-muted transition-colors group-hover:text-accent-ink" />
-              </div>
+              <p className="hidden text-sm leading-relaxed text-muted lg:block">
+                {ind.challenges[0]}
+              </p>
+
+              <ArrowRight className="shrink-0 justify-self-end text-muted transition-colors group-hover:text-accent-ink" />
             </Link>
           </li>
         ))}

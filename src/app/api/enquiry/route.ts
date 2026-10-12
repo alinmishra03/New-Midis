@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { site } from "@/content/site";
+import { SERVICE_OPTIONS, type ServiceOption } from "@/lib/service-options";
 import {
   CONTACT_INVALID_MESSAGE,
   CONTACT_MAX_LENGTH,
@@ -79,30 +80,50 @@ const ALLOWED_SERVICES: ReadonlySet<string> = new Set(STRAPI_SERVICE_VALUES);
  * empty value it does accept, and the precise request survives in `message`.
  */
 function toStrapiService(value: string | undefined): StrapiService {
-  const mapped = SERVICE_MAP[value ?? ""];
+  /* The incoming value is whatever was posted, so it is looked up as a plain
+     string rather than a ServiceOption — an unknown one must resolve to the
+     fallback, not fail to compile. */
+  const lookup: Record<string, StrapiService | undefined> = SERVICE_MAP;
+  const mapped = lookup[value ?? ""];
+
   return mapped !== undefined && ALLOWED_SERVICES.has(mapped)
     ? mapped
     : STRAPI_SERVICE_FALLBACK;
 }
 
 /** Maps the form's service options onto the values Strapi will accept. */
-const SERVICE_MAP: Record<string, StrapiService> = {
+const SERVICE_MAP: Record<ServiceOption, StrapiService> = {
   "Website design": "Web development ",
   "Website development": "Web development ",
   "Website redesign": "Web development ",
   "UI/UX design": "Web development ",
   "E-commerce development": "Web development ",
+  "Shopify development": "Web development ",
   "Search engine optimisation": "Seo Optimisation",
   "Google & Meta Ads": "Digital Marketing",
   "Graphic design": "Graphic designing ",
   "Content writing": "Content Writing ",
-  "Branding": "Brand Identity",
-  /* No column fits these two, so they ride along in `message` instead. */
+  Branding: "Brand Identity",
+  /* No column fits these, so they ride along in `message` instead. */
+  "AI chatbot development": STRAPI_SERVICE_FALLBACK,
   "AI & automation": STRAPI_SERVICE_FALLBACK,
   "Something else": STRAPI_SERVICE_FALLBACK,
 };
 
-export const SERVICE_OPTIONS = Object.keys(SERVICE_MAP);
+/**
+ * The option list and this map are the same contract seen from two sides, and
+ * an option with no mapping would silently file a lead under the empty
+ * catch-all. `Record<ServiceOption, …>` makes TypeScript require an entry for
+ * every option; this checks the same thing at runtime, in case the list is
+ * ever widened from data rather than a literal.
+ */
+const unmappedOptions = SERVICE_OPTIONS.filter((option) => !(option in SERVICE_MAP));
+if (unmappedOptions.length > 0) {
+  throw new Error(
+    `api/enquiry: no Strapi mapping for ${unmappedOptions.join(", ")}. ` +
+      `Add entries to SERVICE_MAP or remove them from lib/service-options.`,
+  );
+}
 
 /**
  * Normalises a missing value to an empty string before validating, so an

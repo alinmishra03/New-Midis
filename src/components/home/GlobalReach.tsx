@@ -4,21 +4,28 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Eyebrow, Section } from "@/components/ui/Section";
 import { MaskedLines } from "@/components/motion/MaskedLines";
 import { site } from "@/content/site";
+import { PRESENCE_COUNTRIES } from "@/content/world-map";
 
 /**
  * Global reach.
  *
- * The map carries no claim about where MIDIS's clients are, because there is
- * no verified data on that — content/evidence.ts is empty by design and
- * inventing markers or routes here would be fabricating exactly the kind of
- * proof the rest of the site refuses to fake. India is marked because the
- * registered address is a fact; everywhere else is simply the world.
+ * The countries highlighted on the map, and the ones named in the copy, come
+ * from PRESENCE_COUNTRIES — the list MIDIS confirmed on 2026-10-12. Section
+ * text and map therefore cannot disagree with each other, and the count in
+ * the supporting line is derived rather than typed.
  *
- * For the same reason there is no country count and no counter. The claim
- * being made is "we work across borders", which the copy states plainly and
- * the map illustrates.
+ * Still no counters and still no results: how many countries MIDIS works in
+ * is a fact it told us, while anything about what the work achieved there
+ * would need the evidence that content/evidence.ts is still waiting for.
  */
+
+/* Small enough to spell out, and spelling it out keeps a figure from reading
+   as a statistic. Derived from the list so the word cannot go stale. */
+const COUNT_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+
 export function GlobalReach() {
+  const countryCount = PRESENCE_COUNTRIES.length;
+  const countWord = COUNT_WORDS[countryCount] ?? String(countryCount);
   return (
     <Section tone="ink" aria-labelledby="global-reach-heading">
       <div className="grid gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-20">
@@ -30,20 +37,21 @@ export function GlobalReach() {
             id="global-reach-heading"
             className="mt-7 text-[length:var(--text-display-md)] text-surface"
           >
-            <MaskedLines stagger={0.08}>Based in India. Connected to the World.</MaskedLines>
+            <MaskedLines stagger={0.08}>Our Presence Goes Beyond Borders.</MaskedLines>
           </h2>
 
           <Reveal delay={90}>
             <p className="mt-6 max-w-lg text-base leading-relaxed text-surface/60 sm:text-lg">
-              Working across borders to bring thoughtful design, development, and digital
-              solutions to businesses worldwide.
+              From India to the world, we collaborate with businesses across the United States,
+              United Kingdom, Canada, and Australia, delivering digital experiences that make an
+              impact.
             </p>
 
             <p className="rule-dark mt-8 flex items-center gap-3 pt-6 text-sm text-surface/50">
               <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
               <span>
-                Studio in {site.address.locality}, {site.address.countryName} — set up for remote
-                collaboration across time zones.
+                Headquartered in {site.address.countryName}. Collaborating with clients across{" "}
+                {countWord} countries.
               </span>
             </p>
 

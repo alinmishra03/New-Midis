@@ -6,6 +6,8 @@ import { IndustriesSection, ServicesSection, TeamSection } from "@/components/ho
 import { AuditSection, FaqSection, FinalCta } from "@/components/home/Conversion";
 import { GlobalReach } from "@/components/home/GlobalReach";
 import { InsightsSection } from "@/components/home/Insights";
+import { PricingSection } from "@/components/home/Pricing";
+import { ClientsSection } from "@/components/home/Clients";
 import { faqs } from "@/content/company";
 import { site } from "@/content/site";
 
@@ -51,16 +53,31 @@ export default function HomePage() {
       {/* 5  */} <Results />
       {/* 6  */} <ServicesSection />
       {/* 7  */} <IndustriesSection />
-      {/* 8  */} <Method />
-      {/* 9  */} <WhyMidis />
-      {/* 10 */} <Testimonials />
-      {/* 11 */} <TeamSection />
-      {/* 12 */} <GlobalReach />
-      {/* 13 */} <AuditSection />
-      {/* 14 */} <InsightsSection />
-      {/* 15 */} <FaqSection />
-      {/* 16 */} <FinalCta />
-      {/* 17 — footer lives in the root layout, shared across every page */}
+      {/*
+        8 — Services and pricing. It sits after the two sections that
+        establish what we do and who it is for, so the cost question is
+        reached having already answered "is this for me". Paper between
+        Industries (surface) and Method (ink) also keeps the page's tonal
+        alternation intact, which placing it directly after Services would
+        have broken.
+      */}
+      {/* 8  */} <PricingSection />
+      {/*
+        9 — Who the work was for. It follows the offer and its pricing, so
+        the proof lands on the question just asked, and it is surface between
+        Pricing (paper) and Method (ink).
+      */}
+      {/* 9  */} <ClientsSection />
+      {/* 10 */} <Method />
+      {/* 11 */} <WhyMidis />
+      {/* 12 */} <Testimonials />
+      {/* 13 */} <TeamSection />
+      {/* 14 */} <GlobalReach />
+      {/* 15 */} <AuditSection />
+      {/* 16 */} <InsightsSection />
+      {/* 17 */} <FaqSection />
+      {/* 18 */} <FinalCta />
+      {/* 19 — footer lives in the root layout, shared across every page */}
 
       <noscript>
         <p className="sr-only">

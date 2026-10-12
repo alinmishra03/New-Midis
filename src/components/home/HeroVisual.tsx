@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useMotionProfile } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 /**
  * Hero visual: an ascending bar field echoing the growth motif inside the
@@ -19,7 +20,7 @@ import { useMotionProfile } from "@/lib/motion";
  *   - pauses entirely off-screen or when the tab is hidden
  *   - DPR capped at 2
  */
-export function HeroVisual() {
+export function HeroVisual({ className }: { className?: string } = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const profile = useMotionProfile();
 
@@ -172,7 +173,13 @@ export function HeroVisual() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-[22vh] w-full select-none sm:h-[38vh] lg:h-[46vh]"
+      /* Distinguishes this canvas from HeroBackground's, which is also in
+         the hero and also unlabelled. */
+      data-hero-band="true"
+      className={cn(
+        "pointer-events-none absolute inset-x-0 bottom-0 h-[22vh] w-full select-none sm:h-[38vh] lg:h-[46vh]",
+        className,
+      )}
     />
   );
 }
