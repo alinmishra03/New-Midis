@@ -18,7 +18,9 @@ export function CaseStudiesSection() {
   if (shownCaseStudies.length === 0 || activeCaseStudyIndustries.length === 0) return null;
 
   return (
-    <Section tone="paper" aria-labelledby="case-studies-heading">
+    /* The id is the target of the Company > Case Studies nav link; the
+       scroll margin keeps the sticky header off the heading. */
+    <Section id="case-studies" tone="paper" className="scroll-mt-24" aria-labelledby="case-studies-heading">
       <SectionHeader
         id="case-studies-heading"
         eyebrow="Proof of our work"

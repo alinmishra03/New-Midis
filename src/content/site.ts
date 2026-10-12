@@ -108,48 +108,151 @@ export interface NavColumn {
 
 export interface NavItem {
   label: string;
+  /**
+   * Where the item itself goes. For a group this is the hub page, used by
+   * the panel's closing link; the trigger itself is a button, not a link.
+   */
   href: string;
+  /**
+   * Extra path prefixes that should show this item as current. Needed
+   * because four groups all sit under /services, so matching on href alone
+   * would light every one of them at once.
+   */
+  match?: string[];
   columns?: NavColumn[];
+  /** Closing link at the foot of the panel. */
+  overview?: NavLink;
 }
 
+/* ==========================================================================
+   PRIMARY NAVIGATION
+   --------------------------------------------------------------------------
+   Every href below resolves to a page that exists. The requested structure
+   named five destinations this site has no page for, and they are left out
+   rather than linked to nothing:
+
+     On-Page SEO, Local SEO      no /services page
+     Website UI Design           no page; UI/UX Design is the only one, so
+     User Experience Design      that item is a plain link, not a one-item menu
+     Social Media Marketing      no page
+     Social Media Management     no page
+
+   The "Social Media" group is therefore called Marketing and lists what
+   MIDIS actually publishes: the ads, email and content pages. Calling it
+   Social Media would promise management work with nothing behind it.
+
+   Case Studies points at the homepage section, which is the only case-study
+   content that exists; /work is still an empty, noindexed placeholder and
+   stays out of the navigation until hasPortfolio flips.
+   ========================================================================== */
+
 export const nav: NavItem[] = [
+  { label: "Home", href: "/" },
   {
-    label: "Services",
-    href: "/services",
+    label: "SEO",
+    href: "/services/seo",
+    match: ["/services/seo", "/services/technical-seo", "/services/ecommerce-seo"],
+    overview: { label: "All services", href: "/services" },
     columns: [
       {
-        heading: "Strategy & Design",
+        heading: "Search visibility",
+        links: [
+          { label: "SEO", href: "/services/seo" },
+          { label: "Technical SEO", href: "/services/technical-seo" },
+          { label: "E-commerce SEO", href: "/services/ecommerce-seo" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "AI",
+    href: "/services/ai-chatbot-development",
+    match: [
+      "/services/ai-chatbot-development",
+      "/services/chatgpt-integration",
+      "/services/openai-api-integration",
+      "/services/generative-ai-consultancy",
+    ],
+    overview: { label: "All services", href: "/services" },
+    columns: [
+      {
+        heading: "AI & automation",
+        links: [
+          { label: "AI Chatbot Development", href: "/services/ai-chatbot-development" },
+          { label: "ChatGPT Integration", href: "/services/chatgpt-integration" },
+          { label: "OpenAI API Integration", href: "/services/openai-api-integration" },
+          { label: "Generative AI Consultancy", href: "/services/generative-ai-consultancy" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Web Development",
+    href: "/services/web-development",
+    match: [
+      "/services/web-design",
+      "/services/web-development",
+      "/services/website-redesign",
+      "/services/react-development",
+      "/services/nextjs-development",
+      "/services/ecommerce-development",
+      "/services/shopify-development",
+      "/services/woocommerce-development",
+      "/services/wordpress-development",
+    ],
+    overview: { label: "All services", href: "/services" },
+    /* Nine pages, so two columns — one dropdown of nine would be a list. */
+    columns: [
+      {
+        heading: "Websites",
         links: [
           { label: "Website Design", href: "/services/web-design" },
-          { label: "UI/UX Design", href: "/services/ui-ux-design" },
-          { label: "Website Redesign", href: "/services/website-redesign" },
-          { label: "Graphic Design", href: "/services/graphic-design" },
-        ],
-      },
-      {
-        heading: "Development",
-        links: [
           { label: "Web Development", href: "/services/web-development" },
+          { label: "Website Redesign", href: "/services/website-redesign" },
           { label: "React Development", href: "/services/react-development" },
           { label: "Next.js Development", href: "/services/nextjs-development" },
-          { label: "WordPress Development", href: "/services/wordpress-development" },
         ],
       },
       {
-        heading: "E-commerce",
+        heading: "E-commerce & CMS",
         links: [
           { label: "E-commerce Development", href: "/services/ecommerce-development" },
           { label: "Shopify Development", href: "/services/shopify-development" },
           { label: "WooCommerce Development", href: "/services/woocommerce-development" },
+          { label: "WordPress Development", href: "/services/wordpress-development" },
+        ],
+      },
+    ],
+  },
+  /* One real page, so a link rather than a menu holding a single item. */
+  { label: "UI/UX", href: "/services/ui-ux-design" },
+  {
+    label: "Marketing",
+    href: "/services/google-meta-ads",
+    match: [
+      "/services/google-meta-ads",
+      "/services/email-marketing",
+      "/services/content-writing",
+      "/services/video-editing",
+      "/services/youtube-management",
+      "/services/graphic-design",
+    ],
+    overview: { label: "All services", href: "/services" },
+    columns: [
+      {
+        heading: "Advertising",
+        links: [
+          { label: "Google & Meta Ads", href: "/services/google-meta-ads" },
+          { label: "Email Marketing", href: "/services/email-marketing" },
         ],
       },
       {
-        heading: "Growth & AI",
+        heading: "Content & creative",
         links: [
-          { label: "Search Engine Optimisation", href: "/services/seo" },
-          { label: "Google & Meta Ads", href: "/services/google-meta-ads" },
-          { label: "AI Chatbot Development", href: "/services/ai-chatbot-development" },
-          { label: "Content & Video", href: "/services/content-writing" },
+          { label: "Content Writing", href: "/services/content-writing" },
+          { label: "Video Editing", href: "/services/video-editing" },
+          { label: "YouTube Management", href: "/services/youtube-management" },
+          { label: "Graphic Design", href: "/services/graphic-design" },
         ],
       },
     ],
@@ -157,6 +260,7 @@ export const nav: NavItem[] = [
   {
     label: "Industries",
     href: "/industries",
+    overview: { label: "All industries", href: "/industries" },
     columns: [
       {
         heading: "Sectors we work in",
@@ -178,16 +282,15 @@ export const nav: NavItem[] = [
       },
     ],
   },
-  { label: "Our Work", href: "/work" },
-  { label: "Insights", href: "/insights" },
   {
     label: "Company",
     href: "/about",
+    match: ["/about", "/why-midis", "/process", "/team", "/insights", "/faq", "/contact", "/tools"],
     columns: [
       {
         heading: "About MIDIS",
         links: [
-          { label: "About", href: "/about" },
+          { label: "About Us", href: "/about" },
           { label: "Why MIDIS", href: "/why-midis" },
           { label: "Our Process", href: "/process" },
           { label: "Our Team", href: "/team" },
@@ -196,6 +299,8 @@ export const nav: NavItem[] = [
       {
         heading: "Resources",
         links: [
+          { label: "Case Studies", href: "/#case-studies" },
+          { label: "Insights", href: "/insights" },
           { label: "Free Website Audit", href: "/tools/website-audit" },
           { label: "FAQ", href: "/faq" },
           { label: "Contact", href: "/contact" },
