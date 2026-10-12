@@ -1401,3 +1401,64 @@ html[data-motion="reduced"] .world-pulse {
     animation: none;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   Case studies — category strip and the full-screen analytics preview
+   -------------------------------------------------------------------------- */
+
+/* --- full-screen analytics preview ---------------------------------- */
+
+.shot-dialog {
+  margin: auto;
+  max-width: min(95vw, 80rem);
+  max-height: 92dvh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.shot-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-ink) 72%, transparent);
+  /* Flat fallback for engines without color-mix in ::backdrop. */
+  background-color: rgb(23 25 28 / 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.shot-dialog-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 1rem;
+  background: var(--color-surface);
+  padding: 1rem;
+  text-align: center;
+}
+
+@media (min-width: 40rem) {
+  .shot-dialog-panel {
+    padding: 1.5rem;
+  }
+}
+
+html.js .shot-dialog[open] {
+  animation: shot-in var(--dur-base) var(--ease-out-expo) both;
+}
+
+@keyframes shot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .shot-dialog[open] {
+    animation: none;
+  }
+}
