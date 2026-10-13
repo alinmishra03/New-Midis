@@ -100,9 +100,8 @@ function Field({ label, value, pending }: { label: string; value: string | null;
 /**
  * The analytics area.
  *
- * Today every project is "awaiting", so this renders the placeholder the
- * brief describes. The published branch is written and guarded even though
- * nothing reaches it yet: images keep their own aspect ratio, are contained
+ * Projects without a report render the placeholder the brief describes.
+ * Published ones show their screenshots: images keep their own aspect ratio, are contained
  * rather than cropped so axis labels survive, and open full-screen in a
  * native dialog — which brings the focus trap, Escape and focus restoration
  * with it instead of us reimplementing them.
@@ -149,7 +148,7 @@ function Analytics({
                     width={img.width}
                     height={img.height}
                     sizes="(max-width: 1024px) 90vw, 40vw"
-                    className="h-auto w-full object-contain"
+                    className="h-auto w-full rounded-md object-contain transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] group-hover/shot:scale-[1.015] motion-reduce:transition-none"
                   />
                   <span className="sr-only">View full size</span>
                 </button>

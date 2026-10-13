@@ -128,11 +128,32 @@ const AWAITING = {
   showcase: true,
 } satisfies Partial<CaseStudyProject>;
 
+/**
+ * A client's performance-insights report, exported into
+ * public/google analytics as "<Client> · Performance insights@2x.png".
+ * Every export is 1520 × 1680, so all panels share one aspect ratio.
+ */
+function insights(client: string) {
+  return {
+    analyticsImages: [
+      {
+        // The file names contain spaces, "·" and "@", so they are encoded.
+        src: encodeURI(`/google analytics/${client} · Performance insights@2x.png`),
+        alt: `${client} performance insights: online sessions and orders per month, before and after the new site went live.`,
+        width: 1520,
+        height: 1680,
+      },
+    ],
+    analyticsStatus: "published",
+  } satisfies Partial<CaseStudyProject>;
+}
+
 export const caseStudies: readonly CaseStudyProject[] = [
   /* ------------------------------------------- e-commerce & retail */
   {
     ...AWAITING,
     slug: "alinkriti",
+    ...insights("Alinkriti"),
     projectName: "Alinkriti",
     industry: "ecommerce-retail",
     /* The brief suggested Home & Lifestyle. The site is a jewellery
@@ -146,6 +167,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "menopause-relief-store",
+    ...insights("Menopause Relief Store"),
     projectName: "The Menopause Relief Store",
     industry: "ecommerce-retail",
     industrySource:
@@ -158,6 +180,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "country-kids",
+    ...insights("Country Kids"),
     projectName: "Country Kids",
     industry: "education-childcare",
     industrySource:
@@ -172,6 +195,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "high-spirits",
+    ...insights("High Spirits"),
     projectName: "High Spirits",
     industry: "hospitality",
     industrySource:
@@ -182,6 +206,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "aureus-hospitality",
+    ...insights("Aureus Hospitality"),
     projectName: "Aureus Hospitality",
     industry: "hospitality",
     /* The homepage renders its copy with JavaScript, so a plain fetch
@@ -210,6 +235,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "gulf-connect-consultancy",
+    ...insights("Gulf Connect"),
     projectName: "Gulf Connect Consultancy",
     industry: "business-consulting",
     industrySource:
@@ -233,6 +259,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "hqb-pro-solutions",
+    ...insights("HQB Pro Solutions"),
     projectName: "HQB Pro Solutions",
     industry: "business-consulting",
     industrySource:
@@ -257,6 +284,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "solar-spectrum",
+    ...insights("Solar Spectrum"),
     projectName: "Solar Spectrum",
     industry: "energy",
     industrySource:
@@ -269,6 +297,7 @@ export const caseStudies: readonly CaseStudyProject[] = [
   {
     ...AWAITING,
     slug: "nexus-fundings",
+    ...insights("Nexus Fundings"),
     projectName: "Nexus Fundings",
     industry: "finance",
     /* Also filed under "Other Industries" in the brief. It is a broker. */
