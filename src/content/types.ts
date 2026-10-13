@@ -12,6 +12,7 @@ import type {
   IndustryPlatform,
   IndustryTimeline,
 } from "./industry-profiles";
+import type { ServiceDetail } from "./service-details/types";
 
 export type ServiceGroup = "strategy-design" | "development" | "ecommerce" | "growth" | "ai";
 
@@ -45,6 +46,8 @@ export interface Service {
    */
   verifiedOffering: boolean;
   seo: SeoMeta;
+  /** Keyword research and extended page sections, from content/service-details. */
+  detail?: ServiceDetail;
 }
 
 export interface Industry {

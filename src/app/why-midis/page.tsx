@@ -1,4 +1,6 @@
 import { DrawLine } from "@/components/motion/DrawLine";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { PageHero } from "@/components/ui/PageHero";
 import { Section, SectionHeader } from "@/components/ui/Section";
@@ -6,9 +8,9 @@ import { differentiators, whatYouGain } from "@/content/company";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "Why MIDIS",
+  title: "Why Choose MIDIS as Your Web Design Agency",
   description:
-    "Eight specific reasons businesses choose MIDIS — strategy before design, business-first decisions, and search-ready builds from day one.",
+    "Why businesses choose MIDIS as their web design and development agency: strategy before design, business-first decisions and search-ready builds from day one.",
   path: "/why-midis",
 });
 
@@ -16,6 +18,8 @@ export default function WhyMidisPage() {
   return (
     <>
       <PageHero
+        keyword="Why choose MIDIS as your web agency"
+        aside={<ServiceVisual kind="why" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="Why MIDIS"
         headlineLines={["Why clients", "come back."]}
         accentWords={["back."]}
@@ -77,6 +81,8 @@ crumbs={[{ label: "Why MIDIS", href: "/why-midis" }]}
           ))}
         </StaggerGroup>
       </Section>
+
+      <FinalCta title="Hold us to all eight." />
     </>
   );
 }

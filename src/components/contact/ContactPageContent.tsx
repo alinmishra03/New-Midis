@@ -43,6 +43,7 @@ export function ContactPageContent({
     <>
       <PageHero
         eyebrow={isCall ? "Book a strategy call" : "Start a project"}
+        keyword={isCall ? "Book a free strategy call" : "Contact MIDIS to start your website project"}
         headlineLines={
           isCall
             ? ["Let's talk about", "where you're going."]

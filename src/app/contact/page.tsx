@@ -2,9 +2,9 @@ import { ContactPageContent } from "@/components/contact/ContactPageContent";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "Contact MIDIS",
+  title: "Contact Us — Start Your Website Project",
   description:
-    "Start a project with MIDIS. Tell us what you're trying to achieve and we'll tell you honestly whether we're the right people to help.",
+    "Contact MIDIS to start a website design, development, SEO or AI project. Tell us what you're trying to achieve and we'll reply with an honest view of fit.",
   path: "/contact",
 });
 

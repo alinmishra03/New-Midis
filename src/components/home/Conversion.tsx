@@ -118,7 +118,23 @@ export function FaqSection() {
 
 /* ------------------------------------------------------ §15 Final CTA */
 
-export function FinalCta() {
+/**
+ * Closing call to action. Shared by the homepage and inner pages, which pass
+ * their own heading and a pre-filled contact link (e.g. `/contact?service=seo`).
+ */
+export function FinalCta({
+  eyebrow = "Start here",
+  title = "Let’s build something your business can grow with.",
+  intro = "Tell us where the business is now and where you want it to be. We’ll tell you honestly whether we’re the right people to get you there.",
+  primaryHref = "/contact",
+  primaryLabel = "Tell us about the project",
+}: {
+  eyebrow?: string;
+  title?: string;
+  intro?: string;
+  primaryHref?: string;
+  primaryLabel?: string;
+} = {}) {
   return (
     <section className="relative isolate overflow-hidden bg-ink text-surface">
       <div
@@ -130,21 +146,20 @@ export function FinalCta() {
       <div className="container-site relative py-24 text-center lg:py-36">
         <Reveal>
           <div className="flex justify-center">
-            <Eyebrow tone="dark">Start here</Eyebrow>
+            <Eyebrow tone="dark">{eyebrow}</Eyebrow>
           </div>
 
           <h2 className="mx-auto mt-8 max-w-[16ch] text-[length:var(--text-display-lg)] text-surface">
-            Let&apos;s build something your business can grow with.
+            {title}
           </h2>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-surface/60 sm:text-lg">
-            Tell us where the business is now and where you want it to be. We&apos;ll tell you
-            honestly whether we&apos;re the right people to get you there.
+            {intro}
           </p>
 
           <div className="mt-11 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button href="/contact" variant="primary" size="lg" magnetic>
-              Tell us about the project
+            <Button href={primaryHref} variant="primary" size="lg" magnetic>
+              {primaryLabel}
               <ArrowRight />
             </Button>
             <Button href="/contact/call" variant="outline-light" size="lg">

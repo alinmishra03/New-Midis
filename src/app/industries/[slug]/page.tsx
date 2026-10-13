@@ -5,6 +5,9 @@ import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
 import { FaqList, faqSchema } from "@/components/ui/FaqList";
 import { PageHero } from "@/components/ui/PageHero";
+import { FinalCta } from "@/components/home/Conversion";
+import { ServiceVisual, type PageVisualKind } from "@/components/services/ServiceVisual";
+import type { ServiceVisual as ServiceVisualKind } from "@/content/service-details/types";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { getIndustry, industries } from "@/content/industries";
@@ -19,6 +22,18 @@ import { hasEvidence } from "@/lib/utils";
  * engines treat as a thin duplicate page.
  */
 export const dynamicParams = false;
+
+/** Hero artwork per sector: what a visitor in that sector actually does on the site. */
+const sectorVisual: Record<string, PageVisualKind | ServiceVisualKind> = {
+  saas: "uiux",
+  healthcare: "booking",
+  "real-estate": "listing",
+  ecommerce: "ecommerce",
+  startups: "web",
+  education: "content",
+  "professional-services": "booking",
+  manufacturing: "specs",
+};
 
 export function generateStaticParams() {
   return industries.map((i) => ({ slug: i.slug }));
@@ -46,7 +61,9 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
     .filter((s): s is NonNullable<typeof s> => Boolean(s));
 
   const faqs = industry.faqs ?? [];
-  const sector = industry.name.toLowerCase();
+  /* Lower-cased mid-sentence, except names with internal capitals such as
+     "SaaS", which previously rendered as "Websites for saas." */
+  const sector = /[a-z][A-Z]/.test(industry.name) ? industry.name : industry.name.toLowerCase();
 
   return (
     <>
@@ -54,7 +71,10 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
 
       <PageHero
         eyebrow={`${industry.name} websites`}
-        headlineLines={[`Websites for`, `${industry.name.toLowerCase()}.`]}
+        keyword={industry.seo.title.replace(/\s*\|\s*MIDIS\s*$/, "")}
+        headlineLines={[`Websites for`, `${sector}.`]}
+        accentWords={[`${sector.split(" ").pop()}.`]}
+        aside={<ServiceVisual kind={sectorVisual[industry.slug] ?? "web"} className="mx-auto max-w-lg lg:max-w-none" />}
         intro={industry.intro?.[0]}
         visualSeed={industry.slug}
         variant="weave"
@@ -362,6 +382,8 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
           </div>
         </Section>
       )}
+
+      <FinalCta title={`Planning a ${sector} website?`} />
     </>
   );
 }

@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
@@ -9,9 +11,9 @@ import { JsonLd, buildMetadata } from "@/lib/seo";
 import type { TeamMember } from "@/content/types";
 
 export const metadata = buildMetadata({
-  title: "Our Team",
+  title: "Meet the Team — Designers & Developers",
   description:
-    "Meet the designers, developers and specialists at MIDIS. You work directly with the people building your site, not an account manager relaying messages.",
+    "Meet the MIDIS team of web designers, developers and digital specialists. You work directly with the people building your website, not an account manager.",
   path: "/team",
 });
 
@@ -83,6 +85,10 @@ export default function TeamPage() {
       <TeamSchema people={everyone} />
 
       <PageHero
+
+        keyword="Meet our web designers & developers"
+
+        aside={<ServiceVisual kind="team" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="The team"
         headlineLines={["The people", "behind the work."]}
         accentWords={["work."]}
@@ -144,6 +150,8 @@ crumbs={[{ label: "Our Team", href: "/team" }]}
           ))}
         </StaggerGroup>
       </Section>
+
+      <FinalCta title="Talk to the people who’ll build it." />
     </>
   );
 }

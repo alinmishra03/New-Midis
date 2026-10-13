@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import Link from "next/link";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
@@ -12,9 +14,9 @@ import { hasEvidence } from "@/lib/utils";
 export const revalidate = 1800;
 
 export const metadata = buildMetadata({
-  title: "Insights",
+  title: "Web Design, SEO & Digital Growth Insights",
   description:
-    "Articles, guides and technical breakdowns on website design, development, performance and search — written from work we've actually done.",
+    "Insights on website design, web development, site performance, SEO and digital growth — practical articles and breakdowns written from real MIDIS project work.",
   path: "/insights",
 });
 
@@ -25,6 +27,8 @@ export default async function InsightsPage() {
   return (
     <>
       <PageHero
+        keyword="Web design, development & SEO insights"
+        aside={<ServiceVisual kind="insights" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="Insights"
         headlineLines={["What we're", "thinking about."]}
         accentWords={["about."]}
@@ -147,6 +151,8 @@ crumbs={[{ label: "Insights", href: "/insights" }]}
           </>
         )}
       </Section>
+
+      <FinalCta title="Rather talk it through?" />
     </>
   );
 }

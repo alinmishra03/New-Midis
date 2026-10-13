@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
 import { PageHero } from "@/components/ui/PageHero";
@@ -7,9 +9,9 @@ import { getAllIndustries } from "@/content/industries";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "Industries",
+  title: "Industry-Specific Website Design & Development",
   description:
-    "Websites built around what's specific to your sector — SaaS, healthcare, real estate, e-commerce, startups, education, professional services and manufacturing.",
+    "Industry-specific website design and development for SaaS, healthcare, real estate, e-commerce, startups, education, professional services and manufacturing.",
   path: "/industries",
 });
 
@@ -19,6 +21,8 @@ export default function IndustriesPage() {
   return (
     <>
       <PageHero
+        keyword="Industry-specific website design & development"
+        aside={<ServiceVisual kind="sectors" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="Industries"
         headlineLines={["Different businesses", "need different", "websites."]}
         accentWords={["websites."]}
@@ -154,6 +158,8 @@ export default function IndustriesPage() {
           its recommendation — and the circumstances where we would argue against it.
         </p>
       </Section>
+
+      <FinalCta title="Don’t see your sector listed?" intro="The principles carry across. Tell us what makes buying in your market different and we’ll show you how the site should answer it." />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { serviceContent } from "./service-content";
+import { serviceDetails } from "./service-details";
 import type { Service } from "./types";
 
 /**
@@ -434,7 +435,8 @@ export function getService(slug: string): Service | undefined {
   if (!base) return undefined;
 
   const extra = serviceContent[slug];
-  return extra ? { ...base, ...extra } : base;
+  const detail = serviceDetails[slug];
+  return { ...base, ...extra, detail };
 }
 
 /** Every service, merged with its page content. */
@@ -454,6 +456,11 @@ if (missingContent.length > 0) {
     `services.ts: missing page content for ${missingContent.join(", ")}. ` +
       `Add entries to service-content.ts or remove them from the catalogue.`,
   );
+}
+
+const missingDetail = services.filter((s) => !serviceDetails[s.slug]).map((s) => s.slug);
+if (missingDetail.length > 0) {
+  throw new Error(`services.ts: missing service-details entry for ${missingDetail.join(", ")}.`);
 }
 
 const orphanContent = Object.keys(serviceContent).filter(

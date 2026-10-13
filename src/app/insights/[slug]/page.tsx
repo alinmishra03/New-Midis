@@ -25,9 +25,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const article = await getArticle(slug);
   if (!article) return {};
 
+  /* CMS excerpts can run long; search results cut descriptions at roughly
+     160 characters, so trim at a word boundary rather than mid-word. */
+  const clip = (text: string, max = 158) =>
+    text.length <= max ? text : `${text.slice(0, text.lastIndexOf(" ", max - 1)).replace(/[,;:—-]\s*$/, "")}…`;
+
   return buildMetadata({
     title: article.title,
-    description: article.excerpt || `${article.title} — an article from MIDIS.`,
+    description: clip(article.excerpt || `${article.title} — an article from MIDIS.`),
     path: `/insights/${article.slug}`,
   });
 }

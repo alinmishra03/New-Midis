@@ -1,4 +1,6 @@
 import { StickyStack } from "@/components/motion/StickyStack";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
@@ -6,9 +8,9 @@ import { processSteps } from "@/content/company";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "Our Process",
+  title: "Our Website Design & Development Process",
   description:
-    "The MIDIS method: Discover, Strategise, Design, Build, Launch and Grow. Six stages with defined outputs at every point.",
+    "The MIDIS website design and development process: Discover, Strategise, Design, Build, Launch and Grow. Six stages, each with written outputs you can check.",
   path: "/process",
 });
 
@@ -16,6 +18,8 @@ export default function ProcessPage() {
   return (
     <>
       <PageHero
+        keyword="Our website design & development process"
+        aside={<ServiceVisual kind="process" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="How we work"
         headlineLines={["The MIDIS", "method."]}
         accentWords={["method."]}
@@ -111,6 +115,8 @@ crumbs={[{ label: "Our Process", href: "/process" }]}
           </Reveal>
         </div>
       </Section>
+
+      <FinalCta title="Ready to start at stage one?" primaryLabel="Start the discovery" />
     </>
   );
 }

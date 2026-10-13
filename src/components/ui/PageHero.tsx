@@ -24,6 +24,8 @@ export function PageHero({
   visualSeed,
   /** Chooses the hero background composition. */
   variant = "signal",
+  keyword,
+  aside,
 }: {
   eyebrow: string;
   headlineLines: string[];
@@ -34,6 +36,15 @@ export function PageHero({
   className?: string;
   visualSeed?: string;
   variant?: HeroVariant;
+  /**
+   * Search-intent phrase for the page (e.g. "Website Design Agency"). When
+   * given, it replaces the eyebrow and is rendered INSIDE the h1, above the
+   * display line, so the heading search engines read leads with what the
+   * page is about while the visual hierarchy stays editorial.
+   */
+  keyword?: string;
+  /** Right-hand visual. Switches the hero to a two-column layout on lg. */
+  aside?: ReactNode;
 }) {
   return (
     <section className={cn("relative isolate overflow-hidden bg-paper", className)}>
@@ -48,7 +59,7 @@ export function PageHero({
       />
 
       {/* Original generated artwork, seeded per page — see AbstractVisual. */}
-      {visualSeed && (
+      {visualSeed && !aside && (
         <AbstractVisual
           seed={visualSeed}
           className="absolute bottom-0 right-0 hidden h-[60%] w-[46%] opacity-70 lg:block"
@@ -82,39 +93,62 @@ export function PageHero({
           </ol>
         </nav>
 
-        <p className="mt-10 flex items-center gap-3 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">
-          <span className="h-px w-8 bg-accent" aria-hidden="true" />
-          {eyebrow}
-        </p>
+        <div className={cn(aside && "lg:grid lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-16")}>
+          <div className="min-w-0">
+            {!keyword && (
+              <p className="mt-10 flex items-center gap-3 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">
+                <span className="h-px w-8 bg-accent" aria-hidden="true" />
+                {eyebrow}
+              </p>
+            )}
 
-        <h1 className="mt-7 max-w-[20ch] text-[length:var(--text-display-lg)] font-semibold leading-[0.92] tracking-[-0.04em]">
-          <MaskedLines>
-            {/* Lines are joined and allowed to wrap naturally; MaskedLines
-                measures the rendered layout rather than assuming breaks.
-                Accent words keep their orange highlight. */}
-            {headlineLines
-              .join(" ")
-              .split(" ")
-              .map((word, i, all) => {
-                const normalised = word.toLowerCase().replace(/[.,?]/g, "");
-                const isAccent = accentWords?.some(
-                  (a) => a.toLowerCase().replace(/[.,?]/g, "") === normalised,
-                );
-                return (
-                  <span key={i} className={isAccent ? "text-accent" : undefined}>
-                    {word}
-                    {i < all.length - 1 ? " " : ""}
-                  </span>
-                );
-              })}
-          </MaskedLines>
-        </h1>
+            <h1
+              className={cn(
+                "max-w-[20ch] font-semibold tracking-[-0.04em]",
+                keyword ? "mt-10" : "mt-7",
+                aside ? "text-[length:var(--text-display-md)] leading-[0.98]" : "text-[length:var(--text-display-lg)] leading-[0.92]",
+              )}
+            >
+              {keyword && (
+                <span className="mb-6 flex items-center gap-3 text-[0.75rem] font-semibold uppercase leading-snug tracking-[0.18em] text-accent-ink sm:text-[0.8125rem]">
+                  <span className="h-px w-8 shrink-0 bg-accent" aria-hidden="true" />
+                  {keyword}
+                  {/* Keeps the two parts apart in the accessible name and the
+                      text search engines read: "Keyword: Headline". */}
+                  <span className="sr-only">: </span>
+                </span>
+              )}
+              <MaskedLines>
+                {/* Lines are joined and allowed to wrap naturally; MaskedLines
+                    measures the rendered layout rather than assuming breaks.
+                    Accent words keep their orange highlight. */}
+                {headlineLines
+                  .join(" ")
+                  .split(" ")
+                  .map((word, i, all) => {
+                    const normalised = word.toLowerCase().replace(/[.,?]/g, "");
+                    const isAccent = accentWords?.some(
+                      (a) => a.toLowerCase().replace(/[.,?]/g, "") === normalised,
+                    );
+                    return (
+                      <span key={i} className={isAccent ? "text-accent" : undefined}>
+                        {word}
+                        {i < all.length - 1 ? " " : ""}
+                      </span>
+                    );
+                  })}
+              </MaskedLines>
+            </h1>
 
-        {intro && (
-          <p className="mt-7 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">{intro}</p>
-        )}
+            {intro && (
+              <p className="mt-7 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">{intro}</p>
+            )}
 
-        {children}
+            {children}
+          </div>
+
+          {aside && <div className="mt-14 min-w-0 lg:mt-10">{aside}</div>}
+        </div>
       </div>
     </section>
   );

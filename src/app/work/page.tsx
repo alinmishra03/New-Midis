@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import { WorkGrid } from "@/components/work/WorkGrid";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
@@ -13,9 +15,9 @@ import { buildMetadata } from "@/lib/seo";
  * real projects land it becomes indexable automatically.
  */
 export const metadata = buildMetadata({
-  title: "Our Work",
+  title: "Web Design Portfolio & Case Studies",
   description:
-    "Selected projects from MIDIS — websites, e-commerce builds, web applications, branding and growth work, with the thinking behind each one.",
+    "The MIDIS web design and development portfolio: websites, e-commerce builds and web applications, documented with the business problem behind each project.",
   path: "/work",
   noIndex: !hasPortfolio,
 });
@@ -24,6 +26,8 @@ export default function WorkPage() {
   return (
     <>
       <PageHero
+        keyword="Web design portfolio & case studies"
+        aside={<ServiceVisual kind="work" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="Selected work"
         headlineLines={
           hasPortfolio
@@ -76,6 +80,8 @@ crumbs={[{ label: "Our Work", href: "/work" }]}
           </Reveal>
         )}
       </Section>
+
+      <FinalCta title="Your project could be the next one here." />
     </>
   );
 }

@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { TrackView } from "@/components/analytics/Track";
 import { AuditResults } from "@/components/tools/AuditResults";
@@ -11,9 +13,9 @@ import { runAudit, type AuditStrategy } from "@/lib/pagespeed";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "Free Website Growth Audit",
+  title: "Free Website Audit Tool — Speed, SEO & Accessibility",
   description:
-    "Run a free, genuine audit of your website — performance, accessibility, SEO fundamentals and best practices, measured by Google Lighthouse. No invented scores.",
+    "Free website audit tool powered by Google Lighthouse. Check your site's speed, SEO, accessibility and best practices, and see the specific issues found.",
   path: "/tools/website-audit",
 });
 
@@ -145,6 +147,8 @@ export default async function WebsiteAuditPage({
   return (
     <>
       <PageHero
+        keyword="Free website audit tool"
+        aside={<ServiceVisual kind="audit" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="Free website growth audit"
         headlineLines={["Is your website", "helping your", "business grow?"]}
         accentWords={["grow?"]}
@@ -232,6 +236,8 @@ export default async function WebsiteAuditPage({
           </div>
         </Section>
       )}
+
+      <FinalCta title="Want the issues fixed, not just found?" primaryLabel="Get help with the fixes" />
     </>
   );
 }

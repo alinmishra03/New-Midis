@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { FinalCta } from "@/components/home/Conversion";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
@@ -7,9 +9,9 @@ import { aboutNarrative, aboutPrinciples, leadership, whatYouGain } from "@/cont
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "About MIDIS",
+  title: "About Us — Web Design & Development Agency",
   description:
-    "MIDIS is a website design and development agency in Mohali, working with startups and established businesses worldwide.",
+    "MIDIS is a website design and development agency in Mohali, India, working with startups and established businesses worldwide. How we work and what we measure.",
   path: "/about",
 });
 
@@ -17,6 +19,8 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
+        keyword="About MIDIS, a web design & development agency"
+        aside={<ServiceVisual kind="about" className="mx-auto max-w-lg lg:max-w-none" />}
         eyebrow="About MIDIS"
         headlineLines={["Who we are,", "and how we work."]}
         accentWords={["work."]}
@@ -160,6 +164,8 @@ crumbs={[{ label: "About", href: "/about" }]}
           ))}
         </StaggerGroup>
       </Section>
+
+      <FinalCta title="Want to see how we’d approach your project?" />
     </>
   );
 }
