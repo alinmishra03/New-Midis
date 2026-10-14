@@ -35,6 +35,11 @@ const MANIFEST = "src/content/client-logos.ts";
  * Consultancy one. Every slug below exists in content/clients.ts.
  */
 const BATCH_2 = {
+  /* Added 2026-10-14, after the first ten. Both are white-on-transparent and
+     take the dark panel; the "samriti txt." file is the mark for the client
+     the report calls Samrit — see the note in content/clients.ts. */
+  "country-kids": "Country kids learning center (3).png",
+  samrit: "samriti txt. (12).png",
   "cozy-and-comfy": "cozy n comfy.png",
   "gulf-connect-consultancy": "GCC (1).png",
   "hqb-pro-solutions": "hbq.png",

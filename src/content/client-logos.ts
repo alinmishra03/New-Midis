@@ -27,6 +27,7 @@ export interface ClientLogoAsset {
 export const clientLogos: Readonly<Record<string, ClientLogoAsset>> = {
   "alinkriti": { src: "/images/clients/alinkriti.webp", width: 520, height: 180, onDark: true, source: "https://alinkriti.com/cdn/shop/files/A_8.png" },
   "aureus-hospitality": { src: "/images/clients/aureus-hospitality.webp", width: 236, height: 240, onDark: true, source: "https://www.aureus-hospitality.com/logo.png" },
+  "country-kids": { src: "/images/clients/country-kids.webp", width: 106, height: 67, onDark: true, source: "public/logos/Country kids learning center (3).png (supplied by MIDIS, 2026-10-14)" },
   "cozy-and-comfy": { src: "/images/clients/cozy-and-comfy.webp", width: 182, height: 151, onDark: false, source: "public/logos/cozy n comfy.png (supplied by MIDIS, 2026-10-14)" },
   "gulf-connect-consultancy": { src: "/images/clients/gulf-connect-consultancy.webp", width: 480, height: 123, onDark: true, source: "public/logos/GCC (1).png (supplied by MIDIS, 2026-10-14)" },
   "high-spirits": { src: "/images/clients/high-spirits.webp", width: 139, height: 240, onDark: false, source: "https://www.highspirits.au/logo.png" },
@@ -36,6 +37,7 @@ export const clientLogos: Readonly<Record<string, ClientLogoAsset>> = {
   "mobile-tyre-champions": { src: "/images/clients/mobile-tyre-champions.webp", width: 149, height: 149, onDark: false, source: "public/logos/mtc.png (supplied by MIDIS, 2026-10-14)" },
   "mounting-backend-service": { src: "/images/clients/mounting-backend-service.webp", width: 240, height: 56, onDark: false, source: "public/logos/mbs.png (supplied by MIDIS, 2026-10-14)" },
   "nexus-fundings": { src: "/images/clients/nexus-fundings.webp", width: 155, height: 240, onDark: false, source: "https://nexusfundings.com.au/wp-content/uploads/2025/04/logo-2.svg" },
+  "samrit": { src: "/images/clients/samrit.webp", width: 248, height: 138, onDark: true, source: "public/logos/samriti txt. (12).png (supplied by MIDIS, 2026-10-14)" },
   "sofisam": { src: "/images/clients/sofisam.webp", width: 520, height: 86, onDark: true, source: "https://sofisam.com/logo.png" },
   "solar-spectrum": { src: "/images/clients/solar-spectrum.webp", width: 520, height: 178, onDark: false, source: "https://www.solarspectrum.com.au/Asset%207.png" },
   "the-thali-tales": { src: "/images/clients/the-thali-tales.webp", width: 240, height: 240, onDark: false, source: "public/logos/thali tales.png (supplied by MIDIS, 2026-10-14)" },

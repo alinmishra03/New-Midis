@@ -8,16 +8,18 @@ import { cn } from "@/lib/utils";
 /**
  * Client showcase.
  *
- * Every one of the 18 clients in MIDIS's portfolio report appears, whether or
- * not an authentic logo exists for it. Sixteen now have one: six downloaded
- * from the client's own website in October 2026, and ten supplied by MIDIS on
- * 2026-10-14. Country Kids and Samrit are still set as text, which the brief
- * asks for in place of a substitute mark.
+ * All 18 clients in MIDIS's portfolio report appear, and all 18 now carry an
+ * authentic mark: six downloaded from the client's own website in October
+ * 2026, and twelve supplied by MIDIS on 2026-10-14.
  *
- * The 2026-10-14 batch also retired two text cards that existed because their
- * downloads had been discarded on inspection — a Maxxis tyre-brand logo
- * scraped from a supplier strip for Mobile Tyre Champions, and a photograph
- * of the Burj Khalifa for Gulf Connect. Both now carry their real mark.
+ * That batch retired four text cards. Two existed because the download had
+ * been discarded on inspection — a Maxxis tyre-brand logo scraped from a
+ * supplier strip for Mobile Tyre Champions, and a photograph of the Burj
+ * Khalifa for Gulf Connect. The other two, Country Kids and Samrit, had no
+ * asset at all.
+ *
+ * The text treatment below is kept even though nothing uses it today: a
+ * nineteenth client with no mark should be named, not omitted.
  *
  * Nothing here claims a result. The section says who MIDIS has worked with,
  * which the report supports, and stops there.
