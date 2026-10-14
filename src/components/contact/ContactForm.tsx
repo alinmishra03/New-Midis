@@ -256,7 +256,7 @@ export function ContactForm({ defaultIntent }: { defaultIntent?: string }) {
 
   if (status === "success") {
     return (
-      <div role="status" className="rounded-2xl border border-line bg-surface p-8 text-center sm:p-10">
+      <div role="status" className="rounded-2xl border border-line bg-surface p-6 text-center sm:p-8">
         <div
           aria-hidden="true"
           className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent"

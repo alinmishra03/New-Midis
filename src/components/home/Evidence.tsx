@@ -37,7 +37,7 @@ export function TrustStrip() {
   if (!hasEvidence(logos) && countsWorthShowing.length === 0) return null;
 
   return (
-    <Section tone="surface" className="!py-16" aria-labelledby="trust-heading">
+    <Section tone="surface" className="!py-10 lg:!py-14" aria-labelledby="trust-heading">
       <h2 id="trust-heading" className="sr-only">
         Clients and company facts
       </h2>
@@ -56,11 +56,11 @@ export function TrustStrip() {
       )}
 
       {hasEvidence(logos) && (
-        <Reveal className={countsWorthShowing.length > 0 ? "rule mt-12 pt-12" : undefined}>
+        <Reveal className={countsWorthShowing.length > 0 ? "rule mt-[var(--space-block)] pt-[var(--space-block)]" : undefined}>
           <p className="mb-8 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">
             Trusted by
           </p>
-          <ul className="flex flex-wrap items-center gap-x-12 gap-y-8">
+          <ul className="flex flex-wrap items-center gap-x-8 gap-y-8">
             {logos.map((l) => (
               <li key={l.name}>
                 <Image
@@ -99,7 +99,7 @@ export function FeaturedWork() {
         }
       />
 
-      <div className="mt-14 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-[var(--space-block)] grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {featured.map((p, i) => (
           <Reveal key={p.slug} delay={(i % 3) * 90}>
             <Link href={`/work/${p.slug}`} className="group block">
@@ -153,9 +153,9 @@ export function Results() {
         intro="Every figure below names the client, the starting point, the period it was measured over and how it was measured. If we can't show you that, we don't publish the number."
       />
 
-      <div className="mt-14 grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-[var(--space-block)] grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-3">
         {results.map((r, i) => (
-          <Reveal key={`${r.client}-${r.label}`} delay={(i % 3) * 80} className="bg-ink p-8">
+          <Reveal key={`${r.client}-${r.label}`} delay={(i % 3) * 80} className="bg-ink p-5 sm:p-6">
             <p className="tabular font-display text-[length:var(--text-display-sm)] text-accent">
               {r.value}
             </p>
@@ -203,12 +203,12 @@ export function Testimonials() {
         title="Real people. Real companies."
       />
 
-      <div className="mt-14 grid gap-8 lg:grid-cols-3">
+      <div className="mt-[var(--space-block)] grid gap-8 lg:grid-cols-3">
         {testimonials.map((t, i) => (
           <Reveal
             key={`${t.name}-${t.company}`}
             delay={(i % 3) * 90}
-            className="flex flex-col rounded-xl border border-line p-8"
+            className="flex flex-col rounded-xl border border-line p-5 sm:p-6"
           >
             <blockquote className="flex-1 text-lg leading-relaxed text-ink">
               &ldquo;{t.quote}&rdquo;

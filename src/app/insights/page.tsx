@@ -49,7 +49,7 @@ crumbs={[{ label: "Insights", href: "/insights" }]}
            * unreachable or has nothing published, we say so rather than
            * rendering filler.
            */
-          <Reveal className="mx-auto max-w-2xl rounded-2xl border border-line bg-paper p-10 text-center lg:p-14">
+          <Reveal className="mx-auto max-w-2xl rounded-2xl border border-line bg-paper p-6 text-center sm:p-8 lg:p-10">
             <h3 className="text-2xl tracking-tight text-ink">Nothing published here yet.</h3>
             <p className="mt-5 text-base leading-relaxed text-muted">
               We&apos;re working on it. In the meantime, if there&apos;s something you&apos;d
@@ -61,7 +61,7 @@ crumbs={[{ label: "Insights", href: "/insights" }]}
             {/* ------------------------------------------------ lead article */}
             <Reveal>
               <Link href={`/insights/${lead.slug}`} className="group block">
-                <div className="grid gap-8 lg:grid-cols-2 lg:gap-14 lg:items-center">
+                <div className="grid gap-8 lg:grid-cols-2 lg:gap-10 lg:items-center">
                   {lead.image && (
                     <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-line">
                       <Image
@@ -111,7 +111,7 @@ crumbs={[{ label: "Insights", href: "/insights" }]}
               <StaggerGroup
                 as="ul"
                 step={75}
-                className="rule mt-16 grid gap-x-8 gap-y-14 pt-16 sm:grid-cols-2 lg:grid-cols-3"
+                className="rule mt-[var(--space-block)] grid gap-x-8 gap-y-10 pt-[var(--space-block)] sm:grid-cols-2 lg:grid-cols-3"
               >
                 {rest.map((a) => (
                   <li key={a.slug}>

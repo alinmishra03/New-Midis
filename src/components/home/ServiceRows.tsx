@@ -28,7 +28,7 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
   return (
     <ul
       ref={listRef}
-      className="rule mt-14"
+      className="rule mt-[var(--space-block)]"
       onMouseLeave={() => setActive(null)}
     >
       {services.map((s, i) => {
@@ -62,17 +62,12 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
                 style={{ transformOrigin: isActive ? "left" : "right" }}
               />
 
-              <div className="grid gap-4 lg:grid-cols-[4rem_1fr_1.1fr_3rem] lg:items-baseline lg:gap-10">
-                {/* An accent rule replaces the former animated numeral —
-                    the brief rules out decorative numbering. */}
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "hidden h-px self-center bg-accent transition-all duration-[var(--dur-base)] ease-[var(--ease-out-expo)] lg:block",
-                    isActive ? "w-12 opacity-100" : "w-6 opacity-50",
-                  )}
-                />
-
+              {/* The 4rem column held the accent rule that stood in for the
+                  former numeral, and nothing else. With the rule gone the
+                  column goes too, rather than indenting every row behind an
+                  empty gutter. The row still shows which one is active: the
+                  full-width rule below draws across, and the others dim. */}
+              <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr_3rem] lg:items-baseline lg:gap-8">
                 <div>
                   <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted">
                     {s.problem}

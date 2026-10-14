@@ -8,7 +8,7 @@ import { faqs } from "@/content/company";
 export function AuditSection() {
   return (
     <Section tone="surface" aria-labelledby="audit-heading">
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
+      <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
         <div>
           <SectionHeader
             id="audit-heading"
@@ -76,7 +76,7 @@ export function FaqSection() {
   /* Native <details> — keyboard accessible and fully functional with no JS. */
   return (
     <Section tone="paper" aria-labelledby="faq-heading">
-      <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+      <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
         <div className="lg:sticky lg:top-32 lg:self-start">
           <SectionHeader
             id="faq-heading"
@@ -143,7 +143,7 @@ export function FinalCta({
         style={{ background: "radial-gradient(circle, #EF8716 0%, transparent 70%)" }}
       />
 
-      <div className="container-site relative py-24 text-center lg:py-36">
+      <div className="container-site relative py-[var(--space-section)] text-center">
         <Reveal>
           <div className="flex justify-center">
             <Eyebrow tone="dark">{eyebrow}</Eyebrow>

@@ -31,8 +31,8 @@ export function PortfolioGateway() {
         style={{ background: "radial-gradient(circle, #EF8716 0%, transparent 70%)" }}
       />
 
-      <div className="container-site relative py-[clamp(4.5rem,8vw,10rem)]">
-        <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-20">
+      <div className="container-site relative py-[var(--space-section)]">
+        <div className="grid items-center gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14">
           <div className="min-w-0">
             <Reveal>
               <Eyebrow tone="dark">The full portfolio</Eyebrow>

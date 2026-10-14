@@ -102,7 +102,7 @@ crumbs={[{ label: "Our Team", href: "/team" }]}
       <Section tone="surface" aria-labelledby="leadership-heading">
         <SectionHeader id="leadership-heading" eyebrow="Leadership" title="The visionaries." />
 
-        <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="mt-[var(--space-block)] grid gap-8 lg:grid-cols-2 lg:gap-12">
           {leadership.map((person) => (
             <Reveal key={person.name}>
               {/*
@@ -143,7 +143,7 @@ crumbs={[{ label: "Our Team", href: "/team" }]}
         <StaggerGroup
           as="ul"
           step={60}
-          className="mt-14 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4"
+          className="mt-[var(--space-block)] grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4"
         >
           {team.map((member) => (
             <MemberCard key={member.name} member={member} />

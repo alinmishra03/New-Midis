@@ -59,7 +59,7 @@ export function WorkShowcase({ projects }: { projects: readonly FeaturedProject[
     /* The preview takes the larger column and the selector the smaller one.
        They started the other way round, which gave the list of six labels
        more width than the thing it selects. */
-    <div className="mt-14 grid gap-10 lg:mt-16 lg:grid-cols-[1.35fr_0.65fr] lg:items-center lg:gap-14">
+    <div className="mt-[var(--space-block)] grid gap-8 lg:grid-cols-[1.35fr_0.65fr] lg:items-center lg:gap-8">
       {/* ------------------------------------------------- the selector */}
       <div className="min-w-0 lg:order-2">
         <div

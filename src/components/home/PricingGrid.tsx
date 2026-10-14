@@ -159,16 +159,16 @@ export function PricingGrid({ cards }: { cards: readonly PricingCard[] }) {
          * ones; a 230px card cannot hold a heading, a summary, three
          * deliverables and two CTAs without clipping something.
          */
-        className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4"
+        className="mt-[var(--space-block)] grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4"
       >
         {cards.map((card) => (
           <li key={card.slug} className="min-w-0">
             <article
               className={cn(
-                "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface p-6",
+                "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface p-5",
                 "transition-[border-color,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)]",
                 "hover:border-accent/45 hover:shadow-[0_20px_50px_-34px_rgba(23,25,28,0.55)]",
-                "focus-within:border-accent/45 motion-safe:hover:-translate-y-1 sm:p-7",
+                "focus-within:border-accent/45 motion-safe:hover:-translate-y-1 sm:p-6",
               )}
             >
               {/* Accent rule that draws across the top edge on hover or
@@ -178,10 +178,7 @@ export function PricingGrid({ cards }: { cards: readonly PricingCard[] }) {
                 className="absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-accent transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] group-hover:scale-x-100 group-focus-within:scale-x-100"
               />
 
-              <p className={cn("flex items-center gap-2.5", labelClass)}>
-                <span aria-hidden="true" className="h-px w-4 shrink-0 bg-accent" />
-                {card.group}
-              </p>
+              <p className={labelClass}>{card.group}</p>
 
               {/* The heading carries the crawlable link to the service page.
                   Everything the dialog shows is reachable without it. */}
@@ -259,12 +256,9 @@ export function PricingGrid({ cards }: { cards: readonly PricingCard[] }) {
             tabIndex={-1}
             className="plan-dialog-panel w-full max-w-xl rounded-t-2xl border border-line bg-surface outline-none sm:rounded-2xl"
           >
-            <div className="flex items-start justify-between gap-4 border-b border-line p-6 sm:p-7">
+            <div className="flex items-start justify-between gap-4 border-b border-line p-5 sm:p-6">
               <div className="min-w-0">
-                <p className={cn("flex items-center gap-2.5", labelClass)}>
-                  <span aria-hidden="true" className="h-px w-4 shrink-0 bg-accent" />
-                  {active.group}
-                </p>
+                <p className={labelClass}>{active.group}</p>
                 <h2
                   id="plan-dialog-title"
                   className="mt-3 text-[length:var(--text-display-sm)] leading-tight tracking-tight text-ink"
@@ -294,7 +288,7 @@ export function PricingGrid({ cards }: { cards: readonly PricingCard[] }) {
               </button>
             </div>
 
-            <div className="max-h-[min(60vh,32rem)] overflow-y-auto p-6 sm:p-7">
+            <div className="max-h-[min(60vh,32rem)] overflow-y-auto p-5 sm:p-6">
               <p className="text-base leading-relaxed text-ink">{active.problem}</p>
               <p className="mt-4 text-sm leading-relaxed text-muted">{active.summary}</p>
 

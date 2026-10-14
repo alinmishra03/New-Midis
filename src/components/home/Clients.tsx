@@ -161,7 +161,7 @@ export function ClientsSection() {
         as="ul"
         step={40}
         shift="1rem"
-        className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6"
+        className="mt-[var(--space-block)] grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6"
       >
         {clients.map((client) => (
           <li key={client.slug} className="min-w-0">

@@ -103,10 +103,13 @@ export function Hero() {
           as blank — hence the much smaller reservation on mobile. From lg the
           showcase replaces the band, so the reservation goes with it.
         */}
-        <div className="flex min-h-[calc(100svh-5rem-var(--announce-h))] flex-col justify-center pb-[24vh] pt-6 sm:pb-[40vh] sm:pt-16 lg:pb-16 lg:pt-20">
+        {/* lg:pb-20 rather than pb-16: the scroll cue is 63px tall and sits
+            16px off the foot of the section, so it needs 79px of clear space
+            and had 64 — the value strip ran into it on any desktop viewport
+            under about 1000px tall. 80px is the first step that clears it. */}
+        <div className="flex min-h-[calc(100svh-5rem-var(--announce-h))] flex-col justify-center pb-[24vh] pt-6 sm:pb-[40vh] sm:pt-16 lg:pb-20 lg:pt-20">
           {/* ----------------------------------------------- eyebrow */}
-          <div data-hero-stagger style={delay(80)} className="flex items-center gap-3">
-            <span className="h-px w-8 shrink-0 bg-accent" aria-hidden="true" />
+          <div data-hero-stagger style={delay(80)}>
             <p className="text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted sm:text-[0.6875rem] sm:tracking-[0.2em]">
               {/* Separators are decorative, so they are hidden from screen
                   readers rather than read out as "middle dot".
@@ -223,7 +226,7 @@ export function Hero() {
 
           {/* Everything below the headline. Two columns from lg, with the
               showcase taking the second one. */}
-          <div className="mt-7 max-sm:mt-5 grid gap-10 sm:mt-9 lg:mt-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)] lg:items-center lg:gap-16">
+          <div className="mt-7 max-sm:mt-5 grid gap-8 sm:mt-9 lg:mt-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)] lg:items-center lg:gap-12">
             <div>
               {/* -------------------------------------- the qualifier */}
               <div data-hero-stagger style={delay(560)}>

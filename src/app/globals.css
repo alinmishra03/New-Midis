@@ -49,6 +49,29 @@
 
   /* Layout */
   --spacing-gutter: 1rem;
+
+  /*
+   * VERTICAL RHYTHM
+   *
+   * Two values carry almost all of the page's vertical spacing, so the rhythm
+   * is tuned here rather than in forty components.
+   *
+   *   --space-section  padding above and below a <Section>. 44px on a phone,
+   *                    64 at 1280, 72 at 1440, capped at 88. It replaces
+   *                    clamp(4.5rem, 8vw, 10rem), which was 72 on a phone and
+   *                    102 at 1280 — 204px of air between two sections.
+   *   --space-block    a section header to the content under it, and any
+   *                    divider that separates blocks inside a section. 28 on a
+   *                    phone, 32 at 1280, 40 from 1600. It replaces the
+   *                    mt-12/mt-14/mt-16 that were used interchangeably for
+   *                    the same job.
+   *
+   * Both are clamps rather than breakpoint steps because the gap should track
+   * the viewport continuously; a phone and a 4K display should not get the
+   * same number, and neither should jump at 640px.
+   */
+  --space-section: clamp(2.75rem, 5vw, 5.5rem);
+  --space-block: clamp(1.75rem, 2.5vw, 2.5rem);
   /*
    * Height of the announcement bar, published so full-height sections can
    * subtract the chrome that is actually above them. The hero used to

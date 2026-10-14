@@ -145,7 +145,7 @@ export default function WorkPage() {
 
       {/* A plain path back into the site for anyone who reached the foot of
           the page without taking either CTA. */}
-      <Section tone="surface" className="!py-14">
+      <Section tone="surface" className="!py-10 lg:!py-12">
         <Reveal className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted">
           <span>Looking for something specific?</span>
           {[

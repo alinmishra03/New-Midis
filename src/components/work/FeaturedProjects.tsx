@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
  */
 export function FeaturedProjects({ projects }: { projects: readonly FeaturedProject[] }) {
   return (
-    <ul className="mt-16 flex flex-col gap-20 sm:mt-20 lg:gap-28">
+    <ul className="mt-[var(--space-block)] flex flex-col gap-10 lg:gap-14">
       {projects.map((project, i) => {
         /* The preview leads on the left for even rows and the right for odd
            ones. Below lg everything is one column and the preview always
@@ -38,7 +38,7 @@ export function FeaturedProjects({ projects }: { projects: readonly FeaturedProj
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "group grid items-center gap-8 rounded-2xl outline-none sm:gap-10 lg:grid-cols-2 lg:gap-16",
+                  "group grid items-center gap-8 rounded-2xl outline-none sm:gap-8 lg:grid-cols-2 lg:gap-12",
                   "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-8 focus-visible:ring-offset-paper",
                 )}
               >
@@ -66,8 +66,7 @@ export function FeaturedProjects({ projects }: { projects: readonly FeaturedProj
 
                 {/* ---------------------------------------------- text */}
                 <div className={cn("min-w-0", previewRight && "lg:order-1")}>
-                  <p className="flex items-center gap-3 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">
-                    <span className="h-px w-8 shrink-0 bg-accent" aria-hidden="true" />
+                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">
                     {project.category}
                   </p>
 

@@ -182,7 +182,7 @@ export function Footer() {
 
       {/* ============================================================ CTA */}
       <section aria-labelledby="footer-cta-heading" className="container-site relative">
-        <div className="grid gap-x-16 gap-y-10 py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-end lg:py-24">
+        <div className="grid gap-x-12 gap-y-8 py-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-end lg:py-16">
           <h2
             id="footer-cta-heading"
             className="max-w-[24ch] text-[length:var(--text-display-md)] text-surface"
@@ -235,7 +235,7 @@ export function Footer() {
 
       {/* ==================================================== main columns */}
       <div className="container-site relative">
-        <div className="grid gap-x-16 gap-y-14 py-16 lg:grid-cols-[minmax(17rem,23rem)_minmax(0,1fr)] lg:gap-x-20 lg:py-20 xl:gap-x-28">
+        <div className="grid gap-x-12 gap-y-8 py-12 lg:grid-cols-[minmax(17rem,23rem)_minmax(0,1fr)] lg:gap-x-14 lg:py-16 xl:gap-x-20">
           {/* ------------------------------------------------ identity */}
           <Reveal>
             <Link
@@ -312,7 +312,7 @@ export function Footer() {
           </Reveal>
 
           {/* ---------------------------------------------- navigation */}
-          <div className={`grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 ${navColumns}`}>
+          <div className={`grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3 ${navColumns}`}>
             {navGroups.map((group, i) => (
               <Reveal key={group.id} delay={60 + i * 60}>
                 <FooterNav {...group} />

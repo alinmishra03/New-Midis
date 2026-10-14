@@ -44,12 +44,14 @@ crumbs={[{ label: "Why MIDIS", href: "/why-midis" }]}
           <StaggerGroup as="ol" step={70} className="rule relative">
             {differentiators.map((d) => (
               <li key={d.number} className="group border-b border-line py-10 lg:py-12">
-                <div className="grid gap-5 lg:grid-cols-[6rem_1fr_1.2fr] lg:items-start lg:gap-10">
-                  <span
-                    aria-hidden="true"
-                    className="mt-4 block h-px w-10 bg-accent transition-[width] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] lg:group-hover:w-16"
-                  />
-                  <h3 className="text-[length:var(--text-display-sm)] leading-tight tracking-tight text-ink transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] lg:group-hover:translate-x-1.5">
+                {/* The first column is empty now that the decorative rule has
+                    gone, and it stays: the vertical line above is drawn at
+                    1.25rem and this column is the gutter it runs down. Closing
+                    it would put that line through the headings. The title is
+                    placed in column two explicitly, since there is no longer a
+                    first child to occupy column one. */}
+                <div className="grid gap-5 lg:grid-cols-[6rem_1fr_1.2fr] lg:items-start lg:gap-8">
+                  <h3 className="text-[length:var(--text-display-sm)] leading-tight tracking-tight text-ink transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] lg:col-start-2 lg:group-hover:translate-x-1.5">
                     {d.title}
                   </h3>
                   <p className="max-w-xl text-base leading-relaxed text-muted">{d.body}</p>
@@ -71,7 +73,7 @@ crumbs={[{ label: "Why MIDIS", href: "/why-midis" }]}
         <StaggerGroup
           as="ul"
           step={70}
-          className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-[var(--space-block)] grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4"
         >
           {whatYouGain.map((g) => (
             <li key={g.title} className="rule pt-6">

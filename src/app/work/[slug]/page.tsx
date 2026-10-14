@@ -54,10 +54,9 @@ function Chapter({
   if (!hasEvidence(paragraphs)) return null;
 
   return (
-    <Reveal className="grid gap-5 border-b border-line py-10 lg:grid-cols-[8rem_1fr] lg:gap-12 lg:py-14">
+    <Reveal className="grid gap-5 border-b border-line py-10 lg:grid-cols-[8rem_1fr] lg:gap-8 lg:py-14">
       <div>
-        <span aria-hidden="true" className="block h-px w-10 bg-accent" />
-        <h2 className="mt-4 text-xl tracking-tight text-ink">{title}</h2>
+        <h2 className="text-xl tracking-tight text-ink">{title}</h2>
       </div>
       <div className="max-w-2xl space-y-5">
         {paragraphs!.map((p, i) => (
@@ -122,7 +121,7 @@ crumbs={[
         </Reveal>
 
         {/* ------------------------------------------------ overview + facts */}
-        <div className="mt-16 grid gap-12 lg:grid-cols-[1.3fr_0.7fr] lg:gap-20">
+        <div className="mt-[var(--space-block)] grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:gap-14">
           <div>
             <SectionHeader eyebrow="Overview" title="The project." />
             <div className="mt-8 max-w-2xl space-y-5">
@@ -208,7 +207,7 @@ crumbs={[
             Project visuals
           </h2>
 
-          <div className="space-y-12">
+          <div className="space-y-8">
             {study!.images.map((img, i) => (
               <Reveal key={img.src} delay={(i % 2) * 70}>
                 <figure>
@@ -242,9 +241,9 @@ crumbs={[
             intro="Each figure below names its baseline, the period it covers and how it was measured."
           />
 
-          <div className="mt-14 grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-[var(--space-block)] grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-3">
             {study!.results.map((r, i) => (
-              <Reveal key={r.label} delay={(i % 3) * 80} className="bg-ink p-8">
+              <Reveal key={r.label} delay={(i % 3) * 80} className="bg-ink p-5 sm:p-6">
                 <p className="tabular font-display text-[length:var(--text-display-sm)] text-accent">
                   {r.value}
                 </p>
@@ -305,7 +304,7 @@ crumbs={[
         <Section tone="paper" aria-labelledby="related-heading">
           <SectionHeader id="related-heading" eyebrow="More work" title="Related projects." />
 
-          <ul className="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-[var(--space-block)] grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((p, i) => (
               <Reveal key={p.slug} as="li" delay={(i % 3) * 80}>
                 <Link href={`/work/${p.slug}`} className="group block">

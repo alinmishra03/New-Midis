@@ -62,7 +62,7 @@ export function MethodSteps({ steps }: { steps: readonly ProcessStep[] }) {
           content below is complete and readable on its own, so this adds
           orientation without carrying information of its own. */}
       {allowsMovement && (
-        <div aria-hidden="true" className="mt-14 flex items-center gap-2">
+        <div aria-hidden="true" className="mt-[var(--space-block)] flex items-center gap-2">
           {steps.map((step, i) => (
             <div key={step.number} className="flex flex-1 items-center gap-2">
               <span className="relative h-px flex-1 overflow-hidden bg-line-dark">
@@ -88,7 +88,7 @@ export function MethodSteps({ steps }: { steps: readonly ProcessStep[] }) {
             as="li"
             delay={(i % 3) * 80}
             className={cn(
-              "group relative bg-ink p-8 transition-colors duration-[var(--dur-base)] lg:p-10",
+              "group relative bg-ink p-5 transition-colors duration-[var(--dur-base)] sm:p-6 lg:p-8",
               isActive ? "bg-ink-soft" : "hover:bg-ink-soft",
             )}
           >
@@ -102,14 +102,10 @@ export function MethodSteps({ steps }: { steps: readonly ProcessStep[] }) {
                 )}
               />
 
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "block h-px bg-accent transition-all duration-[var(--dur-base)] ease-[var(--ease-out-expo)]",
-                  isActive ? "w-12 opacity-100" : "w-6 opacity-55",
-                )}
-              />
-              <h3 className="mt-5 text-2xl tracking-tight text-surface">{step.title}</h3>
+              {/* The small accent rule that sat here is gone. Which step is
+                  active is still shown by the rule above, which fills the
+                  full width of the card, and by the card's own background. */}
+              <h3 className="text-2xl tracking-tight text-surface">{step.title}</h3>
               <p className="mt-2 text-sm font-medium text-surface/70">{step.summary}</p>
               <p className="mt-5 text-sm leading-relaxed text-surface/55">{step.detail}</p>
 

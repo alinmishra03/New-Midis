@@ -197,7 +197,7 @@ function Panel({
   const client = clientFor(project);
 
   return (
-    <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] lg:gap-12 lg:p-10">
+    <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] lg:gap-8 lg:p-8">
       {/* ------------------------------------------------ the project */}
       <div className="flex min-w-0 flex-col">
         <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-accent-ink">
@@ -373,7 +373,7 @@ export function CaseStudyExplorer() {
   }
 
   return (
-    <div className="mt-12 sm:mt-14">
+    <div className="mt-[var(--space-block)]">
       {/*
         ---------------------------------------------- category tabs
 

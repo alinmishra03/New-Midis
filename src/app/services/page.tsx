@@ -83,7 +83,7 @@ export default function ServicesPage() {
 
         return (
           <Section key={group.id} id={group.id} tone={tone} className="scroll-mt-24" aria-labelledby={`group-${group.id}`}>
-            <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-16">
+            <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-12">
               <div className="lg:sticky lg:top-32 lg:self-start">
                 <SectionHeader id={`group-${group.id}`} eyebrow={`0${gi + 1}`} title={group.label} intro={groupIntro[group.id]} />
               </div>
@@ -99,7 +99,7 @@ export default function ServicesPage() {
                     <Link
                       href={`/services/${s.slug}`}
                       className={cn(
-                        "group flex h-full flex-col rounded-2xl border p-7 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
+                        "group flex h-full flex-col rounded-2xl border p-5 sm:p-6 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
                         tone === "surface" ? "border-line bg-paper/60" : "border-line bg-surface",
                       )}
                     >

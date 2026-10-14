@@ -86,7 +86,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
 
       {/* ---------------------------------------------------- the problem */}
       <Section tone="surface" aria-labelledby="challenges-heading">
-        <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-14">
           <div className="lg:sticky lg:top-32 lg:self-start">
             <SectionHeader
               id="challenges-heading"
@@ -107,10 +107,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
             <StaggerGroup as="ol" className="rule mt-10" step={60}>
               {industry.challenges.map((c) => (
                 <li key={c} className="border-b border-line py-5">
-                  <div className="flex items-baseline gap-5">
-                    <span aria-hidden="true" className="mt-3 h-px w-6 shrink-0 bg-accent" />
-                    <p className="text-base leading-relaxed text-ink">{c}</p>
-                  </div>
+                  <p className="text-base leading-relaxed text-ink">{c}</p>
                 </li>
               ))}
             </StaggerGroup>
@@ -130,13 +127,12 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
 
           <StaggerGroup
             as="ol"
-            className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line-dark md:grid-cols-3"
+            className="mt-[var(--space-block)] grid gap-px overflow-hidden rounded-xl bg-line-dark md:grid-cols-3"
             step={90}
           >
             {industry.approach!.map((a) => (
-              <li key={a} className="bg-ink p-8 lg:p-10">
-                <span aria-hidden="true" className="block h-px w-10 bg-accent" />
-                <p className="mt-5 text-base leading-relaxed text-surface/75">{a}</p>
+              <li key={a} className="bg-ink p-5 sm:p-6 lg:p-8">
+                <p className="text-base leading-relaxed text-surface/75">{a}</p>
               </li>
             ))}
           </StaggerGroup>
@@ -146,7 +142,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
       {/* ---------------------------------------------------------- buyers */}
       {hasEvidence(industry.buyers) && (
         <Section tone="paper" aria-labelledby="buyers-heading">
-          <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+          <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-14">
             <div className="lg:sticky lg:top-32 lg:self-start">
               <SectionHeader
                 id="buyers-heading"
@@ -158,7 +154,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
 
             <StaggerGroup as="ul" className="space-y-px overflow-hidden rounded-xl bg-line" step={90}>
               {industry.buyers!.map((b) => (
-                <li key={b.role} className="bg-paper p-7 sm:p-8">
+                <li key={b.role} className="bg-paper p-5 sm:p-6">
                   <h3 className="text-base font-semibold tracking-tight text-ink">{b.role}</h3>
                   <p className="mt-2.5 text-base leading-relaxed text-muted">{b.needs}</p>
                 </li>
@@ -171,7 +167,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
       {/* ------------------------------------------------------- features */}
       {hasEvidence(industry.features) && (
         <Section tone="surface" aria-labelledby="features-heading">
-          <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+          <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-14">
             <div className="lg:sticky lg:top-32 lg:self-start">
               <SectionHeader
                 id="features-heading"
@@ -203,10 +199,10 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
             intro="A recommendation is only useful if it also says where it stops being right. This is the default for the sector, and the case against it."
           />
 
-          <div className="mt-12 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
+          <div className="mt-[var(--space-block)] grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
             {/* The recommendation is uncovered rather than faded in — it is
                 the answer the section exists to give. */}
-            <ClipWipe className="rounded-xl border border-line-dark p-8 lg:p-10">
+            <ClipWipe className="rounded-xl border border-line-dark p-5 sm:p-6 lg:p-8">
               <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-accent">
                 Our default
               </p>
@@ -234,8 +230,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
                 </h3>
                 <StaggerGroup as="ul" className="mt-6 space-y-0" step={50}>
                   {industry.integrations!.map((item) => (
-                    <li key={item} className="flex items-baseline gap-4 border-b border-line-dark py-3.5">
-                      <span aria-hidden="true" className="mt-2.5 h-px w-4 shrink-0 bg-accent" />
+                    <li key={item} className="border-b border-line-dark py-3.5">
                       <span className="text-[0.9375rem] leading-relaxed text-surface/70">{item}</span>
                     </li>
                   ))}
@@ -255,7 +250,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
             title="How we'd know it worked, and what moves the date."
           />
 
-          <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-20">
+          <div className="mt-[var(--space-block)] grid gap-8 lg:grid-cols-2 lg:gap-14">
             {hasEvidence(industry.metrics) && (
               <div>
                 <h3 className="text-base font-semibold tracking-tight text-ink">
@@ -267,8 +262,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
                 </p>
                 <StaggerGroup as="ul" className="mt-7" step={55}>
                   {industry.metrics!.map((m) => (
-                    <li key={m} className="flex items-baseline gap-4 border-b border-line py-3.5">
-                      <span aria-hidden="true" className="mt-2.5 h-px w-4 shrink-0 bg-accent" />
+                    <li key={m} className="border-b border-line py-3.5">
                       <span className="text-[0.9375rem] leading-relaxed text-ink">{m}</span>
                     </li>
                   ))}
@@ -290,8 +284,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
                 </p>
                 <StaggerGroup as="ol" className="mt-5 space-y-5" step={70}>
                   {industry.timeline.drivers.map((d) => (
-                    <li key={d} className="flex items-baseline gap-4">
-                      <span aria-hidden="true" className="mt-2.5 h-px w-4 shrink-0 bg-accent" />
+                    <li key={d}>
                       <span className="text-[0.9375rem] leading-relaxed text-muted">{d}</span>
                     </li>
                   ))}
@@ -305,7 +298,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
       {/* ------------------------------------------------- rebuild signals */}
       {hasEvidence(industry.rebuildSignals) && (
         <Section tone="surface" aria-labelledby="signals-heading">
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
             <div className="lg:sticky lg:top-32 lg:self-start">
               <SectionHeader
                 id="signals-heading"
@@ -317,7 +310,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
 
             <StaggerGroup as="ul" className="grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2" step={80}>
               {industry.rebuildSignals!.map((s) => (
-                <li key={s} className="flex items-start gap-4 bg-surface p-7">
+                <li key={s} className="flex items-start gap-4 bg-surface p-5 sm:p-6">
                   <svg
                     viewBox="0 0 16 16"
                     aria-hidden="true"
@@ -348,14 +341,14 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
 
           <StaggerGroup
             as="ul"
-            className="mt-12 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2 lg:grid-cols-4"
+            className="mt-[var(--space-block)] grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-2 lg:grid-cols-4"
             step={70}
           >
             {relatedServices.map((s) => (
               <li key={s.slug} className="bg-paper">
                 <Link
                   href={`/services/${s.slug}`}
-                  className="group flex h-full flex-col p-7 transition-colors hover:bg-surface"
+                  className="group flex h-full flex-col p-5 transition-colors hover:bg-surface sm:p-6"
                 >
                   <h3 className="text-base font-semibold tracking-tight text-ink">{s.title}</h3>
                   <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">{s.summary}</p>
@@ -370,7 +363,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
       {/* ------------------------------------------------------------ FAQ */}
       {hasEvidence(faqs) && (
         <Section tone="surface" aria-labelledby="faq-heading">
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
             <div className="lg:sticky lg:top-32 lg:self-start">
               <SectionHeader
                 id="faq-heading"

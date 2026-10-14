@@ -23,7 +23,7 @@ export function WorkClosingCta() {
        doubling up on it. */
     <section
       aria-labelledby="work-closing-heading"
-      className="relative isolate overflow-hidden border-t border-surface/10 bg-ink pt-20 text-surface lg:pt-28"
+      className="relative isolate overflow-hidden border-t border-surface/10 bg-ink pt-[var(--space-section)] text-surface"
     >
       <div
         aria-hidden="true"
@@ -31,7 +31,7 @@ export function WorkClosingCta() {
         style={{ background: "radial-gradient(circle, #EF8716 0%, transparent 70%)" }}
       />
 
-      <div className="container-site relative pb-24 text-center lg:pb-36">
+      <div className="container-site relative pb-[var(--space-section)] text-center">
         <Reveal>
           <div className="flex justify-center">
             <Eyebrow tone="dark">What&apos;s next</Eyebrow>

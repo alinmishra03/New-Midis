@@ -122,7 +122,7 @@ crumbs={[
         <div
           className="mx-auto max-w-2xl
             [&>*+*]:mt-6
-            [&_h2]:mt-14 [&_h2]:font-display [&_h2]:text-[length:var(--text-display-sm)] [&_h2]:tracking-tight [&_h2]:text-ink
+            [&_h2]:mt-10 [&_h2]:font-display [&_h2]:text-[length:var(--text-display-sm)] [&_h2]:tracking-tight [&_h2]:text-ink
             [&_h3]:mt-10 [&_h3]:font-display [&_h3]:text-2xl [&_h3]:tracking-tight [&_h3]:text-ink
             [&_p]:text-base [&_p]:leading-relaxed [&_p]:text-muted sm:[&_p]:text-lg
             [&_a]:text-accent-ink [&_a]:underline [&_a]:underline-offset-4
@@ -138,7 +138,7 @@ crumbs={[
           dangerouslySetInnerHTML={{ __html: html }}
         />
 
-        <div className="rule mx-auto mt-14 max-w-2xl pt-8">
+        <div className="rule mx-auto mt-[var(--space-block)] max-w-2xl pt-8">
           <Link
             href="/insights"
             className="group inline-flex items-center gap-2 text-sm font-medium text-ink"
@@ -153,7 +153,7 @@ crumbs={[
         <Section tone="paper" aria-labelledby="more-heading">
           <SectionHeader id="more-heading" eyebrow="More reading" title="Other articles." />
 
-          <ul className="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-[var(--space-block)] grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((a, i) => (
               <Reveal key={a.slug} as="li" delay={(i % 3) * 80}>
                 <Link href={`/insights/${a.slug}`} className="group block">

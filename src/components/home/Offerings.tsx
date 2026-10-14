@@ -48,7 +48,7 @@ export function IndustriesSection() {
         intro="A SaaS product and a healthcare practice are not solving the same problem. We start from what's specific to your sector rather than a template."
       />
 
-      <StaggerGroup as="ul" step={45} className="mt-14 rule">
+      <StaggerGroup as="ul" step={45} className="mt-[var(--space-block)] rule">
         {industries.map((ind) => (
           <li key={ind.slug} className="border-b border-line">
             {/*
@@ -63,17 +63,11 @@ export function IndustriesSection() {
             */}
             <Link
               href={`/industries/${ind.slug}`}
-              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 py-7 transition-colors lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_auto] lg:gap-x-12"
+              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 py-7 transition-colors lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_auto] lg:gap-x-8"
             >
-              <div className="flex items-baseline gap-5">
-                <span
-                  aria-hidden="true"
-                  className="h-px w-6 shrink-0 bg-accent transition-[width] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:w-10"
-                />
-                <h3 className="text-2xl tracking-tight text-ink transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-x-1.5 sm:text-3xl">
-                  {ind.name}
-                </h3>
-              </div>
+              <h3 className="text-2xl tracking-tight text-ink transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-x-1.5 sm:text-3xl">
+                {ind.name}
+              </h3>
 
               <p className="hidden text-sm leading-relaxed text-muted lg:block">
                 {ind.challenges[0]}
@@ -121,7 +115,7 @@ export function TeamSection() {
       <StaggerGroup
         as="ul"
         step={55}
-        className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4"
+        className="mt-[var(--space-block)] grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4"
       >
         {team.map((m) => (
           <li key={m.name}>

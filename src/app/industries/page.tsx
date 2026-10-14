@@ -47,17 +47,11 @@ export default function IndustriesPage() {
             <li key={ind.slug} className="bg-surface">
               <Link
                 href={`/industries/${ind.slug}`}
-                className="group flex h-full flex-col p-8 transition-colors duration-[var(--dur-base)] hover:bg-paper lg:p-10"
+                className="group flex h-full flex-col p-5 transition-colors duration-[var(--dur-base)] hover:bg-paper sm:p-6 lg:p-8"
               >
-                <div className="flex items-baseline gap-4">
-                  <span
-                    aria-hidden="true"
-                    className="h-px w-6 bg-accent transition-[width] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:w-10"
-                  />
-                  <h3 className="text-2xl tracking-tight text-ink transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-x-1">
-                    {ind.name}
-                  </h3>
-                </div>
+                <h3 className="text-2xl tracking-tight text-ink transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:translate-x-1">
+                  {ind.name}
+                </h3>
 
                 <p className="mt-5 text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted">
                   What makes it hard
@@ -100,7 +94,7 @@ export default function IndustriesPage() {
           intro="Every sector arrives at a website with a different shape of problem — a different group of people to convince, and a different sensible default to build on. This is where those answers diverge."
         />
 
-        <div className="mt-12 overflow-hidden rounded-xl border border-line">
+        <div className="mt-[var(--space-block)] overflow-hidden rounded-xl border border-line">
           {/* Column headings, hidden on mobile where each row stacks and
               carries its own labels instead. */}
           <div

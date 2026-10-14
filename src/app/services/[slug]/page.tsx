@@ -145,9 +145,9 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
             title={`Where ${midSentence(service.title)} usually goes wrong.`}
           />
 
-          <StaggerGroup as="ol" step={90} className="mt-14 grid gap-px overflow-hidden rounded-2xl bg-line-dark md:grid-cols-3">
+          <StaggerGroup as="ol" step={90} className="mt-[var(--space-block)] grid gap-px overflow-hidden rounded-2xl bg-line-dark md:grid-cols-3">
             {detail.challenges.map((c, i) => (
-              <li key={c.title} className="group relative bg-ink p-8 transition-colors duration-[var(--dur-base)] hover:bg-ink-soft lg:p-10">
+              <li key={c.title} className="group relative bg-ink p-5 transition-colors duration-[var(--dur-base)] hover:bg-ink-soft sm:p-6 lg:p-8">
                 <span className="font-display text-sm font-semibold text-accent tabular">0{i + 1}</span>
                 <h3 className="mt-6 text-xl font-semibold tracking-tight text-surface">{c.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-surface/60">{c.body}</p>
@@ -163,7 +163,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
 
       {/* --------------------------------------------------------- approach */}
       <Section tone="surface" aria-labelledby="overview-heading">
-        <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
+        <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-14">
           <div className="lg:sticky lg:top-32 lg:self-start">
             <SectionHeader
               id="overview-heading"
@@ -217,12 +217,12 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           />
 
           {/* Bento: the first offering leads at double width on large screens. */}
-          <StaggerGroup as="ul" step={70} className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <StaggerGroup as="ul" step={70} className="mt-[var(--space-block)] grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {detail.offerings.map((o, i) => (
               <li
                 key={o.title}
                 className={cn(
-                  "group relative flex flex-col overflow-hidden rounded-2xl border p-7 transition-[transform,box-shadow,border-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
+                  "group relative flex flex-col overflow-hidden rounded-2xl border p-5 sm:p-6 transition-[transform,box-shadow,border-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
                   i === 0
                     ? "border-ink bg-ink text-surface sm:col-span-2 lg:row-span-2"
                     : "border-line bg-surface hover:border-accent/50",
@@ -278,11 +278,11 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
             }
           />
 
-          <div className="relative mt-16">
+          <div className="relative mt-[var(--space-block)]">
             <DrawLine orientation="horizontal" className="absolute left-0 right-0 top-5 hidden bg-line lg:block" />
             <DrawLine orientation="vertical" className="absolute bottom-0 left-5 top-0 bg-line lg:hidden" />
 
-            <StaggerGroup as="ol" step={110} className="relative grid gap-10 lg:grid-cols-4 lg:gap-8">
+            <StaggerGroup as="ol" step={110} className="relative grid gap-8 lg:grid-cols-4 lg:gap-8">
               {detail.process.map((p, i) => (
                 <li key={p.title} className="relative pl-16 lg:pl-0">
                   <span className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border border-accent bg-surface font-display text-sm font-semibold text-accent-ink lg:relative">
@@ -300,7 +300,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       {/* ------------------------------------------------ tech + industries */}
       {(detail || hasEvidence(industries)) && (
         <Section tone="paper" aria-labelledby="stack-heading">
-          <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
             {detail && (
               <div>
                 <SectionHeader id="stack-heading" eyebrow="Tools & technologies" title="What we work with." />
@@ -351,7 +351,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       {/* -------------------------------------------------------------- FAQ */}
       {hasEvidence(faqs) && (
         <Section tone="surface" aria-labelledby="faq-heading">
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
             <div className="lg:sticky lg:top-32 lg:self-start">
               <SectionHeader
                 id="faq-heading"
@@ -385,12 +385,12 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
             }
           />
 
-          <StaggerGroup as="ul" step={60} className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StaggerGroup as="ul" step={60} className="mt-[var(--space-block)] grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {related.map((r) => (
               <li key={r.slug}>
                 <Link
                   href={`/services/${r.slug}`}
-                  className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-7 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.3)]"
+                  className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-5 sm:p-6 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.3)]"
                 >
                   <h3 className="text-base font-semibold tracking-tight text-ink">{r.title}</h3>
                   <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">{r.problem}</p>

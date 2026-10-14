@@ -133,7 +133,7 @@ export function PricingSection() {
 
       {/* ------------------------------------------- custom proposal CTA */}
       <Reveal delay={60}>
-        <div className="rule mt-14 flex flex-col gap-6 pt-10 lg:flex-row lg:items-center lg:justify-between lg:gap-12">
+        <div className="rule mt-[var(--space-block)] flex flex-col gap-6 pt-[var(--space-block)] lg:flex-row lg:items-center lg:justify-between lg:gap-8">
           <p className="max-w-xl text-[length:var(--text-display-sm)] leading-tight tracking-tight text-ink">
             Need something more specific? Let&apos;s talk about your project.
           </p>

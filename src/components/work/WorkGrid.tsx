@@ -75,7 +75,7 @@ export function WorkGrid({
         Showing {visible.length} {visible.length === 1 ? "project" : "projects"}
       </p>
 
-      <ul className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((p, i) => (
           <Reveal key={p.slug} as="li" delay={(i % 3) * 80}>
             <Link href={`/work/${p.slug}`} className="group block">

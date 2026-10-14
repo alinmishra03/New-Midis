@@ -32,8 +32,7 @@ export default function NotFound() {
       />
 
       <div className="container-site relative py-24 lg:py-36">
-        <p className="flex items-center gap-3 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">
-          <span className="h-px w-8 bg-accent" aria-hidden="true" />
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-muted">
           Error 404
         </p>
 
@@ -56,7 +55,7 @@ export default function NotFound() {
           </Button>
         </div>
 
-        <div className="rule mt-16 grid gap-10 pt-10 sm:grid-cols-3">
+        <div className="rule mt-[var(--space-block)] grid gap-8 pt-[var(--space-block)] sm:grid-cols-3">
           <div>
             <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted">
               Popular services

@@ -73,13 +73,13 @@ export function ContactPageContent({
       {/* The aside is capped rather than proportional: a fractional track
           let it stretch past a comfortable measure on wide screens, and the
           shorter form no longer needs to be given two thirds of the row. */}
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)] lg:gap-16 xl:gap-20">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)] lg:gap-12 xl:gap-14">
           <Reveal className="min-w-0">
             <ContactForm defaultIntent={isCall ? "call" : undefined} />
           </Reveal>
 
           <Reveal delay={120} className="min-w-0 space-y-5">
-            <div className="rounded-2xl border border-line bg-paper p-6 sm:p-7">
+            <div className="rounded-2xl border border-line bg-paper p-5 sm:p-6">
               <h3 className="text-lg font-semibold tracking-tight text-ink">
                 Prefer to talk right now?
               </h3>

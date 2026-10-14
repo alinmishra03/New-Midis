@@ -73,18 +73,18 @@ export function AuditResults({ result }: { result: AuditSuccess }) {
           }
         />
 
-        <Reveal className="mt-12 grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <Reveal className="mt-[var(--space-block)] grid grid-cols-2 gap-8 sm:grid-cols-4">
           {result.categories.map((c) => (
             <ScoreDial key={c.id} score={c.score} label={c.label} />
           ))}
         </Reveal>
 
         {hasEvidence(result.metrics) && (
-          <Reveal className="rule mt-14 pt-10">
+          <Reveal className="rule mt-[var(--space-block)] pt-[var(--space-block)]">
             <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted">
               Core metrics
             </h3>
-            <dl className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+            <dl className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
               {result.metrics.map((m) => (
                 <div key={m.id} className="rule pt-4">
                   <dt className="flex items-baseline justify-between gap-4">
@@ -112,7 +112,7 @@ export function AuditResults({ result }: { result: AuditSuccess }) {
             intro="Specific issues Google identified on this page, ordered by estimated impact. These are its findings, reported as given."
           />
 
-          <ul className="rule mt-12">
+          <ul className="rule mt-[var(--space-block)]">
             {result.opportunities.map((o, i) => (
               <Reveal key={o.title} as="li" delay={Math.min(i, 5) * 50} className="border-b border-line py-6">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8">

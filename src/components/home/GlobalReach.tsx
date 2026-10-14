@@ -28,7 +28,7 @@ export function GlobalReach() {
   const countWord = COUNT_WORDS[countryCount] ?? String(countryCount);
   return (
     <Section tone="ink" aria-labelledby="global-reach-heading">
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-20">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-14">
         {/* ------------------------------------------------------- copy */}
         <div className="max-w-xl">
           <Eyebrow tone="dark">Our global reach</Eyebrow>

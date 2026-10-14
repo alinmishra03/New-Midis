@@ -46,15 +46,11 @@ crumbs={[{ label: "Our Process", href: "/process" }]}
           {processSteps.map((step) => (
             <article
               key={step.number}
-              className="group rounded-2xl border border-line p-7 shadow-[0_1px_2px_rgba(23,25,28,0.04),0_12px_32px_-18px_rgba(23,25,28,0.18)] sm:p-9 lg:p-12"
+              className="group rounded-2xl border border-line p-5 shadow-[0_1px_2px_rgba(23,25,28,0.04),0_12px_32px_-18px_rgba(23,25,28,0.18)] sm:p-6 lg:p-8"
             >
-              <div className="grid gap-7 lg:grid-cols-[1fr_1fr] lg:gap-14">
+              <div className="grid gap-7 lg:grid-cols-[1fr_1fr] lg:gap-10">
                 <div>
-                  <span
-                    aria-hidden="true"
-                    className="block h-px w-10 bg-accent transition-[width] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover:w-16"
-                  />
-                  <h3 className="mt-6 text-[length:var(--text-display-sm)] leading-tight tracking-tight text-ink">
+                  <h3 className="text-[length:var(--text-display-sm)] leading-tight tracking-tight text-ink">
                     {step.title}
                   </h3>
                   <p className="mt-3 text-base font-medium text-ink/70">{step.summary}</p>
@@ -88,7 +84,7 @@ crumbs={[{ label: "Our Process", href: "/process" }]}
 
       {/* ------------------------------------------------------ principles */}
       <Section tone="ink" aria-labelledby="why-process-heading">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
           <SectionHeader
             id="why-process-heading"
             tone="dark"

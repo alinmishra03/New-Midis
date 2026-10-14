@@ -32,7 +32,7 @@ crumbs={[{ label: "About", href: "/about" }]}
 
       {/* ------------------------------------------------------- narrative */}
       <Section tone="surface" aria-labelledby="story-heading">
-        <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-14">
           <div className="lg:sticky lg:top-32 lg:self-start">
             <SectionHeader id="story-heading" eyebrow="Our story" title="Why we exist." />
           </div>
@@ -56,7 +56,7 @@ crumbs={[{ label: "About", href: "/about" }]}
           intro="Four things clients tell us make the difference."
         />
 
-        <StaggerGroup as="ul" step={80} className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2">
+        <StaggerGroup as="ul" step={80} className="mt-[var(--space-block)] grid gap-x-8 gap-y-8 sm:grid-cols-2">
           {aboutPrinciples.map((p) => (
             <li key={p.title} className="rule pt-6">
               <h3 className="text-xl font-semibold tracking-tight text-ink">{p.title}</h3>
@@ -74,7 +74,7 @@ crumbs={[{ label: "About", href: "/about" }]}
           title="Who runs MIDIS."
         />
 
-        <div className="mt-14 space-y-16 lg:space-y-20">
+        <div className="mt-[var(--space-block)] space-y-10 lg:space-y-14">
           {leadership.map((person, i) => (
             <Reveal
               key={person.name}
@@ -84,7 +84,7 @@ crumbs={[{ label: "About", href: "/about" }]}
                 empty space on large displays. The split flips with the
                 alternation so the image column is always the narrow one.
               */
-              className={`grid items-center gap-8 lg:gap-16 ${
+              className={`grid items-center gap-8 lg:gap-12 ${
                 i % 2 === 1
                   ? "lg:grid-cols-[1.2fr_0.8fr] lg:[&>figure]:order-2"
                   : "lg:grid-cols-[0.8fr_1.2fr]"
@@ -115,8 +115,7 @@ crumbs={[{ label: "About", href: "/about" }]}
               </figure>
 
               <div>
-                <span aria-hidden="true" className="block h-px w-10 bg-accent" />
-                <h3 className="mt-4 text-[length:var(--text-display-sm)] tracking-tight text-ink">
+                <h3 className="text-[length:var(--text-display-sm)] tracking-tight text-ink">
                   {person.name}
                 </h3>
                 <p className="mt-2 text-sm font-medium uppercase tracking-[0.15em] text-muted">
@@ -154,7 +153,7 @@ crumbs={[{ label: "About", href: "/about" }]}
         <StaggerGroup
           as="ul"
           step={70}
-          className="mt-14 grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-[var(--space-block)] grid gap-px overflow-hidden rounded-xl bg-line-dark sm:grid-cols-2 lg:grid-cols-4"
         >
           {whatYouGain.map((g) => (
             <li key={g.title} className="bg-ink p-8">

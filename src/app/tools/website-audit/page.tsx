@@ -71,7 +71,7 @@ function AuditForm({ defaultUrl, strategy }: { defaultUrl?: string; strategy?: A
 function AuditFallback({ reason, retryable, url }: { reason: string; retryable: boolean; url?: string }) {
   return (
     <Section tone="surface" className="!pt-0" aria-labelledby="fallback-heading">
-      <Reveal className="mx-auto max-w-2xl rounded-2xl border border-line bg-paper p-8 lg:p-12">
+      <Reveal className="mx-auto max-w-2xl rounded-2xl border border-line bg-paper p-6 lg:p-8">
         <h2 id="fallback-heading" className="text-2xl tracking-tight text-ink">
           We couldn&apos;t complete that audit.
         </h2>
@@ -168,7 +168,7 @@ export default async function WebsiteAuditPage({
         </Suspense>
       ) : (
         <Section tone="surface" className="!pt-0" aria-labelledby="what-heading">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
+          <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
             <div>
               <SectionHeader
                 id="what-heading"
@@ -203,7 +203,7 @@ export default async function WebsiteAuditPage({
             </div>
 
             <Reveal delay={120} className="lg:pt-16">
-              <div className="rounded-2xl border border-line bg-paper p-8">
+              <div className="rounded-2xl border border-line bg-paper p-6">
                 <h3 className="text-lg font-semibold tracking-tight text-ink">
                   Where these numbers come from
                 </h3>

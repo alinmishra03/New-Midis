@@ -98,7 +98,7 @@ export function ConsentBanner() {
       className="fixed inset-x-0 bottom-0 z-[60] p-4 sm:p-6"
     >
       <div className="container-site">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-line bg-surface p-6 shadow-[0_8px_40px_rgba(23,25,28,0.12)] sm:p-7">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-line bg-surface p-5 shadow-[0_8px_40px_rgba(23,25,28,0.12)] sm:p-6">
           <h2 id="consent-title" className="text-base font-semibold tracking-tight text-ink">
             Can we measure how this site is used?
           </h2>
