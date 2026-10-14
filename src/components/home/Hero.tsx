@@ -109,10 +109,45 @@ export function Hero() {
             <span className="h-px w-8 shrink-0 bg-accent" aria-hidden="true" />
             <p className="text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted sm:text-[0.6875rem] sm:tracking-[0.2em]">
               {/* Separators are decorative, so they are hidden from screen
-                  readers rather than read out as "middle dot". */}
-              Web Design <span aria-hidden="true">·</span> Development{" "}
-              <span aria-hidden="true">·</span> E-commerce{" "}
-              <span aria-hidden="true">·</span> Digital Growth
+                  readers rather than read out as "middle dot".
+
+                  THE TWO GROUPS ARE THE MOBILE LINE BREAK.
+
+                  The four terms are one run of text, and below sm the measure
+                  is too narrow for them: 236px at 320px against a line that
+                  wants 414. The greedy wrapper took the only break point it
+                  could reach, which is the hyphen in "E-commerce" — so the
+                  line ended "E-" and the next began "commerce". From 390 it
+                  kept the word whole but ended the line on a dangling
+                  separator and left "Digital Growth" alone underneath.
+
+                  Holding each pair together puts the break between them
+                  instead: two terms per line, no hyphen break, nothing
+                  orphaned. The middle separator is dropped below sm because
+                  the line break is already doing its job, and a trailing "·"
+                  at the end of the first line reads as a mistake.
+
+                  Each group is a block below sm rather than relying on the
+                  wrap, because the separator is hidden by a breakpoint and the
+                  wrap is decided by text metrics, and the two disagreed: from
+                  about 500px the run fits on one line again, and it rendered
+                  as "Development E-commerce" with the dot missing. A block
+                  makes the two lines certain wherever the hidden separator is,
+                  so the pair cannot come apart — and it does not depend on how
+                  wide the font happens to measure.
+
+                  All three are max-sm only. From sm the whole run fits on one
+                  line with room to spare (472px of text in 538px at 640), so
+                  above the breakpoint this renders exactly as it did. */}
+              <span className="max-sm:block max-sm:whitespace-nowrap">
+                Web Design <span aria-hidden="true">·</span> Development
+              </span>{" "}
+              <span aria-hidden="true" className="max-sm:hidden">
+                ·
+              </span>{" "}
+              <span className="max-sm:block max-sm:whitespace-nowrap">
+                E-commerce <span aria-hidden="true">·</span> Digital Growth
+              </span>
             </p>
           </div>
 
