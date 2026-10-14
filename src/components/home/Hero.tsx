@@ -126,8 +126,24 @@ export function Hero() {
               CTAs below the fold — on the page whose job is converting. This
               curve holds it to three lines on a phone and two on a desktop,
               and still caps far above every other heading on the site.
+
+              THE SECOND CLAMP IS THE PHONE, AND IT IS SIZED BY THE LONGEST
+              PHRASE RATHER THAN BY TASTE.
+
+              The base curve bottoms out at 36px, which was reading a size
+              too large on a phone and, at 320px, broke to four lines with
+              "Weeks." alone on the last. The mobile curve runs 28px at 320
+              to 36px at 430 and holds 36 from there to the sm step.
+
+              Its floor is set by "Launch Your Business", which the wrappers
+              below hold on one line: that phrase is 9.2x the font size, and
+              the measure at 320px is 280px, so 30px would leave 4px spare
+              and clip the moment a fallback font is a few percent wide.
+              28px leaves 22px, about 8%, which a metric-matched fallback
+              fits inside. From 360px up the curve is back above 30px, so
+              only the narrowest screen pays for the margin.
             */
-            className="mt-6 max-w-[24ch] sm:mt-8 text-[clamp(2.25rem,1rem+5.2vw,6.5rem)] font-semibold leading-[0.92] tracking-[-0.045em]"
+            className="mt-6 max-w-[24ch] max-sm:mt-4 sm:mt-8 text-[clamp(2.25rem,1rem+5.2vw,6.5rem)] max-sm:text-[clamp(1.75rem,0.296rem+7.27vw,2.25rem)] font-semibold leading-[0.92] tracking-[-0.045em]"
           >
             <MaskedLines delay={0.15} stagger={0.09}>
               {/*
@@ -140,14 +156,39 @@ export function Hero() {
                 390px the line duly began ". Not 14 Weeks." Keeping it with
                 "Days" removes the break opportunity; the cost is a two-pixel
                 orange dot.
+
+                THE PHRASE WRAPPERS ARE THE LINE BREAKS, BELOW sm ONLY.
+
+                `text-wrap: balance` on the global h1 rule cannot do this job
+                here: MaskedLines turns every word into an inline-block, and
+                the balancer does not reach across those, so the headline
+                falls back to a greedy wrap. Greedy gave "Launch Your" on a
+                half-empty first line from 360 up, and orphaned "Weeks." on a
+                fourth line at 320.
+
+                Holding each phrase together instead puts the break where the
+                sentence already turns, and lands the contrast the headline is
+                making — "in 14 Days." against "Not 14 Weeks." — on two
+                consecutive lines. Only below sm: above it the measure is wide
+                enough that the original wrap is what renders, and nothing
+                about the desktop headline changes.
+
+                Each phrase must still fit the measure on its own, since
+                nowrap removes its internal break points. The longest is
+                "Launch Your Business", which is checked at 320px — the
+                narrowest width the site targets — in the mobile clamp above.
               */}
-              Launch Your Business in <span className="hero-mark">14 Days.</span> Not 14 Weeks.
+              <span className="max-sm:whitespace-nowrap">Launch Your Business</span>{" "}
+              <span className="max-sm:whitespace-nowrap">
+                in <span className="hero-mark">14 Days.</span>
+              </span>{" "}
+              <span className="max-sm:whitespace-nowrap">Not 14 Weeks.</span>
             </MaskedLines>
           </h1>
 
           {/* Everything below the headline. Two columns from lg, with the
               showcase taking the second one. */}
-          <div className="mt-7 grid gap-10 sm:mt-9 lg:mt-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)] lg:items-center lg:gap-16">
+          <div className="mt-7 max-sm:mt-5 grid gap-10 sm:mt-9 lg:mt-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)] lg:items-center lg:gap-16">
             <div>
               {/* -------------------------------------- the qualifier */}
               <div data-hero-stagger style={delay(560)}>
@@ -162,7 +203,13 @@ export function Hero() {
 
               {/* ------------------------------------- the subheading */}
               <div data-hero-stagger style={delay(660)}>
-                <p className="mt-5 max-w-xl text-base leading-relaxed text-muted sm:mt-6 sm:text-lg">
+                {/* 15px/1.55 below sm. At 16px/1.625 the paragraph set five
+                    lines on every phone width and carried the most vertical
+                    weight of anything under the headline, which is what made
+                    the CTAs sit so low. The size step is small enough that
+                    the measure barely changes — it buys back the height from
+                    the leading, not from re-wrapping the text. */}
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-muted max-sm:text-[0.9375rem] max-sm:leading-[1.55] sm:mt-6 sm:text-lg">
                   Build a powerful online presence with custom websites, Shopify stores, smart
                   digital experiences, and growth-focused solutions. From first idea to launch,
                   MIDIS helps ambitious brands move faster and grow smarter.
@@ -173,13 +220,20 @@ export function Hero() {
               <div
                 data-hero-stagger
                 style={delay(780)}
-                className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:items-center"
+                className="mt-8 max-sm:mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:items-center"
               >
-                <Button href="/contact" variant="primary" size="lg" magnetic trackAs="hero_start_project">
+                {/* 48px below sm rather than the 56px of `size="lg"`. The
+                    column already stretches both to the same full width, so
+                    only the height needed bringing down — 56px on a stacked
+                    pair reads as two slabs, and 48 is still comfortably above
+                    the 44px touch minimum. Everything else about the buttons,
+                    including the magnetism and the hover swap, is the size
+                    they already were. */}
+                <Button href="/contact" variant="primary" size="lg" magnetic trackAs="hero_start_project" className="max-sm:h-12">
                   Start Your Project
                   <ArrowRight />
                 </Button>
-                <Button href="/work" variant="outline" size="lg" trackAs="hero_explore_work">
+                <Button href="/work" variant="outline" size="lg" trackAs="hero_explore_work" className="max-sm:h-12">
                   Explore Our Work
                   <ArrowRight />
                 </Button>
@@ -194,7 +248,12 @@ export function Hero() {
               <ul
                 data-hero-stagger
                 style={delay(900)}
-                className="mt-9 flex flex-col gap-2.5 border-t border-line pt-7 sm:flex-row sm:flex-wrap sm:gap-x-7 sm:gap-y-2.5"
+                /* Below sm the rule sat 36px under the CTAs and 28px above
+                   the first item, 64px of clear space that detached the strip
+                   from the hero it belongs to. 24 above and 20 below keeps the
+                   separator but closes the gap and leans it towards the items
+                   it introduces. */
+                className="mt-9 max-sm:mt-6 flex flex-col gap-2.5 border-t border-line pt-7 max-sm:pt-5 sm:flex-row sm:flex-wrap sm:gap-x-7 sm:gap-y-2.5"
               >
                 {VALUE_POINTS.map((point) => (
                   <li key={point} className="flex items-center gap-2.5 text-sm text-ink/75">

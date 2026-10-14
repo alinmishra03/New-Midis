@@ -55,8 +55,8 @@
    * subtract a hardcoded 5rem for the header alone, which left it a bar's
    * worth too tall the moment the bar was added.
    */
-  /* Two rows below sm (h-16 + 1px border); one row above. */
-  --announce-h: 4.0625rem;
+  /* One row of boxes below sm (3rem + 1px border); one row above. */
+  --announce-h: 3.0625rem;
   /* Was 86rem, which boxed the site in on large screens. */
   --container-site: 118rem;
 }
@@ -518,6 +518,33 @@ html.js .hero-bar {
    box is involved, and it is the alternative the brief offers. One pass, no
    loop, no flashing.
    -------------------------------------------------------------------------- */
+
+/*
+ * Homepage headline leading, below the `sm` step only.
+ *
+ * This is here rather than as a `max-sm:leading-*` class in Hero.tsx because
+ * it cannot work from there: the `h1, h2, h3, h4` rule near the top of this
+ * file is unlayered, and an unlayered declaration beats every utility in
+ * Tailwind's layers — which is why the headline has always computed to 0.96
+ * and the `leading-[0.92]` on the element has never applied. Setting it from
+ * an unlayered rule further down the same file is the one place that wins
+ * without reaching for `!important`.
+ *
+ * 0.96 is drawn for the display sizes the headline reaches from sm up. At
+ * the 30–36px it sets on a phone the lines close up and the three-line stack
+ * reads as a block, so the phone gets its own value and nothing else does.
+ *
+ * The condition is written the way Tailwind compiles `max-sm:`, so this rule
+ * and the `max-sm:` classes on the same element are byte-for-byte the same
+ * query and cannot disagree about where mobile ends. Range syntax
+ * (`width < 40rem`) reads better but is dropped silently by the CSS
+ * pipeline — it compiled to nothing at all.
+ */
+@media not (min-width: 40rem) {
+  #hero-heading {
+    line-height: 1.12;
+  }
+}
 
 .hero-mark {
   color: var(--color-accent);
