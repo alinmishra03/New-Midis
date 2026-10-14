@@ -1,42 +1,65 @@
 /**
- * Optimises the staged client logos into public/images/clients/ and writes
- * the manifest the section reads.
+ * Optimises client logos into public/images/clients/ and writes the manifest
+ * the section reads.
  *
- * Two staged files are deliberately NOT installed:
- *   mobile-tyre-champions.webp  is the Maxxis tyre brand's logo, lifted from
- *                               a supplier strip on the client's own site
- *   gulf-connect-consultancy.png  is a photograph of the Burj Khalifa
- * Both would be exactly the "unrelated image" the brief rules out, so those
- * two clients fall back to the text treatment.
+ * TWO BATCHES.
+ *
+ * Batch 1 was downloaded from each client's own website on 2026-10-12. Those
+ * originals are not in the repository, so the rows are carried here verbatim
+ * rather than re-derived — re-running this script must not drop them. Two of
+ * that batch's downloads were discarded on inspection: a Maxxis tyre-brand
+ * logo lifted from a supplier strip, and a photograph of the Burj Khalifa.
+ * Both clients now have a real mark in batch 2.
+ *
+ * Batch 2 was supplied by MIDIS on 2026-10-14 and staged in public/logos/.
+ * Those files stay where they are; this script only derives WebP copies, so
+ * the originals are preserved.
  *
  * Colours are never touched. Where a mark turns out to be light-on-
- * transparent — made for a dark header — it is flagged so the card can give
- * it a dark panel to sit on, rather than recolouring the logo.
+ * transparent — drawn for a dark header — it is flagged so the card can give
+ * it a dark panel to sit on, rather than recolouring someone's logo.
  */
 import sharp from "sharp";
-import { readdirSync, mkdirSync, writeFileSync, statSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
-const STAGE = "C:/Users/user/AppData/Local/Temp/claude/C--Users-user-OneDrive-Desktop-New-Midis/eb6a01f1-4e3c-4e2f-a80c-16fe30b0061c/scratchpad/client-logos";
+const STAGE = "public/logos";
 const OUT_DIR = "public/images/clients";
 const MANIFEST = "src/content/client-logos.ts";
 
-/* Rejected above; see the note at the top of this file. */
-const REJECT = new Set(["mobile-tyre-champions", "gulf-connect-consultancy"]);
-
-/** Where each installed mark came from, for the record. */
-const SOURCES = {
-  "high-spirits": "https://www.highspirits.au/logo.png",
-  "aureus-hospitality": "https://www.aureus-hospitality.com/logo.png",
-  "solar-spectrum": "https://www.solarspectrum.com.au/Asset%207.png",
-  alinkriti: "https://alinkriti.com/cdn/shop/files/A_8.png",
-  "menopause-relief-store":
-    "https://www.themenopausereliefstore.com/wp-content/uploads/2026/04/mrs-logo-pink-transparent2.png",
-  sofisam: "https://sofisam.com/logo.png",
-  "nexus-fundings": "https://nexusfundings.com.au/wp-content/uploads/2025/04/logo-2.svg",
+/**
+ * Batch 2: the staged file for each client slug.
+ *
+ * Mapped by reading each file, not by guessing from its name — "hbq.png"
+ * carries the HQB Pro Solutions mark and "GCC (1).png" the Gulf Connect
+ * Consultancy one. Every slug below exists in content/clients.ts.
+ */
+const BATCH_2 = {
+  "cozy-and-comfy": "cozy n comfy.png",
+  "gulf-connect-consultancy": "GCC (1).png",
+  "hqb-pro-solutions": "hbq.png",
+  "mars-home-centre": "MArs home centre (3).png",
+  "mounting-backend-service": "mbs.png",
+  "menopause-relief-store": "menopause.png",
+  "mobile-tyre-champions": "mtc.png",
+  "the-thali-tales": "thali tales.png",
+  tiv: "tiv.png",
+  yogshala: "yogshala.png",
 };
 
-/* Display box is about 190x72 CSS px, so this is comfortably past 2x. */
+/** Batch 1, already installed. Menopause is re-cut from batch 2 and drops out. */
+const BATCH_1 = [
+  { slug: "alinkriti", src: "/images/clients/alinkriti.webp", width: 520, height: 180, onDark: true, source: "https://alinkriti.com/cdn/shop/files/A_8.png" },
+  { slug: "aureus-hospitality", src: "/images/clients/aureus-hospitality.webp", width: 236, height: 240, onDark: true, source: "https://www.aureus-hospitality.com/logo.png" },
+  { slug: "high-spirits", src: "/images/clients/high-spirits.webp", width: 139, height: 240, onDark: false, source: "https://www.highspirits.au/logo.png" },
+  { slug: "nexus-fundings", src: "/images/clients/nexus-fundings.webp", width: 155, height: 240, onDark: false, source: "https://nexusfundings.com.au/wp-content/uploads/2025/04/logo-2.svg" },
+  { slug: "sofisam", src: "/images/clients/sofisam.webp", width: 520, height: 86, onDark: true, source: "https://sofisam.com/logo.png" },
+  { slug: "solar-spectrum", src: "/images/clients/solar-spectrum.webp", width: 520, height: 178, onDark: false, source: "https://www.solarspectrum.com.au/Asset%207.png" },
+];
+
+/* Display box is about 190x72 CSS px, so this is comfortably past 2x.
+   withoutEnlargement means a small original is never upscaled — a soft mark
+   is worse than a small one, and the card centres whatever it is given. */
 const MAX_W = 520;
 const MAX_H = 240;
 
@@ -45,18 +68,14 @@ mkdirSync(OUT_DIR, { recursive: true });
 /**
  * How much of the mark would actually read against a white card.
  *
- * Mean luminance is the wrong question: the MRS mark is a pale pink disc with
- * dark lettering inside it, so its average is light while the mark itself is
+ * Mean luminance is the wrong question: the MRS mark is a pale disc with dark
+ * lettering inside it, so its average is light while the mark itself is
  * perfectly legible on paper. What matters is whether ANY meaningful part of
  * it is dark enough to see — so this returns the share of opaque pixels with
  * enough contrast against white.
  */
 async function readableShare(buf) {
-  const { data, info } = await sharp(buf)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
+  const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   let dark = 0;
   let opaque = 0;
   for (let i = 0; i < data.length; i += info.channels) {
@@ -69,61 +88,60 @@ async function readableShare(buf) {
   return opaque === 0 ? 0 : dark / opaque;
 }
 
-const rows = [];
+const rows = [...BATCH_1];
 
-for (const file of readdirSync(STAGE).sort()) {
-  const slug = file.replace(/\.[^.]+$/, "");
-  if (REJECT.has(slug)) {
-    console.log(`skip  ${slug.padEnd(26)} rejected: not this client's mark`);
+for (const [slug, file] of Object.entries(BATCH_2)) {
+  const input = join(STAGE, file);
+  if (!existsSync(input)) {
+    console.log(`MISS  ${slug.padEnd(26)} ${file} not found`);
     continue;
   }
 
-  const input = join(STAGE, file);
-  /* SVGs are rasterised at a high density rather than copied: the Nexus file
-     is 488 KB because it carries an embedded bitmap, so shipping it as-is
-     would cost more than the PNG it contains. */
-  const pipeline = sharp(input, { density: 300 });
-  const meta = await pipeline.metadata();
-
-  const resized = sharp(input, { density: 300 })
+  const meta = await sharp(input).metadata();
+  const { data, info } = await sharp(input)
     .resize({ width: MAX_W, height: MAX_H, fit: "inside", withoutEnlargement: true })
-    .trim({ threshold: 2 });
+    /* Trims the transparent margin so the mark fills its box rather than
+       floating in whitespace the card then pads again. */
+    .trim({ threshold: 2 })
+    .webp({ quality: 92, effort: 6 })
+    .toBuffer({ resolveWithObject: true });
 
-  const { data, info } = await resized.webp({ quality: 92, effort: 6 }).toBuffer({ resolveWithObject: true });
-
-  const outName = `${slug}.webp`;
-  writeFileSync(join(OUT_DIR, outName), data);
+  writeFileSync(join(OUT_DIR, `${slug}.webp`), data);
 
   const readable = await readableShare(data);
   /*
-   * Under a twelfth of the mark carrying real contrast means it was drawn
-   * for a dark header. The figure is set from what the rendered grid
-   * actually looked like: Alinkriti measures 5.7% and is barely visible on
-   * a white card, while the MRS mark at 16% reads perfectly well.
+   * Under a twelfth of the mark carrying real contrast means it was drawn for
+   * a dark header. The figure is set from what the rendered grid actually
+   * looked like: Alinkriti measures 5.7% and is barely visible on a white
+   * card, while the MRS mark at 16% reads perfectly well.
    */
   const onDark = readable < 0.08;
 
   rows.push({
     slug,
-    src: `/images/clients/${outName}`,
+    src: `/images/clients/${slug}.webp`,
     width: info.width,
     height: info.height,
     onDark,
-    source: SOURCES[slug] ?? "",
+    source: `public/logos/${file} (supplied by MIDIS, 2026-10-14)`,
   });
 
   console.log(
-    `ok    ${slug.padEnd(26)} ${String(meta.width ?? "?").padStart(4)}x${String(meta.height ?? "?").padEnd(4)} -> ` +
-      `${info.width}x${info.height}  ${(data.length / 1024).toFixed(1)} KB  readable=${(readable * 100).toFixed(1)}%${onDark ? "  (light mark: needs a dark panel)" : ""}`,
+    `ok    ${slug.padEnd(26)} ${String(meta.width).padStart(4)}x${String(meta.height).padEnd(4)} -> ` +
+      `${String(info.width).padStart(3)}x${String(info.height).padEnd(3)}  ${(data.length / 1024).toFixed(1)} KB  ` +
+      `readable=${(readable * 100).toFixed(1)}%${onDark ? "  (light mark: needs a dark panel)" : ""}`,
   );
 }
+
+rows.sort((a, b) => a.slug.localeCompare(b.slug));
 
 const file = `/**
  * Generated by scripts/prepare-client-logos.mjs — do not edit by hand.
  *
- * Authentic client marks, downloaded from each client's own website on
- * 2026-10-12 and re-encoded to WebP. Colours are untouched; only size and
- * surrounding whitespace changed.
+ * Authentic client marks. The 2026-10-12 batch was downloaded from each
+ * client's own website; the 2026-10-14 batch was supplied by MIDIS and is
+ * staged in public/logos/. Colours are untouched; only size and surrounding
+ * whitespace changed.
  *
  * \`onDark\` means the mark is light-on-transparent — drawn for a dark header.
  * Those sit on a dark panel rather than being recoloured, because recolouring
@@ -154,8 +172,4 @@ ${rows
 `;
 
 writeFileSync(MANIFEST, file);
-
-console.log(`\ninstalled ${rows.length} logos into ${OUT_DIR}`);
-console.log(`manifest: ${MANIFEST}`);
-const total = rows.reduce((n, r) => n + statSync(join(OUT_DIR, r.src.split("/").pop())).size, 0);
-console.log(`total weight: ${(total / 1024).toFixed(1)} KB`);
+console.log(`\n${rows.length} logos in the manifest -> ${MANIFEST}`);

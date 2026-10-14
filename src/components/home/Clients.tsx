@@ -9,11 +9,15 @@ import { cn } from "@/lib/utils";
  * Client showcase.
  *
  * Every one of the 18 clients in MIDIS's portfolio report appears, whether or
- * not an authentic logo exists for it. Seven have marks downloaded from their
- * own websites; the other eleven are set as text, which the brief asks for in
- * place of a substitute. Two downloads were discarded on inspection — a
- * Maxxis tyre-brand logo scraped from a supplier strip, and a photograph of
- * the Burj Khalifa — because an unrelated image is worse than a name.
+ * not an authentic logo exists for it. Sixteen now have one: six downloaded
+ * from the client's own website in October 2026, and ten supplied by MIDIS on
+ * 2026-10-14. Country Kids and Samrit are still set as text, which the brief
+ * asks for in place of a substitute mark.
+ *
+ * The 2026-10-14 batch also retired two text cards that existed because their
+ * downloads had been discarded on inspection — a Maxxis tyre-brand logo
+ * scraped from a supplier strip for Mobile Tyre Champions, and a photograph
+ * of the Burj Khalifa for Gulf Connect. Both now carry their real mark.
  *
  * Nothing here claims a result. The section says who MIDIS has worked with,
  * which the report supports, and stops there.
@@ -27,12 +31,21 @@ import { cn } from "@/lib/utils";
  * no per-card JavaScript.
  */
 
-/** Uniform frame for every mark, whatever shape it is. */
+/**
+ * Uniform frame for every mark, whatever shape it is.
+ *
+ * The box is one size for all 18 so the grid reads as a grid; what varies is
+ * the mark inside it, which keeps its own proportions. The frame grew from
+ * 112/120px to 112/128 and the padding came in from 20px to 16, because
+ * several of the marks supplied on 2026-10-14 are square or portrait — a
+ * crest at the old 68px cap sat in the middle of a 190x112 card with air all
+ * round it.
+ */
 const CARD =
   "group relative flex h-28 items-center justify-center overflow-hidden rounded-xl border border-line " +
-  "px-5 transition-[border-color,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] " +
+  "px-4 transition-[border-color,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] " +
   "hover:border-accent/45 hover:shadow-[0_16px_40px_-30px_rgba(23,25,28,0.5)] " +
-  "focus-visible:border-accent/45 motion-safe:hover:-translate-y-0.5 sm:h-[7.5rem]";
+  "focus-visible:border-accent/45 motion-safe:hover:-translate-y-0.5 sm:h-32";
 
 function CardInner({ client }: { client: Client }) {
   const logo = clientLogo(client.slug);
@@ -59,7 +72,17 @@ function CardInner({ client }: { client: Client }) {
           height={logo.height}
           loading="lazy"
           sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 16vw"
-          className="max-h-[4.25rem] w-auto max-w-full object-contain transition-opacity duration-[var(--dur-base)]"
+          /*
+           * The cap is a height, so a square crest and a long wordmark both
+           * end up optically similar rather than the crest being shrunk to
+           * the wordmark's height. 76/88px against a 112/128px frame leaves
+           * the mark room to breathe without floating in it.
+           *
+           * Nothing is upscaled past about 1.2x of its native size at 2x DPR:
+           * the smallest supplied mark is 117x139, which is why the cap stops
+           * at 88 rather than filling the frame.
+           */
+          className="max-h-[4.75rem] w-auto max-w-full object-contain transition-opacity duration-[var(--dur-base)] sm:max-h-[5.5rem]"
         />
       ) : (
         /* No authentic mark yet. The name, set properly — not a stand-in

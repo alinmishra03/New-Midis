@@ -148,15 +148,38 @@ export const leadership: readonly TeamMember[] = [
   },
 ];
 
+/*
+ * PHOTOGRAPHS
+ *
+ * MIDIS supplied a new set on 2026-10-14, named after the people in them, and
+ * renamed the previous numbered files to "old 3 (N).webp" in the same move —
+ * which left every path here pointing at a file that no longer existed. The
+ * paths below are the new named derivatives (see scripts/prepare-team-photos).
+ *
+ * Nine people. Alok Yadav (Video Editor) was removed on 2026-10-14: he no
+ * longer works at MIDIS. He was the only person without a new photograph,
+ * which is consistent with the set MIDIS supplied.
+ */
 export const team: readonly TeamMember[] = [
-  { name: "Alin Mishra", role: "Web Developer", photo: "/team/7.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Shivani Dixit", role: "Frontend Developer", photo: "/team/9.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Ojasvinny Saini", role: "Graphic Designer", photo: "/team/8.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Swayam Gandhi", role: "Backend Developer", photo: "/team/4.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Rahul Gehlot", role: "Graphic Designer", photo: "/team/3.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Navkirat Bhogal", role: "SEO Expert", photo: "/team/5.webp", photoWidth: 1920, photoHeight: 2400 },
-  { name: "Chanda Angral", role: "Graphic Designer", photo: "/team/chanda.webp", photoWidth: 819, photoHeight: 1024 },
-  { name: "Alok Yadav", role: "Video Editor", photo: "/team/6.webp", photoWidth: 1920, photoHeight: 2400 },
+  { name: "Alin Mishra", role: "Web Developer", photo: "/team/alin-mishra.webp", photoWidth: 1200, photoHeight: 1500 },
+  { name: "Shivani Dixit", role: "Frontend Developer", photo: "/team/shivani-dixit.webp", photoWidth: 1200, photoHeight: 1500 },
+  { name: "Ojasvinny Saini", role: "Graphic Designer", photo: "/team/ojasvinny-saini.webp", photoWidth: 1200, photoHeight: 1500 },
+  { name: "Swayam Gandhi", role: "Backend Developer", photo: "/team/swayam-gandhi.webp", photoWidth: 1200, photoHeight: 1500 },
+  { name: "Rahul Gehlot", role: "Graphic Designer", photo: "/team/rahul-gehlot.webp", photoWidth: 1200, photoHeight: 1500 },
+  /* Was "SEO Expert"; changed on MIDIS's instruction of 2026-10-14. */
+  { name: "Navkirat Bhogal", role: "Digital Marketer", photo: "/team/navkirat-bhogal.webp", photoWidth: 1200, photoHeight: 1500 },
+  { name: "Chanda Angral", role: "Graphic Designer", photo: "/team/chanda-angral.webp", photoWidth: 1200, photoHeight: 1500 },
+  /*
+   * Added 2026-10-14. Both roles are read from the photographs themselves,
+   * which carry the title set above the subject — the same series as everyone
+   * above, where every printed title matches the role already recorded here.
+   * Nothing is inferred from the faces.
+   *
+   * "Simar" is the whole name MIDIS supplied; the file is Simar.jpg and no
+   * surname was given, so none is invented.
+   */
+  { name: "Mritunjai Upadhyay", role: "Full Stack Developer", photo: "/team/mritunjai-upadhyay.webp", photoWidth: 1200, photoHeight: 1500 },
+  { name: "Simar", role: "UX/UI Designer", photo: "/team/simar.webp", photoWidth: 1200, photoHeight: 1500 },
 ];
 
 /* ==========================================================================
