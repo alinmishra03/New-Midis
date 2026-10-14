@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, ArrowRight } from "@/components/ui/Button";
 import { LogoLink } from "@/components/ui/Logo";
 import { nav, type NavItem } from "@/content/site";
-import { hasPortfolio } from "@/content/work";
 import { cn } from "@/lib/utils";
 
 /**
@@ -44,11 +43,16 @@ import { cn } from "@/lib/utils";
  */
 
 /*
- * "Our Work" stays out of the navigation until there is work to show.
- * Sending a prospect to an empty portfolio costs more than a missing item,
- * and the item returns on its own once projects exist.
+ * "Work" used to be filtered out of the navigation until `hasPortfolio`
+ * flipped, because /work was then a noindexed empty state and sending a
+ * prospect to it cost more than a missing nav item did.
+ *
+ * It is now the work landing page: it carries its own featured projects and
+ * its own route to the portfolio, and it does not depend on
+ * content/evidence.ts being populated. So there is nothing left to gate and
+ * the navigation renders as written.
  */
-const visibleNav = nav.filter((item) => item.href !== "/work" || hasPortfolio);
+const visibleNav = nav;
 
 /** Matches the 1320px breakpoint used in the classes below. */
 const DESKTOP_NAV = "(min-width: 1320px)";

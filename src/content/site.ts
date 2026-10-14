@@ -282,6 +282,17 @@ export const nav: NavItem[] = [
       },
     ],
   },
+  /*
+   * A plain link, not a menu: /work is itself the index of the work, and a
+   * dropdown would have to list either the six featured projects — which all
+   * leave the site — or the portfolio, which is the page's own main CTA.
+   *
+   * It sits immediately before Company so the row still ends on the company
+   * group, and it is the ninth item in a bar that was rebuilt around eight.
+   * The bar wraps to the drawer below 1320px, so the extra item costs width
+   * only on genuinely wide screens.
+   */
+  { label: "Work", href: "/work" },
   {
     label: "Company",
     href: "/about",

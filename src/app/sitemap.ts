@@ -56,21 +56,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: 0.8,
     })),
+    /*
+     * /work is listed unconditionally. It used to be gated on hasPortfolio
+     * along with the project pages, because it was then a noindexed empty
+     * state and there was nothing to submit. It is now the work landing
+     * page, which has its own content and is indexable whether or not
+     * content/evidence.ts has been populated — so only the project URLs
+     * below it still depend on that flag.
+     */
+    {
+      url: `${site.url}/work`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    },
     ...(hasPortfolio
-      ? [
-          {
-            url: `${site.url}/work`,
-            lastModified: now,
-            changeFrequency: "monthly" as const,
-            priority: 0.9,
-          },
-          ...projects.map((p) => ({
-            url: `${site.url}/work/${p.slug}`,
-            lastModified: now,
-            changeFrequency: "yearly" as const,
-            priority: 0.7,
-          })),
-        ]
+      ? projects.map((p) => ({
+          url: `${site.url}/work/${p.slug}`,
+          lastModified: now,
+          changeFrequency: "yearly" as const,
+          priority: 0.7,
+        }))
       : []),
     ...articles.map((a) => ({
       url: `${site.url}/insights/${a.slug}`,
