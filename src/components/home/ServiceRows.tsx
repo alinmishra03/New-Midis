@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowRight } from "@/components/ui/Button";
+import { CardMedia } from "@/components/ui/CardMedia";
 import { Reveal } from "@/components/ui/Reveal";
+import { getServiceImage } from "@/content/service-imagery";
 import type { Service } from "@/content/types";
 import { useAllowsRichMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,13 @@ import { cn } from "@/lib/utils";
  * The hovered row lifts while its neighbours recede, which gives the list a
  * focal point without hiding anything. Keyboard focus produces the identical
  * state, so the effect is not pointer-only.
+ *
+ * Each row carries its own service's photograph as a background panel behind
+ * the type — a different picture per row, so Website Design and Website
+ * Development no longer look alike. It is a background, not a thumbnail: the
+ * panel is inset inside the row's existing padding box, so the row keeps the
+ * height, the grid and the hairline rules it had before, and the photograph
+ * strengthens on hover alongside the dimming that already happens.
  */
 export function ServiceRows({ services }: { services: readonly Service[] }) {
   const [active, setActive] = useState<string | null>(null);
@@ -34,6 +43,7 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
       {services.map((s, i) => {
         const isActive = active === s.slug;
         const dimmed = rich && active !== null && !isActive;
+        const image = getServiceImage(s.slug);
 
         return (
           <Reveal
@@ -48,10 +58,24 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
               onFocus={() => setActive(s.slug)}
               onBlur={() => setActive(null)}
               className={cn(
-                "group relative block py-8 transition-[opacity,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] lg:py-10",
+                "group relative isolate block py-8 transition-[opacity,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] lg:py-10",
                 dimmed ? "opacity-40" : "opacity-100",
               )}
             >
+              {/*
+                Bled slightly past the text on the horizontal axis and held
+                inside it on the vertical, so the panel reads as ground under
+                the row rather than as a card bolted into the list. The row's
+                own padding is untouched, so nothing gets taller.
+              */}
+              {image && (
+                <CardMedia
+                  src={image.src}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 94vw, 1200px"
+                  intensifyOnHover
+                  className="-inset-x-4 inset-y-1 rounded-2xl sm:-inset-x-6"
+                />
+              )}
               {/* Accent rule that draws across as the row becomes active. */}
               <span
                 aria-hidden="true"
@@ -69,7 +93,12 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
                   full-width rule below draws across, and the others dim. */}
               <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr_3rem] lg:items-baseline lg:gap-8">
                 <div>
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted">
+                  <p
+                    className={cn(
+                      "text-[0.6875rem] font-semibold uppercase tracking-[0.18em]",
+                      image ? "text-muted-strong" : "text-muted",
+                    )}
+                  >
                     {s.problem}
                   </p>
                   <h3
@@ -83,7 +112,12 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
                 </div>
 
                 <div>
-                  <p className="max-w-xl text-sm leading-relaxed text-muted sm:text-base">
+                  <p
+                    className={cn(
+                      "max-w-xl text-sm leading-relaxed sm:text-base",
+                      image ? "text-muted-strong" : "text-muted",
+                    )}
+                  >
                     {s.summary}
                   </p>
                   <ul className="mt-4 flex flex-wrap gap-x-2 gap-y-2">
@@ -94,7 +128,9 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
                           "rounded-full border px-3 py-1 text-xs transition-colors duration-[var(--dur-base)]",
                           isActive
                             ? "border-accent/40 bg-accent-soft text-ink"
-                            : "border-line text-muted",
+                            : image
+                              ? "border-line bg-surface/70 text-muted-strong"
+                              : "border-line text-muted",
                         )}
                       >
                         {d}
@@ -107,7 +143,7 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
                   <span
                     className={cn(
                       "mt-5 inline-flex items-center gap-2 text-sm font-medium transition-colors duration-[var(--dur-base)]",
-                      isActive ? "text-ink" : "text-muted",
+                      isActive ? "text-ink" : image ? "text-muted-strong" : "text-muted",
                     )}
                   >
                     Learn more
@@ -120,7 +156,11 @@ export function ServiceRows({ services }: { services: readonly Service[] }) {
                   aria-hidden="true"
                   className={cn(
                     "hidden h-10 w-10 items-center justify-center rounded-full border transition-colors duration-[var(--dur-base)] lg:flex",
-                    isActive ? "border-accent bg-accent text-ink" : "border-line text-muted",
+                    isActive
+                      ? "border-accent bg-accent text-ink"
+                      : image
+                        ? "border-line bg-surface/70 text-muted-strong"
+                        : "border-line text-muted",
                   )}
                 >
                   <ArrowRight />

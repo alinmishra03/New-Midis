@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { FinalCta } from "@/components/home/Conversion";
 import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { CardMedia } from "@/components/ui/CardMedia";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { ArrowRight } from "@/components/ui/Button";
 import { PageHero } from "@/components/ui/PageHero";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { getAllServices, serviceGroups } from "@/content/services";
+import { getServiceImage } from "@/content/service-imagery";
 import { site } from "@/content/site";
 import { JsonLd, buildMetadata } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -91,7 +93,9 @@ export default function ServicesPage() {
               {/* Separate cards rather than a hairline grid, so an odd
                   number of services never leaves an empty filler cell. */}
               <StaggerGroup as="ul" step={65} className="grid gap-4 sm:grid-cols-2">
-                {inGroup.map((s, i) => (
+                {inGroup.map((s, i) => {
+                  const image = getServiceImage(s.slug);
+                  return (
                   <li
                     key={s.slug}
                     className={cn(inGroup.length % 2 === 1 && i === 0 && "sm:col-span-2")}
@@ -99,22 +103,50 @@ export default function ServicesPage() {
                     <Link
                       href={`/services/${s.slug}`}
                       className={cn(
-                        "group flex h-full flex-col rounded-2xl border p-5 sm:p-6 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
-                        tone === "surface" ? "border-line bg-paper/60" : "border-line bg-surface",
+                        "group relative isolate flex h-full flex-col overflow-hidden rounded-2xl border border-line p-5 sm:p-6 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
+                        /*
+                          Image-backed cards sit on surface whichever section
+                          tone they are in, because the scrim above them is
+                          white. A paper-tinted card under a white scrim just
+                          reads as a slightly dirtier white, and the point of
+                          the alternating tone is the *section*, which still
+                          alternates around them.
+                        */
+                        image ? "bg-surface" : tone === "surface" ? "bg-paper/60" : "bg-surface",
                       )}
                     >
-                      <p className="text-[0.6875rem] font-semibold uppercase leading-relaxed tracking-[0.16em] text-accent-ink">
+                      {image && (
+                        <CardMedia
+                          src={image.src}
+                          sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 32vw"
+                          intensifyOnHover
+                        />
+                      )}
+                      <p
+                        className={cn(
+                          "text-[0.6875rem] font-semibold uppercase leading-relaxed tracking-[0.16em]",
+                          image ? "text-accent-ink-strong" : "text-accent-ink",
+                        )}
+                      >
                         {s.problem}
                       </p>
                       <h3 className="mt-4 text-xl font-semibold tracking-tight text-ink">{s.title}</h3>
-                      <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">{s.summary}</p>
+                      <p
+                        className={cn(
+                          "mt-3 flex-1 text-sm leading-relaxed",
+                          image ? "text-muted-strong" : "text-muted",
+                        )}
+                      >
+                        {s.summary}
+                      </p>
                       <span className="mt-7 inline-flex items-center gap-2 text-sm font-medium text-ink">
                         Explore {s.navLabel}
                         <ArrowRight className="transition-transform duration-[var(--dur-base)] group-hover:translate-x-1" />
                       </span>
                     </Link>
                   </li>
-                ))}
+                  );
+                })}
               </StaggerGroup>
             </div>
           </Section>

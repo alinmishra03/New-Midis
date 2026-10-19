@@ -1,5 +1,6 @@
 import { serviceContent } from "./service-content";
 import { serviceDetails } from "./service-details";
+import { assertUniqueServiceImagery, serviceImagery } from "./service-imagery";
 import type { Service } from "./types";
 
 /**
@@ -469,5 +470,30 @@ const orphanContent = Object.keys(serviceContent).filter(
 if (orphanContent.length > 0) {
   throw new Error(
     `service-content.ts: content for unknown service(s) ${orphanContent.join(", ")}.`,
+  );
+}
+
+/*
+  Card imagery. The same shape of guard as the three above: every service must
+  have a photograph, no photograph may be shared, and a stale entry left behind
+  after a service is renamed must not pass silently. All three fail `next build`
+  rather than shipping a page whose card looks like another service's.
+*/
+assertUniqueServiceImagery();
+
+const missingImagery = services.filter((s) => !serviceImagery[s.slug]).map((s) => s.slug);
+if (missingImagery.length > 0) {
+  throw new Error(
+    `service-imagery.ts: no card photograph for ${missingImagery.join(", ")}. ` +
+      `Add an entry and run \`node scripts/prepare-service-imagery.mjs\`.`,
+  );
+}
+
+const orphanImagery = Object.keys(serviceImagery).filter(
+  (slug) => !services.some((s) => s.slug === slug),
+);
+if (orphanImagery.length > 0) {
+  throw new Error(
+    `service-imagery.ts: photograph for unknown service(s) ${orphanImagery.join(", ")}.`,
   );
 }

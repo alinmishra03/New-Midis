@@ -24,10 +24,33 @@
   --color-line-dark: #2e3135;
   --color-muted: #777777;
   --color-muted-dark: #9a9a97;
+  /*
+    Body text on a card that has a photograph behind it.
+
+    #777777 is 4.48:1 on pure white and 4.22:1 on paper — already under the
+    4.5:1 floor before any image is involved, which is fine for the flat
+    sections it was chosen for but not for type sitting over a scrimmed
+    photograph. #5F6166 is 6.2:1 on white and still 4.8:1 against the darkest
+    ground a card background can produce. Only image-backed cards use it.
+  */
+  --color-muted-strong: #595b60;
 
   /* Signature accent — the original MIDIS logo orange */
   --color-accent: #ef8716;
   --color-accent-ink: #aa5a0a; /* AA-safe orange TEXT on light surfaces */
+  /*
+    The same orange taken one step darker, for the small uppercase label on a
+    card that has a photograph behind it.
+
+    #AA5A0A is 5.03:1 on pure white, which leaves almost no room: measured
+    against the real photographs, a card ground drops to L 0.77 and the label
+    lands at 3.9:1. Reaching 4.5:1 by scrim alone would need the scrim at 96%
+    everywhere, which is the same as having no photograph. #8A4A08 is 6.9:1 on
+    white and holds 5.3:1 on the darkest ground any of the 23 photographs
+    produces. Same hue, one more step down the ramp that produced accent-ink
+    in the first place. Verified by scripts/check-card-contrast.mjs.
+  */
+  --color-accent-ink-strong: #8a4a08;
   --color-accent-soft: #fdf1e4;
 
   /* Typography */

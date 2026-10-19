@@ -4,12 +4,14 @@ import { DrawLine } from "@/components/motion/DrawLine";
 import { StaggerGroup } from "@/components/motion/StaggerGroup";
 import { FinalCta } from "@/components/home/Conversion";
 import { ServiceVisual } from "@/components/services/ServiceVisual";
+import { CardMedia } from "@/components/ui/CardMedia";
 import { ArrowRight, Button } from "@/components/ui/Button";
 import { FaqList, faqSchema } from "@/components/ui/FaqList";
 import { PageHero } from "@/components/ui/PageHero";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { getIndustry } from "@/content/industries";
 import { getService, serviceGroups, services } from "@/content/services";
+import { getServiceImage } from "@/content/service-imagery";
 import { site } from "@/content/site";
 import { JsonLd, buildMetadata } from "@/lib/seo";
 import { cn, hasEvidence, midSentence } from "@/lib/utils";
@@ -54,6 +56,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
 
   const detail = service.detail;
   const groupLabel = serviceGroups.find((g) => g.id === service.group)?.label;
+  const serviceImage = getServiceImage(service.slug);
 
   const related = (service.relatedServices ?? [])
     .map((s) => getService(s))
@@ -222,12 +225,27 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
               <li
                 key={o.title}
                 className={cn(
-                  "group relative flex flex-col overflow-hidden rounded-2xl border p-5 sm:p-6 transition-[transform,box-shadow,border-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
+                  "group relative isolate flex flex-col overflow-hidden rounded-2xl border p-5 sm:p-6 transition-[transform,box-shadow,border-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.35)] lg:p-8",
                   i === 0
                     ? "border-ink bg-ink text-surface sm:col-span-2 lg:row-span-2"
                     : "border-line bg-surface hover:border-accent/50",
                 )}
               >
+                {/*
+                  Only the lead card. The brief this was built to asks for
+                  background imagery on the featured card and warns against
+                  forcing a picture onto every small one — five photographs in
+                  a bento grid would fight each other and leave nowhere for
+                  the eye to rest. The smaller cards stay typographic.
+                */}
+                {i === 0 && serviceImage && (
+                  <CardMedia
+                    src={serviceImage.src}
+                    tone="dark"
+                    sizes="(max-width: 640px) 92vw, (max-width: 1024px) 94vw, 62vw"
+                    intensifyOnHover
+                  />
+                )}
                 <span
                   className={cn(
                     "flex h-10 w-10 items-center justify-center rounded-xl font-display text-sm font-semibold tabular",
@@ -386,18 +404,45 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           />
 
           <StaggerGroup as="ul" step={60} className="mt-[var(--space-block)] grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {related.map((r) => (
-              <li key={r.slug}>
-                <Link
-                  href={`/services/${r.slug}`}
-                  className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-5 sm:p-6 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.3)]"
-                >
-                  <h3 className="text-base font-semibold tracking-tight text-ink">{r.title}</h3>
-                  <p className="mt-2.5 flex-1 text-sm leading-relaxed text-muted">{r.problem}</p>
-                  <ArrowRight className="mt-5 text-muted transition-[color,transform] duration-[var(--dur-base)] group-hover:translate-x-1 group-hover:text-accent-ink" />
-                </Link>
-              </li>
-            ))}
+            {related.map((r) => {
+              /*
+                Each related card shows the service it links to, not the one
+                being read — so four different pictures, and following the
+                link lands on the page that same picture leads.
+              */
+              const image = getServiceImage(r.slug);
+              return (
+                <li key={r.slug}>
+                  <Link
+                    href={`/services/${r.slug}`}
+                    className="group relative isolate flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface p-5 sm:p-6 transition-[transform,border-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-[0_24px_60px_-30px_rgba(23,25,28,0.3)]"
+                  >
+                    {image && (
+                      <CardMedia
+                        src={image.src}
+                        sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 24vw"
+                        intensifyOnHover
+                      />
+                    )}
+                    <h3 className="text-base font-semibold tracking-tight text-ink">{r.title}</h3>
+                    <p
+                      className={cn(
+                        "mt-2.5 flex-1 text-sm leading-relaxed",
+                        image ? "text-muted-strong" : "text-muted",
+                      )}
+                    >
+                      {r.problem}
+                    </p>
+                    <ArrowRight
+                      className={cn(
+                        "mt-5 transition-[color,transform] duration-[var(--dur-base)] group-hover:translate-x-1 group-hover:text-accent-ink",
+                        image ? "text-muted-strong" : "text-muted",
+                      )}
+                    />
+                  </Link>
+                </li>
+              );
+            })}
           </StaggerGroup>
         </Section>
       )}

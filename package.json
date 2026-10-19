@@ -10,7 +10,9 @@
     "qa": "node scripts/qa.mjs",
     "links": "node scripts/linkcheck.mjs",
     "brand:assets": "node scripts/prepare-brand-assets.mjs",
-    "snapshot": "node scripts/content-snapshot.mjs"
+    "snapshot": "node scripts/content-snapshot.mjs",
+    "imagery": "node scripts/prepare-service-imagery.mjs",
+    "imagery:contrast": "node scripts/check-card-contrast.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
