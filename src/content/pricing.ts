@@ -3,27 +3,64 @@ import { services } from "./services";
 /* ==========================================================================
    SERVICE PRICING
    --------------------------------------------------------------------------
-   `servicePricing` is intentionally empty.
+   ⚠  EVERY FIGURE BELOW IS AN ESTIMATE. NONE HAS BEEN CONFIRMED BY MIDIS.
+       They are marked `estimated: true` and must be replaced with real rates
+       before this site is treated as quoting anyone.
 
-   Nothing in this repository carries a verified MIDIS rate. The audit found
-   no published rate card on midis.in, and the only thing the company says
-   about cost in its own words is the FAQ answer in content/company.ts:
+   Where they came from
+   --------------------
+   This file was deliberately empty. Nothing in the repository carries a
+   verified MIDIS rate: the audit found no published rate card on midis.in,
+   and the only thing the company says about cost in its own words is the FAQ
+   answer in content/company.ts —
 
      "It depends on scope rather than page count. [...] We scope properly
       before quoting, and the proposal breaks down what drives the number."
 
-   So the homepage pricing section shows "Custom Quote" on every card and
-   says plainly why. A "from ₹X" invented here would be the same failure the
-   rest of this project refuses — a number with no source behind it — except
-   that this one is a commercial commitment as well as a credibility risk.
+   The client asked for prices on the homepage anyway, and asked that they be
+   estimated here. So rather than invent numbers outright, each one is placed
+   against published 2026 Indian agency benchmarks and positioned at the upper
+   middle of the band — MIDIS sells against "look as serious as you actually
+   are", so bottom-of-market figures would read wrong next to that:
 
-   The moment MIDIS confirms real starting prices, adding them here makes the
-   figures appear on the cards AND emits Offer structured data, with no
-   component changes. Until then neither exists, which is correct: Google
-   treats an Offer whose price is not visible on the page as a violation.
+     business site, agency-built ......... ₹40,000 – ₹80,000
+     growth / CMS site with SEO .......... ₹80,000 – ₹2,00,000
+     e-commerce build, entry ............. from ₹50,000 – ₹80,000
+     custom app / large store ............ ₹1,50,000 upwards
+     Shopify "launch" tier, published .... ₹1,50,000
+     SEO retainer, mid-market SME ........ ₹40,000 – ₹80,000/month
 
-   The type requires `source` precisely so a figure cannot be dropped in
-   without recording where it was confirmed.
+   They are also set as a coherent ladder, because eight cards sit in one grid
+   and a visitor reads them against each other: design below development,
+   development below Shopify, Shopify below custom e-commerce.
+
+   What they are NOT
+   -----------------
+   They are not MIDIS's rates. They carry no proposal, no scope and no margin
+   behind them. A published price is a commercial commitment — a client can
+   hold the company to it, and a figure set too low loses work that would
+   otherwise have been quoted properly. Treat the table below as a starting
+   point for that conversation, not an answer to it.
+
+   Structured data is deliberately withheld while `estimated` is set: the
+   visible price is what the client asked for, but handing Google a machine-
+   readable Offer carrying an invented number is a different kind of claim.
+   Clearing the flag turns the Offer markup on, from the same source, so the
+   page and the schema can never disagree.
+
+   TO CONFIRM A PRICE
+   ------------------
+   Replace `from` with the real figure, set `source` to where it was confirmed
+   — a signed rate card, a proposal template, written confirmation; never
+   "approx" — and delete the `estimated` flag. Each is independent, so they
+   can be confirmed one service at a time: an unconfirmed slug simply keeps
+   showing "Custom Quote", and the grid stays aligned either way.
+
+     currency  "INR" unless the figure is quoted in something else.
+     from      The lowest number MIDIS will publish for that service.
+     basis     "project" for a one-off build, "month" for a retainer. A
+               monthly figure renders as "₹X/month" so it can never be
+               mistaken for a project price sitting next to one.
    ========================================================================== */
 
 export interface ServicePrice {
@@ -38,10 +75,84 @@ export interface ServicePrice {
    * written confirmation from MIDIS. Never a guess, never "approx".
    */
   source: string;
+  /**
+   * Set while the figure is an estimate rather than a confirmed MIDIS rate.
+   *
+   * The price still renders — that is what the client asked for — but the
+   * Offer structured data is withheld, so an unverified number is never
+   * handed to Google as a machine-readable commitment. Delete the flag when
+   * the rate is confirmed and the markup turns on from the same source.
+   */
+  estimated?: boolean;
 }
 
-/** Keyed by service slug. Empty until MIDIS confirms published rates. */
-export const servicePricing: Readonly<Record<string, ServicePrice>> = {};
+/**
+ * Keyed by service slug.
+ *
+ * ⚠ ESTIMATES, NOT CONFIRMED MIDIS RATES. See the header for how each was
+ * derived and what has to happen before they can be relied on.
+ */
+export const servicePricing: Readonly<Record<string, ServicePrice>> = {
+  /* ---------------------------------------------------------- build work */
+  "web-design": {
+    currency: "INR",
+    from: 65000,
+    basis: "project",
+    source: "ESTIMATE — upper-middle of the ₹40k–80k agency band for a designed business site",
+    estimated: true,
+  },
+  "ui-ux-design": {
+    currency: "INR",
+    from: 85000,
+    basis: "project",
+    source: "ESTIMATE — product design engagement, set above a marketing-site design",
+    estimated: true,
+  },
+  "web-development": {
+    currency: "INR",
+    from: 95000,
+    basis: "project",
+    source: "ESTIMATE — lower end of the ₹80k–2L growth/CMS build band",
+    estimated: true,
+  },
+  "shopify-development": {
+    currency: "INR",
+    from: 150000,
+    basis: "project",
+    source: "ESTIMATE — matches the published Shopify 'launch tier' benchmark",
+    estimated: true,
+  },
+  "ecommerce-development": {
+    currency: "INR",
+    from: 195000,
+    basis: "project",
+    source: "ESTIMATE — custom store, set above Shopify per the ₹1.5L+ custom-build band",
+    estimated: true,
+  },
+  "ai-chatbot-development": {
+    currency: "INR",
+    from: 120000,
+    basis: "project",
+    source: "ESTIMATE — custom application work, below a full e-commerce build",
+    estimated: true,
+  },
+
+  /* ------------------------------------------------------------ retainers */
+  seo: {
+    currency: "INR",
+    from: 45000,
+    basis: "month",
+    source: "ESTIMATE — entry of the ₹40k–80k mid-market SME retainer band",
+    estimated: true,
+  },
+  "google-meta-ads": {
+    currency: "INR",
+    from: 40000,
+    basis: "month",
+    source: "ESTIMATE — management fee, set just below the SEO retainer",
+    estimated: true,
+  },
+};
 
 export function getServicePrice(slug: string): ServicePrice | undefined {
   return servicePricing[slug];
@@ -53,17 +164,27 @@ export function hasPublishedPricing(): boolean {
 }
 
 /**
- * Formats a confirmed price for display. Grouped in the Indian numbering
- * system, because that is the audience the figure is quoted to.
+ * Formats a confirmed price as the amount alone — "₹1,20,000", or
+ * "₹12,000/month" when the figure is a recurring one.
+ *
+ * The amount carries its basis but not its framing, so the card can set
+ * "Starting at" next to it in one weight while the figure itself takes
+ * another, and the plan dialog can put it under a "Starting price" heading,
+ * without either of them restating the other's words. A monthly figure keeps
+ * "/month" welded on deliberately: a project price and a retainer must never
+ * be able to appear side by side looking like the same kind of number.
+ *
+ * Grouped in the Indian numbering system, because that is the audience the
+ * figure is quoted to.
  */
-export function formatServicePrice(price: ServicePrice): string {
+export function formatPriceAmount(price: ServicePrice): string {
   const amount = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: price.currency,
     maximumFractionDigits: 0,
   }).format(price.from);
 
-  return price.basis === "month" ? `From ${amount}/month` : `From ${amount}`;
+  return price.basis === "month" ? `${amount}/month` : amount;
 }
 
 /* --------------------------------------------------------------------------

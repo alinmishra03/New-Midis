@@ -2,7 +2,7 @@ import { ArrowRight, Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import {
-  formatServicePrice,
+  formatPriceAmount,
   getServicePrice,
   hasPublishedPricing,
   pricingServiceSlugs,
@@ -48,7 +48,7 @@ function buildCards(): PricingCard[] {
         summary: service.summary,
         deliverables: service.deliverables,
         audience: service.audience,
-        price: price ? formatServicePrice(price) : null,
+        price: price ? formatPriceAmount(price) : null,
         contactHref: contactHrefForService(service.slug),
       },
     ];
@@ -56,20 +56,24 @@ function buildCards(): PricingCard[] {
 }
 
 /**
- * Offer markup for the services that have a confirmed price.
+ * Offer markup for the services that have a *confirmed* price.
  *
- * Renders nothing today, because nothing is priced. That is deliberate:
- * Google treats an Offer whose price is not visible on the page as spam, and
- * the figure has to come from MIDIS before it can appear in either place.
- * Adding entries to `servicePricing` turns on the visible price and this
- * markup together, from the same source, so the two cannot disagree.
+ * Renders nothing today. Every figure in `servicePricing` is currently an
+ * estimate rather than a MIDIS rate, and `estimated` entries are filtered out
+ * here on purpose: showing a provisional number on the page is the client's
+ * call to make, but emitting it as structured data is a different claim —
+ * Google reads an Offer as a commitment the business stands behind, and
+ * surfaces it in results where nobody sees the surrounding context.
+ *
+ * Clearing the flag on an entry turns on the visible price and this markup
+ * from the same source, so the page and the schema cannot disagree.
  */
 function PricingSchema({ cards }: { cards: readonly PricingCard[] }) {
   if (!hasPublishedPricing()) return null;
 
   const priced = cards.flatMap((card) => {
     const price = getServicePrice(card.slug);
-    return price ? [{ card, price }] : [];
+    return price && !price.estimated ? [{ card, price }] : [];
   });
 
   if (priced.length === 0) return null;
@@ -117,15 +121,21 @@ export function PricingSection() {
         intro="Every project is different. Explore what we offer, see what's included, and talk to our team about the right approach for your business."
       />
 
-      {/* Eight cards all reading "Custom Quote" would look like something
-          was missing. This says once, up front, why there is no price list —
-          which is the same answer the FAQ gives, in the same words. */}
+      {/*
+        Frames the figures on the cards before anyone reads one.
+
+        This used to explain why there was no price list at all, which is the
+        wrong sentence to run above eight visible starting prices. It now says
+        what those prices are — a floor, not a quote — and keeps the rest of
+        the paragraph, which is the same answer the FAQ in content/company.ts
+        gives about scope, in the same words.
+      */}
       <Reveal delay={80}>
         <p className="mt-8 max-w-3xl border-l-2 border-accent pl-5 text-sm leading-relaxed text-muted sm:text-base">
-          We don&apos;t publish a price list because scope drives the number, not page count.
-          A focused marketing site sits at the lower end; a store, a multi-language build or a
-          custom application sits considerably higher. Tell us what the work has to achieve and
-          you&apos;ll get a realistic range before you commit to anything.
+          The prices below are where each service starts, not a quote — scope drives the number,
+          not page count. A focused marketing site sits near the start; a store, a multi-language
+          build or a custom application sits considerably higher. Tell us what the work has to
+          achieve and you&apos;ll get a realistic range before you commit to anything.
         </p>
       </Reveal>
 

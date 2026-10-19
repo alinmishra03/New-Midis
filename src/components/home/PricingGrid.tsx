@@ -49,8 +49,13 @@ export interface PricingCard {
   deliverables: readonly string[];
   audience: string;
   /**
-   * A formatted, verified starting price, or null when none is published —
-   * which is every service today. Never a placeholder figure.
+   * The verified starting figure, formatted as the amount alone
+   * ("₹1,20,000", or "₹12,000/month" for a retainer) — or null when none is
+   * published, which is every service today. Never a placeholder figure.
+   *
+   * The card supplies the "Starting at" and "Custom Quote Available" framing
+   * around it; see `formatPriceAmount` in content/pricing.ts for why the
+   * words live here rather than in the string.
    */
   price: string | null;
   contactHref: string;
@@ -87,6 +92,12 @@ function Tick({ className }: { className?: string }) {
 export function PricingGrid({ cards }: { cards: readonly PricingCard[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState<PricingCard | null>(null);
+
+  /*
+    Whether anything in this grid has a confirmed figure. Drives the spacer
+    that keeps a half-priced grid's pricing blocks aligned — see the card.
+  */
+  const anyPriced = cards.some((c) => c.price !== null);
 
   /*
    * Opening is split across a render: the card goes into state first so the
@@ -207,9 +218,42 @@ export function PricingGrid({ cards }: { cards: readonly PricingCard[] }) {
               <div className="mt-auto pt-6">
                 <div className="rule pt-5">
                   <p className={labelClass}>Pricing</p>
-                  <p className="mt-1.5 text-lg tracking-tight text-ink">
-                    {card.price ?? PRICE_FALLBACK}
-                  </p>
+
+                  {card.price ? (
+                    <>
+                      {/*
+                        "Starting at" stays quiet and the figure takes the
+                        weight, so the number is what the eye lands on. The
+                        amount is the one place the accent earns its keep on
+                        this card — at 1.375rem semibold it is large text, so
+                        #AA5A0A clears its 3:1 floor on white with room over
+                        (it measures 5.03:1).
+                      */}
+                      <p className="mt-1.5 text-[0.8125rem] leading-none text-muted">Starting at</p>
+                      <p className="mt-1 text-[1.375rem] font-semibold leading-tight tracking-tight text-accent-ink">
+                        {card.price}
+                      </p>
+                      <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                        Custom Quote Available
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-1.5 text-lg tracking-tight text-ink">{PRICE_FALLBACK}</p>
+                      {/*
+                        Only reserved once some service actually has a figure.
+                        A spacer on every card while nothing is priced would
+                        be empty space with nothing to align to; a spacer in a
+                        mixed grid is what keeps the "Pricing" blocks on one
+                        line across the row. No invented copy either way.
+                      */}
+                      {anyPriced && (
+                        <p aria-hidden="true" className="mt-1.5 text-xs leading-relaxed">
+                          &nbsp;
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-5 flex flex-col gap-3">
@@ -308,9 +352,22 @@ export function PricingGrid({ cards }: { cards: readonly PricingCard[] }) {
               <h3 className={cn("mt-7", labelClass)}>
                 {active.price ? "Starting price" : "What it costs"}
               </h3>
-              <p className="mt-2 text-lg tracking-tight text-ink">
+              <p
+                className={cn(
+                  "mt-2 tracking-tight",
+                  active.price
+                    ? "text-[1.375rem] font-semibold leading-tight text-accent-ink"
+                    : "text-lg text-ink",
+                )}
+              >
                 {active.price ?? PRICE_FALLBACK}
               </p>
+              {active.price && (
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">
+                  Custom Quote Available — the figure above is where this service starts, and
+                  the proposal breaks down what moves it.
+                </p>
+              )}
               {/* No figure is published for any service yet, so the panel says
                   how the number is arrived at instead of implying one. */}
               {!active.price && (
