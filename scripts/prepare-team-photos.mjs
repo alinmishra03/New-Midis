@@ -100,7 +100,6 @@ const PORTRAITS = {
   "Ojasvinny Saini.jpg": "ojasvinny-saini",
   "Rahul Gehlot.jpg": "rahul-gehlot",
   "Shivani Dixit.jpg": "shivani-dixit",
-  "Simar.jpg": "simar",
   "Swayam Gandhi.jpg": "swayam-gandhi",
 };
 

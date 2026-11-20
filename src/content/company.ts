@@ -156,9 +156,11 @@ export const leadership: readonly TeamMember[] = [
  * which left every path here pointing at a file that no longer existed. The
  * paths below are the new named derivatives (see scripts/prepare-team-photos).
  *
- * Nine people. Alok Yadav (Video Editor) was removed on 2026-10-14: he no
+ * Eight people. Alok Yadav (Video Editor) was removed on 2026-10-14: he no
  * longer works at MIDIS. He was the only person without a new photograph,
  * which is consistent with the set MIDIS supplied.
+ *
+ * Simar (UX/UI Designer) was removed on 2026-11-20: no longer works at MIDIS.
  */
 export const team: readonly TeamMember[] = [
   { name: "Alin Mishra", role: "Web Developer", photo: "/team/alin-mishra.webp", photoWidth: 1200, photoHeight: 1500 },
@@ -170,16 +172,12 @@ export const team: readonly TeamMember[] = [
   { name: "Navkirat Bhogal", role: "Digital Marketer", photo: "/team/navkirat-bhogal.webp", photoWidth: 1200, photoHeight: 1500 },
   { name: "Chanda Angral", role: "Graphic Designer", photo: "/team/chanda-angral.webp", photoWidth: 1200, photoHeight: 1500 },
   /*
-   * Added 2026-10-14. Both roles are read from the photographs themselves,
-   * which carry the title set above the subject — the same series as everyone
+   * Added 2026-10-14. The role is read from the photograph itself, which
+   * carries the title set above the subject — the same series as everyone
    * above, where every printed title matches the role already recorded here.
-   * Nothing is inferred from the faces.
-   *
-   * "Simar" is the whole name MIDIS supplied; the file is Simar.jpg and no
-   * surname was given, so none is invented.
+   * Nothing is inferred from the face.
    */
   { name: "Mritunjai Upadhyay", role: "Full Stack Developer", photo: "/team/mritunjai-upadhyay.webp", photoWidth: 1200, photoHeight: 1500 },
-  { name: "Simar", role: "UX/UI Designer", photo: "/team/simar.webp", photoWidth: 1200, photoHeight: 1500 },
 ];
 
 /* ==========================================================================
