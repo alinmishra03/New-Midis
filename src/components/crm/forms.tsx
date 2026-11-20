@@ -404,7 +404,9 @@ export function ConfirmAction({
   withComment,
   commentLabel = "Comment (optional)",
   commentRequired,
+  ariaLabel,
 }: {
+  ariaLabel?: string;
   action: FormAction;
   fields: Record<string, string>;
   label: ReactNode;
@@ -428,7 +430,7 @@ export function ConfirmAction({
       title={title}
       description={description}
       trigger={(o) => (
-        <button type="button" onClick={o} className={buttonClass(variant, size)}>
+        <button type="button" onClick={o} className={buttonClass(variant, size)} aria-label={ariaLabel}>
           {icon}
           {label}
         </button>

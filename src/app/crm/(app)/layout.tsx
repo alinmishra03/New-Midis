@@ -1,7 +1,9 @@
+import { after } from "next/server";
 import { AppShell } from "@/components/crm/AppShell";
 import { requireViewer } from "@/crm/auth/dal";
 import { visibleNav } from "@/crm/nav";
 import { unreadCount } from "@/crm/services/notifications";
+import { runReminders } from "@/crm/services/reminders";
 
 /**
  * The signed-in portal frame. Note that layouts do not re-run on client
@@ -11,6 +13,8 @@ import { unreadCount } from "@/crm/services/notifications";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const viewer = await requireViewer();
   const unread = await unreadCount(viewer.userId);
+  // Meeting / due-task / birthday reminders, generated after the response is sent.
+  after(() => runReminders(viewer).catch((e) => console.error("[crm reminders]", e)));
 
   return (
     <AppShell

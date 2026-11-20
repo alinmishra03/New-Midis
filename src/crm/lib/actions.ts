@@ -101,6 +101,8 @@ export async function setFlash(message: string, tone: "success" | "error" = "suc
 export const zId = z.uuid({ error: "Invalid selection." });
 export const zDate = z.iso.date({ error: "Enter a valid date." });
 export const zOptionalText = (max = 2000) => z.string().max(max).optional();
+/** A checkbox: present ("on") when ticked, absent when not. In zod 4 an absent key needs .optional(). */
 export const zCheckbox = z
-  .union([z.literal("on"), z.literal("true"), z.literal("1"), z.undefined()])
+  .enum(["on", "true", "1"])
+  .optional()
   .transform((v) => v !== undefined);
