@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
     agentUpgrade: "security",
   },
 
+  /*
+   * The employee portal's embedded development database (PGlite) loads its
+   * WebAssembly and data files relative to its own module, which breaks when
+   * bundled. Loading it from node_modules at runtime keeps it intact. (pg,
+   * used in production, is already on Next's built-in external list.)
+   */
+  serverExternalPackages: ["@electric-sql/pglite"],
+
   images: {
     // Article imagery served by the existing MIDIS Strapi Cloud instance.
     remotePatterns: [
