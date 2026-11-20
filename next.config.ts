@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
    */
   cacheComponents: false,
 
+  experimental: {
+    agentUpgrade: "security",
+  },
+
   images: {
     // Article imagery served by the existing MIDIS Strapi Cloud instance.
     remotePatterns: [
