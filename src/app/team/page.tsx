@@ -42,14 +42,13 @@ function TeamSchema({ people }: { people: readonly TeamMember[] }) {
 
 function MemberCard({ member }: { member: TeamMember }) {
   return (
-    /* n per row, allowing for the 1.5rem gap between them. */
-    <li className="w-[calc((100%-1.5rem)/2)] sm:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)]">
+    <li>
       <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-line">
         <Image
           src={member.photo}
           alt={`${member.name}, ${member.role} at MIDIS`}
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          sizes="(max-width: 359px) 100vw, (max-width: 1023px) 50vw, 25vw"
           className="object-cover object-top grayscale transition-all duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] hover:grayscale-0"
         />
       </div>
@@ -141,17 +140,10 @@ crumbs={[{ label: "Our Team", href: "/team" }]}
           title="The people doing the work."
         />
 
-        {/* Centred flex row rather than a grid — see the note in
-            components/home/Offerings.tsx. A grid left-aligns a part-filled
-            final row, which leaves a card-shaped hole whenever the headcount
-            is not a multiple of the column count; wrapping and centring never
-            does. Same widths as the homepage strip: two on a phone, three
-            from sm, five from lg. */}
-        <StaggerGroup
-          as="ul"
-          step={60}
-          className="mt-[var(--space-block)] flex flex-wrap justify-center gap-x-6 gap-y-8"
-        >
+        {/* Same .team-grid as the homepage strip (globals.css): four per row
+            from lg, two on phones and tablets, one on the narrowest phones,
+            with a part-filled last row centred. */}
+        <StaggerGroup as="ul" step={60} className="team-grid mt-[var(--space-block)]">
           {team.map((member) => (
             <MemberCard key={member.name} member={member} />
           ))}

@@ -107,34 +107,20 @@ export function TeamSection() {
         the front of the grid argued against it. Both still appear on /about
         and in full on /team, which the "Meet the team" button leads to.
 
-        A centred flex row rather than a grid, because the headcount keeps
-        moving: it was ten on 2026-10-14 and is nine now. A grid left-aligns
-        a part-filled last row, so nine cards in fives left a gap the width of
-        a card at the end — which is what reads as "unfinished". Wrapping and
-        centring puts five on the first row and four centred under it, and
-        any future count lands the same way without picking new column counts.
-
-        The widths are column counts expressed as a share of the row: two on a
-        phone, three from sm, five from lg. Five waits for lg because at 768px
-        they would be 126px wide, which wraps the longer names onto two lines.
+        Laid out by .team-grid (globals.css): four per row from lg, so eight
+        people make two even rows of four; two per row on phones and tablets,
+        one on the narrowest phones. If the headcount changes, a part-filled
+        last row is centred rather than left with a gap at the end.
       */}
-      <StaggerGroup
-        as="ul"
-        step={55}
-        className="mt-[var(--space-block)] flex flex-wrap justify-center gap-x-6 gap-y-8"
-      >
+      <StaggerGroup as="ul" step={55} className="team-grid mt-[var(--space-block)]">
         {team.map((m) => (
-          /* n per row, allowing for the 1.5rem gap between them. */
-          <li
-            key={m.name}
-            className="w-[calc((100%-1.5rem)/2)] sm:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)]"
-          >
+          <li key={m.name}>
             <RevealImage className="relative aspect-[4/5] rounded-lg bg-line">
               <Image
                 src={m.photo}
                 alt={`${m.name}, ${m.role} at MIDIS`}
                 fill
-                sizes="(max-width: 640px) 50vw, 25vw"
+                sizes="(max-width: 359px) 100vw, (max-width: 1023px) 50vw, 25vw"
                 className="object-cover object-top grayscale transition-all duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] hover:grayscale-0"
               />
             </RevealImage>
