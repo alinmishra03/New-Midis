@@ -46,9 +46,6 @@ const legalLinks = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
   { label: "Sitemap", href: "/sitemap.xml" },
-  // Staff sign-in for the internal HR portal (app/crm). Kept in the quiet
-  // bottom row so the public layout is unchanged.
-  { label: "Employee Portal", href: "/crm/login" },
 ];
 
 /* A plain Google Maps search for the verified address — no invented place ID,
