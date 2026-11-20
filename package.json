@@ -16,7 +16,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --conditions=react-server scripts/crm/migrate.ts",
     "db:seed": "tsx --conditions=react-server scripts/crm/seed.ts",
-    "crm:create-admin": "tsx --conditions=react-server scripts/crm/create-admin.ts"
+    "crm:create-admin": "tsx --conditions=react-server scripts/crm/create-admin.ts",
+    "crm:preflight": "tsx scripts/crm/preflight.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.17",
