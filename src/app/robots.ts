@@ -7,8 +7,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Route handler, not a page — nothing for a crawler to index.
-        disallow: ["/api/"],
+        // Route handlers and the private employee portal: nothing to index.
+        disallow: ["/api/", "/crm"],
       },
     ],
     sitemap: `${site.url}/sitemap.xml`,

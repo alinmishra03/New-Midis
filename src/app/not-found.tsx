@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { ArrowRight, Button } from "@/components/ui/Button";
 import { industries } from "@/content/industries";
 import { services } from "@/content/services";
@@ -23,7 +24,10 @@ export default function NotFound() {
     { label: "SEO", href: "/services/seo" },
   ];
 
+  // Unmatched URLs render inside the root layout only, so this page brings
+  // the site chrome itself (see components/layout/SiteChrome.tsx).
   return (
+    <SiteChrome>
     <section className="relative isolate overflow-hidden bg-paper">
       <div
         aria-hidden="true"
@@ -111,5 +115,6 @@ export default function NotFound() {
         </div>
       </div>
     </section>
+    </SiteChrome>
   );
 }
