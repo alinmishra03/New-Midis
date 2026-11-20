@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db, type Tx } from "@/crm/db";
-import { leaveBalances, leaveRequests, leaveTypes } from "@/crm/db/schema";
+import { companySettings, leaveBalances, leaveRequests, leaveTypes } from "@/crm/db/schema";
 import { addDays, isoWeekday, todayIn, type ISODate } from "@/crm/lib/time";
 import { ensureLeaveBalances, leaveYearFor } from "./accounts";
 import { getCompany, getScheduleForEmployee, publicHolidaySet } from "./company";
@@ -102,10 +102,15 @@ export async function getBalances(employeeId: string, year?: number): Promise<Ba
   });
 }
 
-/** Applies an approval (+days) or a cancellation of an approved request (−days) to `used`. */
+/**
+ * Applies an approval (+days) or a cancellation of an approved request
+ * (−days) to `used`. Runs inside the caller's transaction and only touches
+ * `tx`: on a single-connection database a query through the global `db`
+ * would wait on this very transaction.
+ */
 export async function applyUsage(tx: Tx, employeeId: string, leaveTypeId: string, startDate: ISODate, days: number) {
-  const company = await getCompany();
-  const year = leaveYearFor(startDate, company.leaveYearStartMonth);
+  const company = await tx.query.companySettings.findFirst({ where: eq(companySettings.id, 1) });
+  const year = leaveYearFor(startDate, company?.leaveYearStartMonth ?? 1);
   await ensureLeaveBalances(tx, employeeId, year);
   await tx
     .update(leaveBalances)

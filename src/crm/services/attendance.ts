@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import { db, type Tx } from "@/crm/db";
-import { attendanceBreaks, attendanceRecords, employees, leaveRequests, wfhRequests } from "@/crm/db/schema";
+import { attendanceBreaks, attendanceRecords, companySettings, employees, leaveRequests, wfhRequests, workSchedules } from "@/crm/db/schema";
 import type { Viewer } from "@/crm/auth/dal";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
@@ -219,12 +219,18 @@ export async function endBreak(viewer: Viewer) {
   if (!closed) throw new AppError("You're not on a break.");
 }
 
-/** Recomputes a record's derived fields after its times change (corrections). */
+/**
+ * Recomputes a record's derived fields after its times change (corrections).
+ * Uses only `tx` — see applyUsage in leave.ts for why.
+ */
 export async function recomputeRecord(tx: Tx, recordId: string) {
   const record = await tx.query.attendanceRecords.findFirst({ where: eq(attendanceRecords.id, recordId) });
   if (!record) return;
-  const company = await getCompany();
-  const schedule = await getScheduleForEmployee(record.employeeId);
+  const company = (await tx.query.companySettings.findFirst({ where: eq(companySettings.id, 1) }))!;
+  const emp = await tx.query.employees.findFirst({ where: eq(employees.id, record.employeeId), columns: { workScheduleId: true } });
+  const schedule =
+    (emp?.workScheduleId ? await tx.query.workSchedules.findFirst({ where: eq(workSchedules.id, emp.workScheduleId) }) : undefined) ??
+    (await tx.query.workSchedules.findFirst({ where: eq(workSchedules.isDefault, true) }))!;
   const breaks = await tx.select().from(attendanceBreaks).where(eq(attendanceBreaks.attendanceId, recordId));
   const m = computeMetrics(record, breaks, schedule, company.timezone);
   await tx.update(attendanceRecords).set(m).where(eq(attendanceRecords.id, recordId));
@@ -282,4 +288,33 @@ export async function monthSummary(employeeId: string, from: ISODate, to: ISODat
     leaveDays,
     workedMinutes: recs.reduce((s, r) => s + r.workedMinutes, 0),
   };
+}
+
+/**
+ * Everyone the viewer may see on a given day, with their attendance state.
+ * Scope: all (attendance.view_all) or their reporting tree (view_team).
+ */
+export async function attendanceForDay(employeeIds: string[] | "all", date: ISODate) {
+  const empConds = [inArray(employees.employmentStatus, ["probation", "active", "notice"]), lte(employees.joiningDate, date)];
+  if (employeeIds !== "all") {
+    if (!employeeIds.length) return [];
+    empConds.push(inArray(employees.id, employeeIds));
+  }
+  const people = await db
+    .select({ id: employees.id, firstName: employees.firstName, lastName: employees.lastName, photoFileId: employees.photoFileId, employeeCode: employees.employeeCode })
+    .from(employees)
+    .where(and(...empConds))
+    .orderBy(asc(employees.firstName));
+  const ids = people.map((p) => p.id);
+  if (!ids.length) return [];
+  const [recs, leaves, wfh] = await Promise.all([
+    db.select().from(attendanceRecords).where(and(eq(attendanceRecords.workDate, date), inArray(attendanceRecords.employeeId, ids))),
+    db.select().from(leaveRequests).where(and(eq(leaveRequests.status, "approved"), lte(leaveRequests.startDate, date), gte(leaveRequests.endDate, date), inArray(leaveRequests.employeeId, ids))),
+    db.select().from(wfhRequests).where(and(eq(wfhRequests.status, "approved"), lte(wfhRequests.startDate, date), gte(wfhRequests.endDate, date), inArray(wfhRequests.employeeId, ids))),
+  ]);
+  return people.map((p) => {
+    const record = recs.find((r) => r.employeeId === p.id) ?? null;
+    const leave = leaves.find((l) => l.employeeId === p.id) ?? null;
+    return { ...p, name: `${p.firstName} ${p.lastName}`.trim(), record, onLeave: leave ? leave.halfDay : null, wfh: wfh.some((w) => w.employeeId === p.id) };
+  });
 }

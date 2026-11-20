@@ -165,7 +165,7 @@ export async function setPasswordWithToken(_prev: ActionState, fd: FormData): Pr
     if (!current || current.status === "disabled") return null;
     const [user] = await tx
       .update(users)
-      .set({ passwordHash, status: "active", passwordChangedAt: new Date(), failedLoginCount: 0, lockedUntil: null })
+      .set({ passwordHash, status: "active", passwordChangedAt: new Date(), failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() })
       .where(eq(users.id, token.userId))
       .returning({ id: users.id, status: users.status });
     await tx

@@ -45,7 +45,7 @@ export type NewEmployeeInput = {
   managerId?: string | null;
   workScheduleId?: string | null;
   employmentType?: "full_time" | "part_time" | "contract" | "intern";
-  employmentStatus?: "probation" | "active";
+  employmentStatus?: "probation" | "active" | "notice";
   phone?: string | null;
   workLocation?: string | null;
 };
