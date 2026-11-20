@@ -22,6 +22,12 @@ import { AppError } from "./actions";
 
 const LOCAL_DIR = path.join(process.cwd(), ".data", "uploads");
 const blobEnabled = () => !!process.env.BLOB_READ_WRITE_TOKEN;
+/**
+ * Always pass the read-write token explicitly. Without it the SDK prefers
+ * Vercel OIDC + BLOB_STORE_ID when both exist (as they do on Vercel), so
+ * the store actually used could differ from the one the token belongs to.
+ */
+const blobToken = () => process.env.BLOB_READ_WRITE_TOKEN!;
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -66,7 +72,7 @@ export async function storeUpload(
   const key = `crm/${new Date().getUTCFullYear()}/${randomUUID()}.${rule.ext}`;
   if (blobEnabled()) {
     const { put } = await import("@vercel/blob");
-    await put(key, Buffer.from(bytes), { access: "private", contentType: type, addRandomSuffix: false });
+    await put(key, Buffer.from(bytes), { access: "private", contentType: type, addRandomSuffix: false, token: blobToken() });
   } else {
     const full = path.join(LOCAL_DIR, key);
     await mkdir(path.dirname(full), { recursive: true });
@@ -84,7 +90,7 @@ export async function storeUpload(
 export async function readStored(storageKey: string): Promise<ReadableStream<Uint8Array> | null> {
   if (blobEnabled()) {
     const { get } = await import("@vercel/blob");
-    const res = await get(storageKey, { access: "private" });
+    const res = await get(storageKey, { access: "private", token: blobToken() });
     return res && res.statusCode === 200 ? res.stream : null;
   }
   const full = path.join(LOCAL_DIR, storageKey);
@@ -105,7 +111,7 @@ export async function readStored(storageKey: string): Promise<ReadableStream<Uin
 export async function deleteStored(storageKey: string) {
   if (blobEnabled()) {
     const { del } = await import("@vercel/blob");
-    await del(storageKey);
+    await del(storageKey, { token: blobToken() });
   } else {
     await rm(path.join(LOCAL_DIR, storageKey), { force: true });
   }
