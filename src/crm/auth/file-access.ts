@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/crm/db";
-import { candidates, documents, employees, files, leaveRequests, projectMembers, taskAttachments, tasks } from "@/crm/db/schema";
+import { candidates, documents, employees, files, interviews, leaveRequests, projectMembers, taskAttachments, tasks } from "@/crm/db/schema";
 import { can, isInTeam, type Viewer } from "./dal";
 
 /**
@@ -13,7 +13,7 @@ import { can, isInTeam, type Viewer } from "./dal";
  * - document → per its visibility (company / employee + HR / HR only);
  * - leave supporting document → the employee, their managers, and HR;
  * - task attachment → whoever can see the task;
- * - candidate resume → recruitment managers;
+ * - candidate resume → recruitment managers, and that candidate's interviewers;
  * - anything else → only the person who uploaded it.
  */
 export async function canViewFile(viewer: Viewer, fileId: string): Promise<typeof files.$inferSelect | null> {
@@ -42,7 +42,11 @@ export async function canViewFile(viewer: Viewer, fileId: string): Promise<typeo
   if (att.length && (await canViewAnyTask(viewer, att.map((a) => a.taskId)))) return allow();
 
   const cand = await db.query.candidates.findFirst({ where: eq(candidates.resumeFileId, fileId), columns: { id: true } });
-  if (cand && can(viewer, "recruitment.manage")) return allow();
+  if (cand) {
+    if (can(viewer, "recruitment.manage")) return allow();
+    // Interviewers may read the resume of a candidate they're interviewing.
+    if (selfEmp && (await db.query.interviews.findFirst({ where: and(eq(interviews.candidateId, cand.id), eq(interviews.interviewerId, selfEmp)) }))) return allow();
+  }
 
   if (file.uploadedById === viewer.userId) return allow();
   return null;
