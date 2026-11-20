@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { asc, desc, eq } from "drizzle-orm";
 import { KeyRound } from "lucide-react";
 import { AccessLinkButton } from "@/components/crm/employee-forms";
+import { SettingsNav } from "@/components/crm/SettingsNav";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, PersonCell, StatusBadge, Table, TBody, THead, Tabs } from "@/components/crm/ui";
 import { can, requirePermission } from "@/crm/auth/dal";
 import { db } from "@/crm/db";
@@ -52,11 +53,8 @@ export default async function UsersPage({ searchParams }: PageProps<"/crm/settin
 
   return (
     <>
-      <PageHeader
-        title="Users & access"
-        description="Every portal account. Accounts are created from Employees → Add employee; nobody can register themselves."
-        breadcrumb={[{ label: "Settings", href: "/crm/settings" }]}
-      />
+      <PageHeader title="Settings" description="Every portal account. Accounts are created from Employees → Add employee; nobody can register themselves." />
+      <SettingsNav active="users" perms={{ settings: can(viewer, "settings.manage"), users: true, roles: superAdmin, audit: can(viewer, "audit.view") }} />
       <Tabs
         active={tab}
         tabs={[
