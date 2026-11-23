@@ -74,6 +74,28 @@ function Chevron({ className }: { className?: string }) {
   );
 }
 
+/** Padlock for the staff sign-in link: marks it as private, not promotional. */
+function LockIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="7" width="10" height="7" rx="1.75" />
+      <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+    </svg>
+  );
+}
+
+/** The internal employee portal (app/crm). Signed-out visitors land on its login page. */
+const EMPLOYEE_PORTAL_HREF = "/crm";
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -435,6 +457,35 @@ export function Header() {
               drawer carries it, drops it.
             */}
             <div className="flex items-center gap-1 justify-self-end">
+              {/*
+                Employee Portal: a quiet staff link, not a second CTA. Same
+                face and accent underline as the main nav, set apart by the
+                padlock and a hairline divider. Desktop only; the drawer
+                carries it below the breakpoint. The main nav has no room to
+                spare at narrower desktop widths (the label would wrap "Web
+                Development" and push "Home" into the logo), so below 1500px
+                it collapses to the padlock alone, with the same accessible
+                name and a tooltip; from 1320px to 1339px there isn't room
+                even for that, and the header is left exactly as it was.
+              */}
+              <Link
+                href={EMPLOYEE_PORTAL_HREF}
+                aria-label="Employee Portal"
+                title="Employee Portal — staff sign-in"
+                className={cn(
+                  "group/nav relative hidden items-center gap-1.5 rounded-full px-1.5 py-2 min-[1340px]:inline-flex min-[1400px]:mr-2 min-[1400px]:px-2.5 min-[1500px]:px-3.5",
+                  "text-[0.9375rem] font-medium tracking-tight text-ink/65",
+                  "transition-colors duration-[var(--dur-fast)] hover:text-ink",
+                  "min-[1400px]:after:absolute min-[1400px]:after:top-1/2 min-[1400px]:after:-right-1 min-[1400px]:after:h-5 min-[1400px]:after:w-px min-[1400px]:after:-translate-y-1/2 min-[1400px]:after:bg-line",
+                )}
+              >
+                <LockIcon className="h-4 w-4 text-ink/50 transition-colors duration-[var(--dur-fast)] group-hover/nav:text-accent-ink min-[1500px]:h-3.5 min-[1500px]:w-3.5 min-[1500px]:text-ink/45" />
+                <span className="hidden whitespace-nowrap min-[1500px]:inline">Employee Portal</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-1.5 bottom-0.5 min-[1400px]:inset-x-2.5 min-[1500px]:inset-x-3.5 h-[1.5px] origin-left scale-x-0 rounded-full bg-accent transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] group-hover/nav:scale-x-100 group-focus-visible/nav:scale-x-100"
+                />
+              </Link>
               <Button href="/contact" variant="primary" magnetic className="hidden sm:inline-flex">
                 Start a Project
                 <ArrowRight />
@@ -582,6 +633,21 @@ export function Header() {
               );
             })}
           </ul>
+
+          {/* Staff sign-in, kept visually apart from the promotional buttons below. */}
+          <Link
+            href={EMPLOYEE_PORTAL_HREF}
+            className="group mt-6 flex min-h-[3.75rem] items-center gap-3.5 rounded-2xl border border-line bg-surface px-4 transition-colors duration-[var(--dur-fast)] hover:border-ink/20"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-paper text-ink/60 transition-colors group-hover:text-accent-ink">
+              <LockIcon className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[0.9375rem] font-medium tracking-tight text-ink">Employee Portal</span>
+              <span className="block text-[0.8125rem] text-muted">Staff sign-in</span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-accent-ink transition-transform duration-[var(--dur-fast)] group-hover:translate-x-1" />
+          </Link>
 
           <div className="mt-7 flex flex-col gap-3 pb-14">
             <Button href="/contact" variant="primary" size="lg" className="w-full">

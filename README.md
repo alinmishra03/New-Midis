@@ -10,6 +10,8 @@ A complete rebuild of [midis.in](https://www.midis.in/) as a server-rendered, ev
 
 > The live midis.in site has **not** been touched. This is a separate application.
 
+> **Employee portal (CRM + HRMS)** at `/crm` — setup, deployment, roles and security model: [docs/06-employee-portal.md](docs/06-employee-portal.md).
+
 ---
 
 ## Why this rebuild exists

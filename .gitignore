@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# employee portal: local embedded database and uploaded files (development only)
+/.data/
+
+.vercel
+.env*

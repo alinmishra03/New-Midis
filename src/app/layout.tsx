@@ -1,14 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
-import { Analytics, ConsentBanner } from "@/components/analytics/Analytics";
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { Header } from "@/components/layout/Header";
-import { RouteTransition } from "@/components/motion/RouteTransition";
-import { Cursor } from "@/components/ui/Cursor";
-import { FloatingWhatsApp } from "@/components/ui/FloatingWhatsApp";
-import { MotionProfileAttribute } from "@/components/ui/MotionProfileAttribute";
-import { ScrollProgress } from "@/components/ui/ScrollProgress";
-import { Footer } from "@/components/layout/Footer";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -60,53 +51,6 @@ export const metadata: Metadata = {
 };
 
 /**
- * Structured data. Only types genuinely supported by page content are
- * emitted — notably NO AggregateRating or Review, because MIDIS has no
- * verified reviews yet and fabricating them would be both dishonest and a
- * structured-data policy violation.
- */
-function OrganizationSchema() {
-  const schema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": `${site.url}/#organization`,
-        name: site.name,
-        url: site.url,
-        logo: `${site.url}/brand/icon-512.png`,
-        email: site.email,
-        telephone: site.phone,
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: site.address.street,
-          addressLocality: site.address.locality,
-          addressRegion: site.address.region,
-          postalCode: site.address.postalCode,
-          addressCountry: site.address.country,
-        },
-        sameAs: site.socials.map((s) => s.url),
-      },
-      {
-        "@type": "WebSite",
-        "@id": `${site.url}/#website`,
-        url: site.url,
-        name: site.name,
-        publisher: { "@id": `${site.url}/#organization` },
-      },
-    ],
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      // Static, developer-authored JSON — no user input reaches this string.
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
-  );
-}
-
-/**
  * Runs before first paint. Adding `js` is what allows the reveal styles to
  * hide anything at all, so a JS-less visitor sees every section immediately.
  * The timeout is the failsafe for a bundle that never finishes hydrating.
@@ -121,31 +65,16 @@ const REVEAL_BOOTSTRAP = `
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${interTight.variable} h-full antialiased`}>
+    // suppressHydrationWarning: the bootstrap script below adds `js` to <html>
+    // before React hydrates, which is intentional, not a mismatch to report.
+    <html lang="en" className={`${inter.variable} ${interTight.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: REVEAL_BOOTSTRAP }} />
       </head>
       <body className="flex min-h-full flex-col bg-paper">
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-sm focus:text-surface"
-        >
-          Skip to content
-        </a>
-        <OrganizationSchema />
-        <RouteTransition />
-        <MotionProfileAttribute />
-        <ScrollProgress />
-        <Cursor />
-        <AnnouncementBar />
-        <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer />
-        <FloatingWhatsApp />
-        <ConsentBanner />
-        <Analytics />
+        {/* Site chrome lives in (site)/layout.tsx; the employee portal at /crm
+            brings its own shell. See components/layout/SiteChrome.tsx. */}
+        {children}
       </body>
     </html>
   );
