@@ -54,7 +54,7 @@ export default async function UsersPage({ searchParams }: PageProps<"/crm/settin
   return (
     <>
       <PageHeader title="Settings" description="Every portal account. Accounts are created from Employees → Add employee; nobody can register themselves." />
-      <SettingsNav active="users" perms={{ settings: can(viewer, "settings.manage"), users: true, roles: superAdmin, audit: can(viewer, "audit.view") }} />
+      <SettingsNav active="users" perms={{ settings: can(viewer, "settings.manage"), users: true, roles: superAdmin, audit: can(viewer, "audit.view"), email: viewer.role.key === "super_admin" }} />
       <Tabs
         active={tab}
         tabs={[

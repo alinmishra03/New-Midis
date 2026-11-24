@@ -14,7 +14,7 @@ export default async function OrganisationPage() {
   return (
     <>
       <PageHeader title="Settings" description="Company-wide configuration. Every change is recorded in the audit log." />
-      <SettingsNav active="organisation" perms={{ settings: true, users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view") }} />
+      <SettingsNav active="organisation" perms={{ settings: true, users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view"), email: viewer.role.key === "super_admin" }} />
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader title="Departments" action={<DepartmentDialog />} />

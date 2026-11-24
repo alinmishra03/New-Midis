@@ -18,7 +18,7 @@ export default async function RolesPage({ searchParams }: PageProps<"/crm/settin
   return (
     <>
       <PageHeader title="Settings" description="Company-wide configuration. Every change is recorded in the audit log." actions={<NewRoleDialog />} />
-      <SettingsNav active="roles" perms={{ settings: can(viewer, "settings.manage"), users: can(viewer, "users.invite"), roles: true, audit: can(viewer, "audit.view") }} />
+      <SettingsNav active="roles" perms={{ settings: can(viewer, "settings.manage"), users: can(viewer, "users.invite"), roles: true, audit: can(viewer, "audit.view"), email: viewer.role.key === "super_admin" }} />
       <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
         <Card className="h-fit">
           <ul className="p-2">

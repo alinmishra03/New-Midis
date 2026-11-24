@@ -21,7 +21,7 @@ export default async function AuditPage({ searchParams }: PageProps<"/crm/settin
   return (
     <>
       <PageHeader title="Settings" description="Company-wide configuration. Every change is recorded in the audit log." />
-      <SettingsNav active="audit" perms={{ settings: can(viewer, "settings.manage"), users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: true }} />
+      <SettingsNav active="audit" perms={{ settings: can(viewer, "settings.manage"), users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: true, email: viewer.role.key === "super_admin" }} />
       <Card>
         <form className="flex flex-wrap items-end gap-2 border-b border-c-border p-4">
           <input name="q" defaultValue={filters.q} placeholder="Search summary or person" aria-label="Search" className={`${inputClass} max-w-xs`} />

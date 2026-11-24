@@ -15,7 +15,7 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" description="Company-wide configuration. Every change is recorded in the audit log." />
-      <SettingsNav active="company" perms={{ settings: true, users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view") }} />
+      <SettingsNav active="company" perms={{ settings: true, users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view"), email: viewer.role.key === "super_admin" }} />
       <Card className="max-w-3xl">
         <CardHeader title="Company information" description="Shown on payslips and reports." />
         <CardBody>

@@ -8,6 +8,7 @@ import { audit } from "@/crm/lib/audit";
 import { addDays, formatDate, todayIn, type ISODate } from "@/crm/lib/time";
 import { getCompany } from "./company";
 import { managerUserId, notify, userIdForEmployee, userIdsWithPermission } from "./notifications";
+import { emailRequestDecided, emailRequestSubmitted, sendAfterResponse } from "./workflow-emails";
 
 /**
  * Work-from-home requests. Approval uses the same rules as leave
@@ -39,6 +40,7 @@ export async function requestWfh(viewer: Viewer, input: { startDate: ISODate; en
     body: `${formatDate(input.startDate)}${input.endDate !== input.startDate ? ` – ${formatDate(input.endDate)}` : ""}`,
     link: "/crm/wfh?tab=approvals",
   });
+  sendAfterResponse("WFH request email", () => emailRequestSubmitted("wfh", row!.id, viewer.userId));
 }
 
 async function canDecide(viewer: Viewer, employeeId: string) {
@@ -64,6 +66,7 @@ export async function decideWfh(viewer: Viewer, id: string, approve: boolean, co
     body: comment,
     link: "/crm/wfh",
   });
+  sendAfterResponse("WFH decision email", () => emailRequestDecided("wfh", id, approve, viewer.userId));
 }
 
 export async function cancelWfh(viewer: Viewer, id: string) {

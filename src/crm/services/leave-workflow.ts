@@ -11,6 +11,7 @@ import { ensureLeaveBalances, leaveYearFor } from "./accounts";
 import { getCompany } from "./company";
 import { applyUsage, countLeaveDays, currentLeaveYear, getBalances } from "./leave";
 import { managerUserId, notify, userIdForEmployee, userIdsWithPermission } from "./notifications";
+import { emailRequestDecided, emailRequestSubmitted, sendAfterResponse } from "./workflow-emails";
 
 /**
  * Leave requests: apply → approve/reject → (cancel).
@@ -86,6 +87,7 @@ export async function applyLeave(viewer: Viewer, input: LeaveInput) {
     body: `${formatDate(input.startDate)}${input.endDate !== input.startDate ? ` – ${formatDate(input.endDate)}` : ""} · ${days} day(s)`,
     link: "/crm/leave?tab=approvals",
   });
+  sendAfterResponse("leave request email", () => emailRequestSubmitted("leave", created.id, viewer.userId));
   return { days, id: created.id };
 }
 
@@ -128,6 +130,7 @@ export async function decideLeave(viewer: Viewer, id: string, approve: boolean, 
     body: comment,
     link: "/crm/leave",
   });
+  sendAfterResponse("leave decision email", () => emailRequestDecided("leave", id, approve, viewer.userId));
 }
 
 /**

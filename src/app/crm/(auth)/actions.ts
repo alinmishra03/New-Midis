@@ -2,6 +2,7 @@
 
 import { and, eq, gt } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/crm/db";
 import { employees, passwordResetRequests, users } from "@/crm/db/schema";
@@ -10,6 +11,8 @@ import { getSession, createSession, deleteAllSessionsForUser, deleteCurrentSessi
 import { consumeToken } from "@/crm/auth/tokens";
 import { audit } from "@/crm/lib/audit";
 import { fail, ok, setFlash, type ActionState } from "@/crm/lib/actions";
+import { selfServiceResetEmail } from "@/crm/services/account-emails";
+import { emailPasswordChanged, sendAfterResponse } from "@/crm/services/workflow-emails";
 import { notify, userIdsWithPermission } from "@/crm/services/notifications";
 
 const MAX_FAILED = 5;
@@ -104,18 +107,44 @@ export async function logout() {
 }
 
 /**
- * Forgot password. Without outbound email, the request is queued for HR,
- * who issue a one-time reset link. The response is identical whether or not
- * the email has an account, so the form cannot be used to discover accounts.
+ * Forgot password. When email is configured, an active account is emailed a
+ * one-time reset link (1 hour, at most one email per 15 minutes). If the email
+ * can't be delivered, the request is queued for HR, who issue a link, as before.
+ * The response is identical in every case, so the form cannot be used to
+ * discover accounts or whether an email was sent.
  */
 export async function requestPasswordReset(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const parsed = z.string().trim().toLowerCase().pipe(z.email()).safeParse(fd.get("email"));
   if (!parsed.success) return fail("Enter your company email address.");
   const message =
-    "If that email belongs to an active account, HR has been asked to send you a reset link. They'll share it with you directly.";
+    "If that email belongs to an active account, we've emailed you a password reset link (check your inbox and spam folder). If it doesn't arrive, HR will send you one.";
 
   const user = await db.query.users.findFirst({ where: eq(users.email, parsed.data) });
   if (!user || user.status !== "active") return ok(message);
+
+  // Email the reset link (or queue it for HR) AFTER the response is sent, so the reply takes the
+  // same time whether or not the account exists. Never throws; nothing above has changed any data.
+  const userId = user.id, userEmail = user.email;
+  const { ipAddress } = await requestMeta();
+  after(async () => {
+    try {
+      await handleResetRequest(userId, userEmail, ipAddress);
+    } catch (e) {
+      console.error("[crm reset request]", e instanceof Error ? e.name : "error");
+    }
+  });
+  return ok(message);
+}
+
+/** The slow part of a forgot-password request (runs after the response). */
+async function handleResetRequest(userId: string, userEmail: string, ipAddress: string | null) {
+  const user = { id: userId, email: userEmail };
+  const emailed = await selfServiceResetEmail(user.id);
+  if (emailed === "sent") {
+    await audit({ actorUserId: null, action: "auth.reset_emailed", entityType: "user", entityId: user.id, summary: "Password reset link emailed (self-service)", ipAddress });
+    return;
+  }
+  if (emailed === "cooldown") return;
 
   const recent = await db.query.passwordResetRequests.findFirst({
     where: and(
@@ -136,8 +165,8 @@ export async function requestPasswordReset(_prev: ActionState, fd: FormData): Pr
     });
     await audit({ actorUserId: null, action: "auth.reset_requested", entityType: "user", entityId: user.id, summary: `Password reset requested for ${user.email}` });
   }
-  return ok(message);
 }
+
 
 const setPasswordSchema = z
   .object({ token: z.string().min(10).max(100), password: z.string(), confirm: z.string() })
@@ -183,10 +212,16 @@ export async function setPasswordWithToken(_prev: ActionState, fd: FormData): Pr
       },
       tx,
     );
-    return { user, type: token.type };
+    return { user, type: token.type, tokenId: token.id };
   });
 
   if (!result?.user) return fail("This link has expired or has already been used. Ask HR for a new one.");
+
+  // Confirm a completed reset to the account's own address (after the response; never blocks or undoes it).
+  if (result.type === "password_reset") {
+    const { id: userId } = result.user, eventId = result.tokenId;
+    sendAfterResponse("password reset confirmation", () => emailPasswordChanged(userId, "reset", eventId));
+  }
 
   // A new password signs out every other device.
   await deleteAllSessionsForUser(result.user.id);
