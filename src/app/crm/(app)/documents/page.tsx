@@ -5,6 +5,7 @@ import { UploadDocumentDialog } from "@/components/crm/document-forms";
 import { ConfirmAction, inputClass } from "@/components/crm/forms";
 import { Badge, Card, EmptyState, PageHeader, Table, TBody, THead, Tabs, buttonClass, humanize } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
+import { uuidOrUndefined } from "@/crm/lib/params";
 import { formatDate } from "@/crm/lib/time";
 import { allDocuments, companyDocuments, DOC_CATEGORIES, myDocuments } from "@/crm/services/documents";
 import { employeeFormOptions } from "@/crm/services/employees";
@@ -90,7 +91,7 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/crm/do
       <PageHeader
         title="Documents"
         description="Your employment documents and company policies, stored privately."
-        actions={(hr || viewer.employee) && <UploadDocumentDialog hr={hr} employees={options?.managers ?? []} categories={categories} selfId={viewer.employee?.id ?? null} defaultEmployee={typeof sp.employee === "string" ? sp.employee : undefined} />}
+        actions={(hr || viewer.employee) && <UploadDocumentDialog hr={hr} employees={options?.managers ?? []} categories={categories} selfId={viewer.employee?.id ?? null} defaultEmployee={uuidOrUndefined(sp.employee)} />}
       />
       <Tabs tabs={tabs} active={tab} />
 

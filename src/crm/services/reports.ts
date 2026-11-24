@@ -15,6 +15,7 @@ import {
   tasks,
 } from "@/crm/db/schema";
 import { can, ForbiddenError, getTeamEmployeeIds, type Viewer } from "@/crm/auth/dal";
+import { uuidOrUndefined } from "@/crm/lib/params";
 import { addDays, formatDate, formatMinutes, isoWeekday, type ISODate } from "@/crm/lib/time";
 import { getDefaultSchedule, publicHolidaySet } from "./company";
 
@@ -84,6 +85,8 @@ const period = (f: ReportFilters) => `${formatDate(f.from)} – ${formatDate(f.t
 export async function buildReport(viewer: Viewer, key: ReportKey, f: ReportFilters): Promise<Report> {
   if (!availableReports(viewer).some((r) => r.key === key)) throw new ForbiddenError();
   if (f.to < f.from) throw new ForbiddenError("The end date is before the start date.");
+  // Ids that aren't well-formed are dropped rather than sent to the database.
+  f = { ...f, departmentId: uuidOrUndefined(f.departmentId), employeeId: uuidOrUndefined(f.employeeId) };
   const def = REPORTS.find((r) => r.key === key)!;
 
   switch (key) {

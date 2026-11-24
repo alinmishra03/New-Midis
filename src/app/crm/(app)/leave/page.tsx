@@ -5,6 +5,7 @@ import { AdjustBalanceDialog, ApplyLeaveDialog } from "@/components/crm/leave-fo
 import { MonthGrid } from "@/components/crm/MonthGrid";
 import { Card, CardHeader, EmptyState, PageHeader, PersonCell, ProgressBar, StatusBadge, Table, TBody, THead, Tabs, buttonClass, humanize } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
+import { yearMonthOr } from "@/crm/lib/params";
 import { endOfMonth, formatDateShort, todayIn } from "@/crm/lib/time";
 import { calendarScope } from "@/crm/services/calendar-scope";
 import { getCompany, getDefaultSchedule, getHolidaysBetween } from "@/crm/services/company";
@@ -54,7 +55,7 @@ export default async function LeavePage({ searchParams }: PageProps<"/crm/leave"
       <Tabs tabs={tabs} active={tab} />
       {tab === "mine" && <MyLeave balances={balances} />}
       {tab === "approvals" && approver && <Approvals />}
-      {tab === "calendar" && <LeaveCalendarTab month={typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today.slice(0, 7)} today={today} />}
+      {tab === "calendar" && <LeaveCalendarTab month={yearMonthOr(sp.month, today.slice(0, 7))} today={today} />}
       {tab === "balances" && can(viewer, "leave.manage") && <BalancesTab employeeId={typeof sp.employee === "string" ? sp.employee : undefined} />}
     </>
   );

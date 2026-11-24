@@ -13,7 +13,8 @@ export default async function EditEmployeePage({ params }: PageProps<"/crm/emplo
   const viewer = await requirePermission("employees.manage");
   const { id } = await params;
   const [profile, options, company] = await Promise.all([getEmployeeProfile(viewer, id), employeeFormOptions(), getCompany()]);
-  if (!profile || !profile.employment) notFound();
+  // Same rule as the save action: no editing your own record, or an HR/Finance/Super Admin record without roles.manage.
+  if (!profile || !profile.employment || !profile.access.manage) notFound();
   const { basic, employment } = profile;
 
   return (

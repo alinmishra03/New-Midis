@@ -5,7 +5,7 @@ import { employees, leaveBalances, leaveRequests, leaveTypes } from "@/crm/db/sc
 import { can, ForbiddenError, getTeamEmployeeIds, isInTeam, type Viewer } from "@/crm/auth/dal";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
-import { storeUpload } from "@/crm/lib/storage";
+import { storeUpload, type UploadInput } from "@/crm/lib/storage";
 import { addDays, formatDate, todayIn, type ISODate } from "@/crm/lib/time";
 import { ensureLeaveBalances, leaveYearFor } from "./accounts";
 import { getCompany } from "./company";
@@ -30,7 +30,7 @@ export type LeaveInput = {
   endDate: ISODate;
   halfDay: "none" | "first_half" | "second_half";
   reason: string;
-  document: File | null;
+  document: UploadInput | null;
 };
 
 const BACKDATE_DAYS = 30;
@@ -143,7 +143,8 @@ export async function cancelLeave(viewer: Viewer, id: string) {
   if (!own && !hr) throw new ForbiddenError();
   if (!["pending", "approved"].includes(req.status)) throw new AppError("Only pending or approved requests can be cancelled.");
   const company = await getCompany();
-  if (req.status === "approved" && own && !hr && req.startDate <= todayIn(company.timezone)) {
+  // HR cancelling their OWN started leave is held to the employee rule too (only a Super Admin is exempt).
+  if (req.status === "approved" && own && viewer.role.key !== "super_admin" && req.startDate <= todayIn(company.timezone)) {
     throw new AppError("This leave has already started. Ask HR to change it.");
   }
   await db.transaction(async (tx) => {
@@ -163,6 +164,7 @@ export async function cancelLeave(viewer: Viewer, id: string) {
 /** HR adjusts a balance (+/-) with a reason. */
 export async function adjustBalance(viewer: Viewer, employeeId: string, leaveTypeId: string, delta: number, reason: string) {
   if (!can(viewer, "leave.manage")) throw new ForbiddenError();
+  if (viewer.employee?.id === employeeId && viewer.role.key !== "super_admin") throw new ForbiddenError("Ask another HR colleague to adjust your own leave balance.");
   if (!Number.isFinite(delta) || delta === 0 || Math.abs(delta) > 365 || Math.round(delta * 2) !== delta * 2) throw new AppError("Enter a non-zero adjustment in steps of 0.5 days.");
   const { year } = await currentLeaveYear();
   await db.transaction(async (tx) => {

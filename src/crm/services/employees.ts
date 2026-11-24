@@ -7,7 +7,8 @@ import { can, ForbiddenError, isInTeam, type Viewer } from "@/crm/auth/dal";
 import { deleteAllSessionsForUser } from "@/crm/auth/session";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
-import { IMAGE_TYPES, storeUpload } from "@/crm/lib/storage";
+import { isUuid } from "@/crm/lib/params";
+import { IMAGE_TYPES, storeUpload, type UploadInput } from "@/crm/lib/storage";
 import { todayIn } from "@/crm/lib/time";
 import { getCompany } from "./company";
 import { notify } from "./notifications";
@@ -27,10 +28,11 @@ export const PAGE_SIZE = 25;
 export async function listEmployees(viewer: Viewer, f: DirectoryFilters) {
   const seeAll = can(viewer, "employees.view_all");
   const conds: SQL[] = [];
-  const status = f.status ?? "current";
+  // Unknown status / malformed department values from the address bar are ignored, not sent to the database.
+  const status = f.status === "all" || (employees.employmentStatus.enumValues as readonly string[]).includes(f.status ?? "") ? f.status! : "current";
   if (!seeAll || status === "current") conds.push(inArray(employees.employmentStatus, [...ACTIVE_STATUSES]));
   else if (status !== "all") conds.push(eq(employees.employmentStatus, status as (typeof employees.employmentStatus.enumValues)[number]));
-  if (f.department) conds.push(eq(employees.departmentId, f.department));
+  if (isUuid(f.department)) conds.push(eq(employees.departmentId, f.department));
   if (f.role && seeAll) conds.push(eq(roles.key, f.role));
   if (f.q) {
     const like = `%${f.q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
@@ -126,7 +128,7 @@ export async function profileAccess(viewer: Viewer, employeeId: string): Promise
     full: isSelf || can(viewer, "employees.view_all") || (team && can(viewer, "employees.view_team")),
     personal: isSelf || can(viewer, "employees.view_personal"),
     salary: isSelf || can(viewer, "payroll.view"),
-    manage: can(viewer, "employees.manage"),
+    manage: await canManageEmployee(viewer, employeeId),
     attendance: isSelf || can(viewer, "attendance.view_all") || (team && can(viewer, "attendance.view_team")),
     leave: isSelf || can(viewer, "leave.manage") || (team && can(viewer, "leave.approve_team")),
   };
@@ -261,6 +263,40 @@ export function assertCanAssignRole(viewer: Viewer, roleKey: string) {
   }
 }
 
+/**
+ * Who may change an employee's record (employment details, personal details
+ * on their behalf, photo):
+ * - needs employees.manage;
+ * - a Super Admin may change any record, including their own;
+ * - otherwise not your own employment record (ask a colleague), and HR, Finance
+ *   or Super Admin records need roles.manage, the same rule as deactivating.
+ * Used both to enforce (assertCanManageEmployee) and to show the controls (profileAccess).
+ */
+async function manageBlocker(viewer: Viewer, employeeId: string): Promise<string | null> {
+  if (!can(viewer, "employees.manage")) return "You don't have permission to do that.";
+  if (viewer.role.key === "super_admin") return null;
+  if (viewer.employee?.id === employeeId) return "Ask another HR colleague or a Super Admin to change your own employment record.";
+  if (can(viewer, "roles.manage")) return null;
+  const [target] = await db
+    .select({ roleKey: roles.key })
+    .from(employees)
+    .innerJoin(users, eq(users.id, employees.userId))
+    .innerJoin(roles, eq(roles.id, users.roleId))
+    .where(eq(employees.id, employeeId))
+    .limit(1);
+  if (target && !ORDINARY_ROLES.includes(target.roleKey)) return "Only a Super Admin can change the record of an HR, Finance or Super Admin account.";
+  return null;
+}
+
+export async function canManageEmployee(viewer: Viewer, employeeId: string) {
+  return (await manageBlocker(viewer, employeeId)) === null;
+}
+
+async function assertCanManageEmployee(viewer: Viewer, employeeId: string) {
+  const blocked = await manageBlocker(viewer, employeeId);
+  if (blocked) throw new ForbiddenError(blocked);
+}
+
 async function assertValidManager(employeeId: string | null, managerId: string | null) {
   if (!managerId) return;
   if (employeeId && managerId === employeeId) throw new AppError("Someone can't report to themselves.");
@@ -278,7 +314,7 @@ async function assertValidManager(employeeId: string | null, managerId: string |
 }
 
 export async function updateEmployee(viewer: Viewer, employeeId: string, input: z.infer<typeof employeeSchema>, roleKey?: string) {
-  if (!can(viewer, "employees.manage")) throw new ForbiddenError();
+  await assertCanManageEmployee(viewer, employeeId);
   const existing = await db.query.employees.findFirst({ where: eq(employees.id, employeeId) });
   if (!existing) throw new AppError("Employee not found.");
   await assertValidManager(employeeId, input.managerId);
@@ -329,15 +365,17 @@ export async function updateOwnPersonal(viewer: Viewer, input: z.infer<typeof pe
 export async function updatePersonal(viewer: Viewer, employeeId: string, input: z.infer<typeof personalSchema>) {
   if (viewer.employee?.id === employeeId) return updateOwnPersonal(viewer, input);
   if (!can(viewer, "employees.manage") || !can(viewer, "employees.view_personal")) throw new ForbiddenError();
+  await assertCanManageEmployee(viewer, employeeId);
   await db.update(employees).set(input).where(eq(employees.id, employeeId));
   await audit({ actorUserId: viewer.userId, action: "employee.personal_update", entityType: "employee", entityId: employeeId, summary: "Updated personal details", metadata: { fields: Object.keys(input) } });
   const target = await db.query.employees.findFirst({ where: eq(employees.id, employeeId), columns: { userId: true } });
   await notify([target?.userId], { type: "profile_updated", title: "HR updated your personal details", link: "/crm/profile" });
 }
 
-export async function setPhoto(viewer: Viewer, employeeId: string, file: File) {
+export async function setPhoto(viewer: Viewer, employeeId: string, file: UploadInput) {
   const self = viewer.employee?.id === employeeId;
-  if (!self && !can(viewer, "employees.manage")) throw new ForbiddenError();
+  // Your own photo is always yours to change; anyone else's follows the record-management rule.
+  if (!self) await assertCanManageEmployee(viewer, employeeId);
   const stored = await storeUpload(file, viewer.userId, { allowed: IMAGE_TYPES });
   await db.update(employees).set({ photoFileId: stored.id }).where(eq(employees.id, employeeId));
   await audit({ actorUserId: viewer.userId, action: "employee.photo", entityType: "employee", entityId: employeeId, summary: self ? "Updated their profile photo" : "Updated a profile photo" });
@@ -382,6 +420,15 @@ export async function reactivateEmployee(viewer: Viewer, employeeId: string) {
   if (!can(viewer, "employees.manage")) throw new ForbiddenError();
   const emp = await db.query.employees.findFirst({ where: eq(employees.id, employeeId) });
   if (!emp) throw new AppError("Employee not found.");
+  if (emp.employmentStatus !== "exited") throw new AppError("Only a deactivated employee can be reactivated.");
+  // Same rule as deactivation: restoring an HR, Finance or Super Admin account needs roles.manage.
+  if (emp.userId) {
+    const u = await db.query.users.findFirst({ where: eq(users.id, emp.userId), columns: { roleId: true } });
+    const r = u ? await db.query.roles.findFirst({ where: eq(roles.id, u.roleId), columns: { key: true } }) : null;
+    if (r && !ORDINARY_ROLES.includes(r.key) && !can(viewer, "roles.manage")) {
+      throw new ForbiddenError("Only a Super Admin can reactivate an HR, Finance or Super Admin account.");
+    }
+  }
   await db.transaction(async (tx) => {
     await tx.update(employees).set({ employmentStatus: "active", exitDate: null }).where(eq(employees.id, employeeId));
     if (emp.userId) {

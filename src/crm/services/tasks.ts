@@ -6,7 +6,7 @@ import { can, ForbiddenError, getTeamEmployeeIds, isInTeam, type Viewer } from "
 import { canViewAnyTask } from "@/crm/auth/file-access";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
-import { storeUpload } from "@/crm/lib/storage";
+import { storeUpload, type UploadInput } from "@/crm/lib/storage";
 import { formatDate, type ISODate } from "@/crm/lib/time";
 import { notify, userIdForEmployee } from "./notifications";
 
@@ -14,16 +14,19 @@ import { notify, userIdForEmployee } from "./notifications";
  * Tasks & projects.
  *
  * Who can do what (enforced here, not in the UI):
- * - See a project: projects.manage / tasks.view_all, its owner, or a member.
- * - Manage a project (edit, members): projects.manage, or its owner/lead.
+ * - Create a project: projects.manage. That permission does NOT grant access
+ *   to other people's projects: managers manage the projects they own or lead.
+ * - See a project: tasks.view_all (read-only, e.g. HR), its owner, or a member.
+ * - Manage a project (edit, members): its owner or a lead; a Super Admin
+ *   manages every project.
  * - See a task: tasks.view_all, assignee, creator, project member, or the
  *   assignee's manager (canViewAnyTask).
  * - Create a task in a project: project managers and members; assign only
  *   to project members. Personal tasks (no project): assign to yourself, or
  *   to your reporting tree if you're a manager.
- * - Update status/progress: assignee, creator, project lead/owner,
- *   projects.manage, or the assignee's manager.
- * - Edit details / delete: creator, project lead/owner, projects.manage.
+ * - Update status/progress: assignee, creator, project lead/owner, a Super
+ *   Admin, or the assignee's manager.
+ * - Edit details / delete: creator, project lead/owner, or a Super Admin.
  * - Comment / attach: anyone who can see the task.
  */
 
@@ -42,12 +45,15 @@ function me(viewer: Viewer) {
 
 /* ================================================================ projects */
 
+/** Company-wide project administration is reserved for the Super Admin. */
+const isSuperAdmin = (viewer: Viewer) => viewer.role.key === "super_admin";
+
 async function projectRole(viewer: Viewer, projectId: string) {
   const p = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
   if (!p) return null;
   const empId = viewer.employee?.id;
   const membership = empId ? await db.query.projectMembers.findFirst({ where: and(eq(projectMembers.projectId, projectId), eq(projectMembers.employeeId, empId)) }) : undefined;
-  const manage = can(viewer, "projects.manage") || (!!empId && p.ownerId === empId) || !!membership?.isLead;
+  const manage = isSuperAdmin(viewer) || (!!empId && p.ownerId === empId) || !!membership?.isLead;
   const view = manage || can(viewer, "tasks.view_all") || !!membership;
   return { project: p, manage, view, member: !!membership };
 }
@@ -71,7 +77,7 @@ export async function getProjectForViewer(viewer: Viewer, projectId: string) {
 export async function listProjects(viewer: Viewer) {
   const empId = viewer.employee?.id;
   let where: SQL | undefined;
-  if (!can(viewer, "projects.manage", "tasks.view_all")) {
+  if (!isSuperAdmin(viewer) && !can(viewer, "tasks.view_all")) {
     if (!empId) return [];
     const memberOf = db.select({ id: projectMembers.projectId }).from(projectMembers).where(eq(projectMembers.employeeId, empId));
     where = or(eq(projects.ownerId, empId), inArray(projects.id, memberOf));
@@ -147,7 +153,7 @@ async function taskRole(viewer: Viewer, task: typeof tasks.$inferSelect) {
   const empId = viewer.employee?.id;
   const proj = task.projectId ? await projectRole(viewer, task.projectId) : null;
   const managerOfAssignee = !!task.assigneeId && (await isInTeam(viewer, task.assigneeId));
-  const edit = can(viewer, "projects.manage") || (!!empId && task.createdById === empId) || !!proj?.manage;
+  const edit = isSuperAdmin(viewer) || (!!empId && task.createdById === empId) || !!proj?.manage;
   const progress = edit || (!!empId && task.assigneeId === empId) || managerOfAssignee;
   const view = progress || (await canViewAnyTask(viewer, [task.id]));
   return { view, progress, edit, proj };
@@ -290,7 +296,7 @@ export async function addComment(viewer: Viewer, taskId: string, body: string) {
   await notify(await Promise.all(recipients.map((e) => userIdForEmployee(e))), { type: "task_comment", title: `${author.fullName} commented on “${task.title}”`, body: body.slice(0, 140), link: `/crm/tasks/${taskId}` });
 }
 
-export async function addAttachment(viewer: Viewer, taskId: string, file: File) {
+export async function addAttachment(viewer: Viewer, taskId: string, file: UploadInput) {
   const task = await db.query.tasks.findFirst({ where: eq(tasks.id, taskId) });
   if (!task || !(await taskRole(viewer, task)).view) throw new ForbiddenError();
   const stored = await storeUpload(file, viewer.userId);

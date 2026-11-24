@@ -155,7 +155,7 @@ export function AttachForm({ id }: { id: string }) {
   return (
     <ActionForm action={attachAction} resetOnSuccess className="flex flex-col gap-2 sm:flex-row">
       <input type="hidden" name="id" value={id} />
-      <input type="file" name="file" required className={inputClass} aria-label="File" />
+      <input type="file" name="file" data-upload="any" required className={inputClass} aria-label="File" />
       <SubmitButton variant="secondary" pendingLabel="Uploading…">
         <Paperclip /> Attach
       </SubmitButton>

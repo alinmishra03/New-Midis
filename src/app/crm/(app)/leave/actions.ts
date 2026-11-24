@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ok, parseForm, runAction, zId, type ActionState } from "@/crm/lib/actions";
-import { fileFrom } from "@/crm/lib/storage";
+import { uploadFrom } from "@/crm/lib/storage";
 import { adjustBalance, applyLeave, cancelLeave, decideLeave } from "@/crm/services/leave-workflow";
 import { cancelWfh, decideWfh, requestWfh } from "@/crm/services/wfh";
 
@@ -17,7 +17,7 @@ const applySchema = z.object({
 export async function applyLeaveAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async (viewer) => {
     const input = parseForm(applySchema, fd);
-    const { days } = await applyLeave(viewer, { ...input, document: fileFrom(fd, "document") });
+    const { days } = await applyLeave(viewer, { ...input, document: uploadFrom(fd, "document") });
     return ok(`Leave requested for ${days} day${days === 1 ? "" : "s"}. Your manager and HR have been notified.`);
   });
 }

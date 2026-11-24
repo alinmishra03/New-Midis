@@ -11,7 +11,7 @@ import { issueToken, tokenTtlLabel, tokenUrl } from "@/crm/auth/tokens";
 import { AppError, fail, ok, parseForm, runAction, setFlash, zId, type ActionState } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
 import { parseCsv, toCsv } from "@/crm/lib/csv";
-import { fileFrom } from "@/crm/lib/storage";
+import { fileFrom, uploadFrom } from "@/crm/lib/storage";
 import { AccountError, createEmployeeWithAccount } from "@/crm/services/accounts";
 import {
   assertCanAssignRole,
@@ -84,7 +84,7 @@ export async function updatePersonalAction(_prev: ActionState, fd: FormData): Pr
 export async function uploadPhotoAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async (viewer) => {
     const id = zId.parse(fd.get("id"));
-    const file = fileFrom(fd, "photo");
+    const file = uploadFrom(fd, "photo");
     if (!file) return fail("Choose an image.");
     await setPhoto(viewer, id, file);
     return ok("Photo updated.");

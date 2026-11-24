@@ -5,6 +5,7 @@ import { WfhDialog } from "@/components/crm/leave-forms";
 import { MonthGrid } from "@/components/crm/MonthGrid";
 import { Card, CardHeader, EmptyState, PageHeader, PersonCell, StatusBadge, Table, TBody, THead, Tabs } from "@/components/crm/ui";
 import { can, requireViewer, scopeFor } from "@/crm/auth/dal";
+import { yearMonthOr } from "@/crm/lib/params";
 import { addDays, endOfMonth, formatDate, formatDateShort, formatMinutes, formatTime, todayIn } from "@/crm/lib/time";
 import { calendarScope } from "@/crm/services/calendar-scope";
 import { getCompany, getDefaultSchedule, getHolidaysBetween } from "@/crm/services/company";
@@ -36,7 +37,7 @@ export default async function WfhPage({ searchParams }: PageProps<"/crm/wfh">) {
     ...(approver ? [{ key: "remote", label: "Remote attendance", href: "/crm/wfh?tab=remote" }] : []),
   ];
   const tab = tabs.some((t) => t.key === sp.tab) ? (sp.tab as string) : "mine";
-  const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today.slice(0, 7);
+  const month = yearMonthOr(sp.month, today.slice(0, 7));
 
   return (
     <>

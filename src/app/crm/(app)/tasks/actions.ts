@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { fail, ok, parseForm, runAction, setFlash, zId, type ActionState } from "@/crm/lib/actions";
-import { fileFrom } from "@/crm/lib/storage";
+import { uploadFrom } from "@/crm/lib/storage";
 import { addAttachment, addComment, createProject, createTask, deleteTask, setProjectMember, setTaskProgress, updateProject, updateTask } from "@/crm/services/tasks";
 
 const optId = z.uuid().optional().transform((v) => v || null);
@@ -61,7 +61,7 @@ export async function commentAction(_prev: ActionState, fd: FormData): Promise<A
 
 export async function attachAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async (viewer) => {
-    const file = fileFrom(fd, "file");
+    const file = uploadFrom(fd, "file");
     if (!file) return fail("Choose a file.");
     await addAttachment(viewer, zId.parse(fd.get("id")), file);
     return ok("File attached.");

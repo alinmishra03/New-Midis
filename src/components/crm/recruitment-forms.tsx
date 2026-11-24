@@ -75,7 +75,7 @@ export function CandidateDialog({ jobId }: { jobId: string }) {
             <label htmlFor="resume" className="mb-1.5 block text-[0.8125rem] font-medium">
               Resume <span className="font-normal text-c-muted">(PDF or Word)</span>
             </label>
-            <input id="resume" type="file" name="resume" accept=".pdf,.docx,application/pdf" className={inputClass} />
+            <input id="resume" type="file" name="resume" data-upload="resume" accept=".pdf,.docx,application/pdf" className={inputClass} />
           </div>
           <TextAreaField label="Notes" name="notes" rows={3} />
           <div className="flex justify-end">

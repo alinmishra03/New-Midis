@@ -4,6 +4,7 @@ import { BarList } from "@/components/crm/charts";
 import { inputClass } from "@/components/crm/forms";
 import { Card, CardBody, CardHeader, EmptyState, PageHeader, StatCard, Table, TBody, THead, buttonClass, withParams } from "@/components/crm/ui";
 import { can, requirePermission } from "@/crm/auth/dal";
+import { isoDateOr, uuidOrUndefined } from "@/crm/lib/params";
 import { addDays, startOfMonth, todayIn } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
 import { employeeFormOptions } from "@/crm/services/employees";
@@ -21,11 +22,13 @@ export default async function ReportsPage({ searchParams }: PageProps<"/crm/repo
   const today = todayIn(company.timezone);
   const reports = availableReports(viewer);
   const key = (reports.some((r) => r.key === sp.r) ? sp.r : reports[0]!.key) as ReportKey;
-  const date = (v: string | undefined, d: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : d);
+  // Only real dates and a real department id reach the database; a reversed range is swapped.
+  const from = isoDateOr(pick(sp.from), key === "payroll" ? addDays(today, -365) : startOfMonth(today));
+  const to = isoDateOr(pick(sp.to), today);
   const filters = {
-    from: date(pick(sp.from), key === "payroll" ? addDays(today, -365) : startOfMonth(today)),
-    to: date(pick(sp.to), today),
-    departmentId: pick(sp.department),
+    from: to < from ? to : from,
+    to: to < from ? from : to,
+    departmentId: uuidOrUndefined(pick(sp.department)),
   };
   const [report, options] = await Promise.all([buildReport(viewer, key, filters), employeeFormOptions()]);
   const params = { r: key, from: filters.from, to: filters.to, department: filters.departmentId };

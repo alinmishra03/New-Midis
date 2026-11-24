@@ -5,6 +5,7 @@ import { HolidayDialog, MeetingDialog } from "@/components/crm/calendar-forms";
 import { ConfirmAction } from "@/components/crm/forms";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, Table, TBody, THead, Tabs, buttonClass } from "@/components/crm/ui";
 import { can, getTeamEmployeeIds, requireViewer } from "@/crm/auth/dal";
+import { yearMonthOr } from "@/crm/lib/params";
 import { addDays, daysBetweenInclusive, endOfMonth, formatDate, formatDateTime, formatMonth, formatTime, isoWeekday, todayIn, zonedToInstant } from "@/crm/lib/time";
 import { meetingsFor, monthEvents, type CalendarEvent } from "@/crm/services/calendar";
 import { getCompany, getHolidaysBetween } from "@/crm/services/company";
@@ -29,7 +30,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/crm/cal
   const company = await getCompany();
   const tz = company.timezone;
   const today = todayIn(tz);
-  const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today.slice(0, 7);
+  const month = yearMonthOr(sp.month, today.slice(0, 7));
   const tab = sp.tab === "holidays" ? "holidays" : "month";
   const from = `${month}-01`;
   const to = endOfMonth(from);

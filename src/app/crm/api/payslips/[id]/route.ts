@@ -31,7 +31,7 @@ export async function GET(request: Request, ctx: RouteContext<"/crm/api/payslips
   d.text(`Payslip`, R, { size: 16, bold: true, align: "right" });
   d.y -= 16;
   // Wrap the address over up to two lines rather than truncating it.
-  const words = (company.address ?? "").split(/s+/);
+  const words = (company.address ?? "").trim().split(/\s+/);
   const lines: string[] = [""];
   for (const w of words) {
     const next = lines[lines.length - 1] ? `${lines[lines.length - 1]} ${w}` : w;

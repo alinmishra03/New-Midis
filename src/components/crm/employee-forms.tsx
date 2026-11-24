@@ -186,7 +186,7 @@ export function PhotoUpload({ employeeId }: { employeeId: string }) {
       {(close) => (
         <ActionForm action={uploadPhotoAction} onSuccess={close} className="space-y-4">
           <input type="hidden" name="id" value={employeeId} />
-          <input type="file" name="photo" accept="image/png,image/jpeg,image/webp" required className={inputClass} />
+          <input type="file" name="photo" data-upload="image" accept="image/png,image/jpeg,image/webp" required className={inputClass} />
           <div className="flex justify-end">
             <SubmitButton pendingLabel="Uploading…">
               <Upload /> Upload
