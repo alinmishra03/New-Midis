@@ -51,7 +51,7 @@ export function UploadDocumentDialog({ hr, employees, categories, selfId, defaul
             <label htmlFor="doc-file" className="mb-1.5 block text-[0.8125rem] font-medium">
               File <span className="text-c-danger">*</span>
             </label>
-            <input id="doc-file" type="file" name="file" required className={inputClass} />
+            <input id="doc-file" type="file" name="file" data-upload="any" required className={inputClass} />
           </div>
           <div className="flex justify-end">
             <SubmitButton pendingLabel="Uploading…">Upload</SubmitButton>

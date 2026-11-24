@@ -6,6 +6,7 @@ import { can, ForbiddenError, type Viewer } from "@/crm/auth/dal";
 import { ALL_PERMISSIONS, LOCKED_ROLE, PERMISSIONS, type Permission } from "@/crm/auth/permissions";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
+import { isIsoDate } from "@/crm/lib/params";
 
 /*
  * Administration: company profile, departments, designations, work
@@ -186,8 +187,9 @@ export async function listAudit(viewer: Viewer, f: { q?: string; action?: string
     conds.push(or(ilike(auditLogs.summary, like), ilike(users.email, like))!);
   }
   if (f.action) conds.push(ilike(auditLogs.action, `${f.action.replace(/[%_\\]/g, "")}%`));
-  if (f.from) conds.push(gte(auditLogs.createdAt, new Date(`${f.from}T00:00:00Z`)));
-  if (f.to) conds.push(lte(auditLogs.createdAt, new Date(`${f.to}T23:59:59Z`)));
+  // Malformed dates from the address bar are ignored rather than sent to the database.
+  if (isIsoDate(f.from)) conds.push(gte(auditLogs.createdAt, new Date(`${f.from}T00:00:00Z`)));
+  if (isIsoDate(f.to)) conds.push(lte(auditLogs.createdAt, new Date(`${f.to}T23:59:59Z`)));
   const where = conds.length ? and(...conds) : undefined;
   const PAGE = 50;
   const [rows, [total]] = await Promise.all([

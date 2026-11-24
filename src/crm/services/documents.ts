@@ -5,7 +5,8 @@ import { documents, employees, files, users } from "@/crm/db/schema";
 import { can, ForbiddenError, type Viewer } from "@/crm/auth/dal";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
-import { deleteStored, storeUpload } from "@/crm/lib/storage";
+import { isUuid } from "@/crm/lib/params";
+import { deleteStored, storeUpload, type UploadInput } from "@/crm/lib/storage";
 import { notify, userIdForEmployee } from "./notifications";
 
 /**
@@ -73,7 +74,7 @@ export async function allDocuments(viewer: Viewer, f: { employeeId?: string; cat
   if (!can(viewer, "documents.manage")) throw new ForbiddenError();
   const conds: SQL[] = [];
   if (f.employeeId === "company") conds.push(isNull(documents.employeeId));
-  else if (f.employeeId) conds.push(eq(documents.employeeId, f.employeeId));
+  else if (isUuid(f.employeeId)) conds.push(eq(documents.employeeId, f.employeeId));
   if (f.category && DOC_CATEGORIES.some((c) => c.value === f.category)) conds.push(eq(documents.category, f.category as DocCategory));
   if (f.q) {
     const like = `%${f.q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
@@ -87,7 +88,7 @@ export async function allDocuments(viewer: Viewer, f: { employeeId?: string; cat
 
 export async function uploadDocument(
   viewer: Viewer,
-  input: { employeeId: string | null; category: DocCategory; title: string; visibility: "employee" | "hr_only" | "company"; file: File },
+  input: { employeeId: string | null; category: DocCategory; title: string; visibility: "employee" | "hr_only" | "company"; file: UploadInput },
 ) {
   const hr = can(viewer, "documents.manage");
   const self = !!viewer.employee && input.employeeId === viewer.employee.id;

@@ -5,6 +5,7 @@ import { CorrectionDialog, HrEditDialog } from "@/components/crm/attendance-form
 import { ConfirmAction, inputClass } from "@/components/crm/forms";
 import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, Tabs, buttonClass } from "@/components/crm/ui";
 import { can, requireViewer, scopeFor } from "@/crm/auth/dal";
+import { isIsoDate, yearMonthOr } from "@/crm/lib/params";
 import { db } from "@/crm/db";
 import { employees, leaveRequests, wfhRequests } from "@/crm/db/schema";
 import { addDays, daysBetweenInclusive, endOfMonth, formatDate, formatMinutes, formatMonth, formatTime, isoWeekday, startOfMonth, todayIn } from "@/crm/lib/time";
@@ -41,8 +42,8 @@ export default async function AttendancePage({ searchParams }: PageProps<"/crm/a
         actions={viewer.employee ? <CorrectionDialog today={today} /> : undefined}
       />
       <Tabs tabs={tabs} active={tab} />
-      {tab === "mine" && <MyAttendance month={typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today.slice(0, 7)} />}
-      {tab === "team" && canTeam && <TeamDay date={typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) && sp.date <= today ? sp.date : today} />}
+      {tab === "mine" && <MyAttendance month={yearMonthOr(sp.month, today.slice(0, 7))} />}
+      {tab === "team" && canTeam && <TeamDay date={isIsoDate(sp.date) && sp.date <= today ? sp.date : today} />}
       {tab === "corrections" && canReview && <Corrections />}
     </>
   );

@@ -59,7 +59,7 @@ export function ApplyLeaveDialog({ types, today, autoOpen }: { types: LeaveTypeO
           <label className="mb-1.5 block text-[0.8125rem] font-medium" htmlFor="leave-doc">
             Supporting document {type?.documentRequiredAfterDays !== null && type?.documentRequiredAfterDays !== undefined ? <span className="font-normal text-c-muted">(required beyond {type.documentRequiredAfterDays} day{type.documentRequiredAfterDays === 1 ? "" : "s"})</span> : <span className="font-normal text-c-muted">(optional)</span>}
           </label>
-          <input id="leave-doc" type="file" name="document" accept="application/pdf,image/png,image/jpeg,image/webp" className={inputClass} />
+          <input id="leave-doc" type="file" name="document" data-upload="any" accept="application/pdf,image/png,image/jpeg,image/webp" className={inputClass} />
         </div>
         <div className="flex justify-end">
           <SubmitButton pendingLabel="Submitting…">Submit request</SubmitButton>

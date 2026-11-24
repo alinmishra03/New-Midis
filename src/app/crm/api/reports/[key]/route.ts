@@ -1,6 +1,7 @@
 import { ForbiddenError, getViewer } from "@/crm/auth/dal";
 import { audit } from "@/crm/lib/audit";
 import { csvResponse } from "@/crm/lib/csv";
+import { isoDateOr, uuidOrUndefined } from "@/crm/lib/params";
 import { createDoc, MUTED, pdfResponse } from "@/crm/lib/pdf";
 import { addDays, todayIn } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
@@ -16,9 +17,10 @@ export async function GET(request: Request, ctx: RouteContext<"/crm/api/reports/
   const sp = new URL(request.url).searchParams;
   const company = await getCompany();
   const today = todayIn(company.timezone);
-  const date = (v: string | null, d: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : d);
-  const uuid = (v: string | null) => (v && /^[0-9a-f-]{36}$/i.test(v) ? v : undefined);
-  const filters = { from: date(sp.get("from"), addDays(today, -30)), to: date(sp.get("to"), today), departmentId: uuid(sp.get("department")), employeeId: uuid(sp.get("employee")) };
+  // Only real dates and real ids reach the database; a reversed range is swapped (same as the page).
+  const from = isoDateOr(sp.get("from"), addDays(today, -30));
+  const to = isoDateOr(sp.get("to"), today);
+  const filters = { from: to < from ? to : from, to: to < from ? from : to, departmentId: uuidOrUndefined(sp.get("department")), employeeId: uuidOrUndefined(sp.get("employee")) };
 
   let report;
   try {

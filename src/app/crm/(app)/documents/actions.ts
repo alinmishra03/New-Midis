@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { fail, ok, parseForm, runAction, zId, type ActionState } from "@/crm/lib/actions";
-import { fileFrom } from "@/crm/lib/storage";
+import { uploadFrom } from "@/crm/lib/storage";
 import { deleteDocument, uploadDocument } from "@/crm/services/documents";
 
 const uploadSchema = z.object({
@@ -15,7 +15,7 @@ const uploadSchema = z.object({
 export async function uploadDocumentAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async (viewer) => {
     const input = parseForm(uploadSchema, fd);
-    const file = fileFrom(fd, "file");
+    const file = uploadFrom(fd, "file");
     if (!file) return fail("Choose a file.");
     await uploadDocument(viewer, { ...input, file });
     return ok("Document uploaded.");

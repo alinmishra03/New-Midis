@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ok, parseForm, runAction, setFlash, zId, type ActionState } from "@/crm/lib/actions";
-import { fileFrom } from "@/crm/lib/storage";
+import { uploadFrom } from "@/crm/lib/storage";
 import {
   addCandidate,
   addOnboardingTask,
@@ -59,7 +59,7 @@ export async function addCandidateAction(_prev: ActionState, fd: FormData): Prom
       }),
       fd,
     );
-    await addCandidate(viewer, { ...input, resume: fileFrom(fd, "resume") });
+    await addCandidate(viewer, { ...input, resume: uploadFrom(fd, "resume") });
     return ok("Candidate added.");
   });
 }

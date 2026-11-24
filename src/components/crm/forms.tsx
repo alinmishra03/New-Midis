@@ -16,6 +16,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
+import { directUploadInputs, prepareDirectUploads, useDirectUpload } from "./direct-upload";
 import { buttonClass, type ButtonSize, type ButtonVariant } from "./ui";
 
 /** Mirrors crm/lib/actions.ts ActionState (kept separate: that module is server-only). */
@@ -121,6 +122,8 @@ export function ActionForm({
   const ref = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const last = useRef<number | undefined>(undefined);
+  const directUpload = useDirectUpload();
+  const uploaded = useRef(new WeakMap<File, string>());
 
   useEffect(() => {
     if (!state || state.at === last.current) return;
@@ -149,7 +152,21 @@ export function ActionForm({
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
-            startTransition(() => formAction(fd));
+            const uploads = directUpload.enabled ? directUploadInputs(e.currentTarget) : [];
+            if (!uploads.length) {
+              startTransition(() => formAction(fd));
+              return;
+            }
+            // Large files go straight to private Blob storage first (see direct-upload.tsx);
+            // the button shows its pending state throughout.
+            startTransition(async () => {
+              const error = await prepareDirectUploads(uploads, fd, directUpload, uploaded.current);
+              if (error) {
+                toast(error, "error");
+                return;
+              }
+              startTransition(() => formAction(fd));
+            });
           }}
           {...rest}
         >

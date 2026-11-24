@@ -5,7 +5,7 @@ import { candidates, departments, employees, files, interviews, jobOpenings, onb
 import { can, ForbiddenError, type Viewer } from "@/crm/auth/dal";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
-import { storeUpload } from "@/crm/lib/storage";
+import { storeUpload, type UploadInput } from "@/crm/lib/storage";
 import { addDays, formatDateTime, todayIn, zonedToInstant, type ISODate } from "@/crm/lib/time";
 import { AccountError, createEmployeeWithAccount } from "./accounts";
 import { getCompany } from "./company";
@@ -71,7 +71,7 @@ export async function getJob(viewer: Viewer, id: string) {
 
 /* -------------------------------------------------------------- candidates */
 
-export async function addCandidate(viewer: Viewer, input: { jobId: string; fullName: string; email: string; phone: string | null; source: string | null; notes: string | null; resume: File | null }) {
+export async function addCandidate(viewer: Viewer, input: { jobId: string; fullName: string; email: string; phone: string | null; source: string | null; notes: string | null; resume: UploadInput | null }) {
   requireRecruiter(viewer);
   const job = await db.query.jobOpenings.findFirst({ where: eq(jobOpenings.id, input.jobId) });
   if (!job) throw new AppError("Job not found.");
