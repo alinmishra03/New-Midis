@@ -53,7 +53,7 @@ export default async function EmailSettingsPage() {
           <CardHeader title="Send a test email" description="Goes only to the reply-to mailbox above. You can't choose another recipient." />
           <CardBody>
             <p className="mb-4 text-[0.8125rem] text-c-muted">
-              Emails sent by the portal: account invitations, password reset links (from HR and from &ldquo;Forgot password&rdquo;). In-app notifications are not emailed.
+              Emails sent by the portal: account invitations, password reset links (from HR and from &ldquo;Forgot password&rdquo;), password-changed confirmations, and leave and work-from-home requests (to approvers) and decisions (to the employee). Other in-app notifications are not emailed.
             </p>
             <TestEmailButton disabled={!status.configured} />
           </CardBody>

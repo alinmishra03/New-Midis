@@ -8,6 +8,7 @@ import { hashPassword, passwordProblems, verifyPassword } from "@/crm/auth/crypt
 import { deleteAllSessionsForUser, requestMeta } from "@/crm/auth/session";
 import { fail, ok, runAction, ValidationError, type ActionState } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
+import { emailPasswordChanged, sendAfterResponse } from "@/crm/services/workflow-emails";
 
 const schema = z.object({ current: z.string().min(1).max(200), password: z.string().max(200), confirm: z.string().max(200) });
 
@@ -25,9 +26,12 @@ export async function changePasswordAction(_prev: ActionState, fd: FormData): Pr
     const user = await db.query.users.findFirst({ where: eq(users.id, viewer.userId) });
     if (!user?.passwordHash || !(await verifyPassword(current, user.passwordHash))) throw new ValidationError({ current: ["That isn't your current password."] });
 
-    await db.update(users).set({ passwordHash: await hashPassword(password), passwordChangedAt: new Date() }).where(eq(users.id, viewer.userId));
+    const changedAt = new Date();
+    await db.update(users).set({ passwordHash: await hashPassword(password), passwordChangedAt: changedAt }).where(eq(users.id, viewer.userId));
     await deleteAllSessionsForUser(viewer.userId, viewer.sessionId);
     await audit({ actorUserId: viewer.userId, action: "auth.password_change", entityType: "user", entityId: viewer.userId, summary: "Changed password", ipAddress: (await requestMeta()).ipAddress });
+    const userId = viewer.userId;
+    sendAfterResponse("password change confirmation", () => emailPasswordChanged(userId, "change", String(changedAt.getTime())));
     return ok("Password changed. Other devices have been signed out.");
   });
 }

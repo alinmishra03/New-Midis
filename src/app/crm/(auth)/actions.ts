@@ -12,6 +12,7 @@ import { consumeToken } from "@/crm/auth/tokens";
 import { audit } from "@/crm/lib/audit";
 import { fail, ok, setFlash, type ActionState } from "@/crm/lib/actions";
 import { selfServiceResetEmail } from "@/crm/services/account-emails";
+import { emailPasswordChanged, sendAfterResponse } from "@/crm/services/workflow-emails";
 import { notify, userIdsWithPermission } from "@/crm/services/notifications";
 
 const MAX_FAILED = 5;
@@ -211,10 +212,16 @@ export async function setPasswordWithToken(_prev: ActionState, fd: FormData): Pr
       },
       tx,
     );
-    return { user, type: token.type };
+    return { user, type: token.type, tokenId: token.id };
   });
 
   if (!result?.user) return fail("This link has expired or has already been used. Ask HR for a new one.");
+
+  // Confirm a completed reset to the account's own address (after the response; never blocks or undoes it).
+  if (result.type === "password_reset") {
+    const { id: userId } = result.user, eventId = result.tokenId;
+    sendAfterResponse("password reset confirmation", () => emailPasswordChanged(userId, "reset", eventId));
+  }
 
   // A new password signs out every other device.
   await deleteAllSessionsForUser(result.user.id);
