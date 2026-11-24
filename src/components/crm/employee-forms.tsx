@@ -201,20 +201,25 @@ export function PhotoUpload({ employeeId }: { employeeId: string }) {
 /** Issues a one-time activation/reset link and shows it for HR to copy. */
 export function AccessLinkButton({ userId, invited, autoOpen = false }: { userId: string; invited: boolean; autoOpen?: boolean }) {
   const [link, setLink] = useState<string | null>(null);
+  /** "sent" when the link was also emailed; otherwise the reason it was not (or null before creating). */
+  const [mailed, setMailed] = useState<string | null>(null);
   const [open, setOpen] = useState(autoOpen);
   return (
     <Dialog
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        if (!o) setLink(null);
+        if (!o) {
+          setLink(null);
+          setMailed(null);
+        }
       }}
       size="md"
       title={invited ? "Activation link" : "Password reset link"}
       description={
         invited
-          ? "Creates a single-use link (valid 7 days) where they set their password. Any earlier link stops working."
-          : "Creates a single-use link (valid 1 hour) to choose a new password. It signs them out of every device once used."
+          ? "Creates a single-use link (valid 7 days) where they set their password, and emails it to their company address. Any earlier link stops working."
+          : "Creates a single-use link (valid 1 hour) to choose a new password, and emails it to their company address. It signs them out of every device once used."
       }
       trigger={(o) => (
         <button type="button" onClick={o} className={buttonClass("secondary", "sm")}>
@@ -224,11 +229,16 @@ export function AccessLinkButton({ userId, invited, autoOpen = false }: { userId
     >
       {link ? (
         <div className="space-y-3">
+          {mailed === "sent" ? (
+            <p className="rounded-lg bg-c-success-soft px-3 py-2 text-[0.8125rem] text-c-success">Emailed to the employee&apos;s company address. You only need the link below if it doesn&apos;t arrive.</p>
+          ) : mailed ? (
+            <p className="rounded-lg bg-c-warning-soft px-3 py-2 text-[0.8125rem] text-c-warning">Not emailed: {mailed} Send the link below to them directly.</p>
+          ) : null}
           <CopyField label="Send this link to the employee directly (e.g. company chat). Don't post it anywhere shared." value={link} />
           <p className="text-xs text-c-subtle">For security it isn&apos;t stored and can&apos;t be shown again. Create a new one if it&apos;s lost.</p>
         </div>
       ) : (
-        <ActionForm action={issueAccessLinkAction} onSuccess={(s) => setLink(s.data?.link ?? null)} showMessage={false}>
+        <ActionForm action={issueAccessLinkAction} onSuccess={(s) => { setLink(s.data?.link ?? null); setMailed(s.data?.emailed === "1" ? "sent" : s.data?.emailNote ? s.data.emailNote : null); }} showMessage={false}>
           <input type="hidden" name="userId" value={userId} />
           <div className="flex justify-end gap-2">
             <SubmitButton pendingLabel="Creating…">Create link</SubmitButton>

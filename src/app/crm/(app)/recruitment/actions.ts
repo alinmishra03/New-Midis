@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ok, parseForm, runAction, setFlash, zId, type ActionState } from "@/crm/lib/actions";
+import { emailAccessLink } from "@/crm/services/account-emails";
 import { uploadFrom } from "@/crm/lib/storage";
 import {
   addCandidate,
@@ -122,7 +123,13 @@ export async function hireAction(_prev: ActionState, fd: FormData): Promise<Acti
     );
     const created = await hireCandidate(viewer, zId.parse(fd.get("id")), input);
     employeeId = created.employeeId;
-    await setFlash("Hired. Their employee record and onboarding checklist are ready — get their activation link below.");
+    // The hire is committed; the invitation email is best-effort and can't undo it.
+    const mail = await emailAccessLink(created.userId, "invite", created.invite.token, viewer.userId);
+    await setFlash(
+      mail.ok
+        ? "Hired. Their employee record and onboarding checklist are ready, and their invitation email has been sent."
+        : `Hired. Their employee record and onboarding checklist are ready. The invitation email wasn't sent (${mail.message}) — get their activation link below.`,
+    );
   });
   if (result?.ok && employeeId) redirect(`/crm/employees/${employeeId}?invite=1`);
   return result;

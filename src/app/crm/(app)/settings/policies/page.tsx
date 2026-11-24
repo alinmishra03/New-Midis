@@ -17,7 +17,7 @@ export default async function PoliciesPage() {
   return (
     <>
       <PageHeader title="Settings" description="Company-wide configuration. Every change is recorded in the audit log." />
-      <SettingsNav active="policies" perms={{ settings: true, users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view") }} />
+      <SettingsNav active="policies" perms={{ settings: true, users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view"), email: viewer.role.key === "super_admin" }} />
       <div className="space-y-4">
         <Card>
           <CardHeader title="Work schedules & attendance rules" description="Each employee follows their own schedule or the default. Late, early-leave, half-day and full-day are judged against it." action={<ScheduleDialog />} />

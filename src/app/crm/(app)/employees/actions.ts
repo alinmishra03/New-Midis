@@ -12,6 +12,7 @@ import { AppError, fail, ok, parseForm, runAction, setFlash, zId, type ActionSta
 import { audit } from "@/crm/lib/audit";
 import { parseCsv, toCsv } from "@/crm/lib/csv";
 import { fileFrom, uploadFrom } from "@/crm/lib/storage";
+import { emailAccessLink } from "@/crm/services/account-emails";
 import { AccountError, createEmployeeWithAccount } from "@/crm/services/accounts";
 import {
   assertCanAssignRole,
@@ -51,7 +52,13 @@ export async function createEmployeeAction(_prev: ActionState, fd: FormData): Pr
       newId = created.employeeId;
       // Fields createEmployeeWithAccount doesn't take directly.
       await db.update(employees).set({ skills: input.skills, bio: input.bio }).where(eq(employees.id, created.employeeId));
-      await setFlash("Employee created. Get their activation link below and send it to them.");
+      // The account is committed; the invitation email is best-effort and can't undo it.
+      const mail = await emailAccessLink(created.userId, "invite", created.invite.token, viewer.userId);
+      await setFlash(
+        mail.ok
+          ? "Employee created and their invitation email has been sent (link valid 7 days)."
+          : `Employee created. The invitation email wasn't sent (${mail.message}) — get their activation link below and send it to them.`,
+      );
       return ok("Employee created.");
     } catch (e) {
       if (e instanceof AccountError) throw new AppError(e.message);
@@ -141,7 +148,12 @@ export async function issueAccessLinkAction(_prev: ActionState, fd: FormData): P
       entityId: userId,
       summary: `Issued ${type === "invite" ? "an activation" : "a password reset"} link for ${emp ? `${emp.firstName} ${emp.lastName}` : u.email}`,
     });
-    return ok(`Link created — valid ${tokenTtlLabel(type)}, single use.`, { link: tokenUrl(token, await origin()), type });
+    // Email it to the employee too (best-effort, after the token is saved); HR still sees the link as a fallback.
+    const mail = await emailAccessLink(userId, type, token, viewer.userId);
+    return ok(
+      mail.ok ? `Link created and emailed to the employee — valid ${tokenTtlLabel(type)}, single use.` : `Link created — valid ${tokenTtlLabel(type)}, single use. Email not sent: ${mail.message}`,
+      { link: tokenUrl(token, await origin()), type, emailed: mail.ok ? "1" : "0", emailNote: mail.ok ? "" : mail.message },
+    );
   });
 }
 
