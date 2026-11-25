@@ -21,7 +21,7 @@ import {
 } from "@/components/crm/dashboard";
 import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, StatCard, StatusBadge } from "@/components/crm/ui";
 import { can, getTeamEmployeeIds, requireViewer } from "@/crm/auth/dal";
-import { formatDate, formatDateShort, zonedMinutes } from "@/crm/lib/time";
+import { formatClock, formatDate, formatDateShort, shiftLabel, zonedMinutes } from "@/crm/lib/time";
 import { getTodayState } from "@/crm/services/attendance";
 import { getCompany } from "@/crm/services/company";
 import {
@@ -69,7 +69,8 @@ export default async function DashboardPage() {
     onLeave: today.ctx.leave ? (today.ctx.leave.halfDay === "none" ? "full" : "half") : "none",
     wfhApproved: today.ctx.wfh,
     allowUnplannedRemote: today.ctx.schedule.allowUnplannedRemote,
-    scheduleLabel: `${today.ctx.schedule.startTime}–${today.ctx.schedule.endTime}`,
+    scheduleLabel: shiftLabel(today.ctx.schedule),
+    scheduleStart: formatClock(today.ctx.schedule.startTime),
     checkInAt: today.record?.checkInAt?.toISOString() ?? null,
     checkOutAt: today.record?.checkOutAt?.toISOString() ?? null,
     workMode: today.record?.workMode ?? null,

@@ -112,6 +112,17 @@ export function minutesFromHHMM(t: string): number {
   return h * 60 + m;
 }
 
+/** "09:30" → "9:30 AM", "18:00" → "6:00 PM" (a schedule's wall-clock time). */
+export function formatClock(t: string): string {
+  const [h, m] = t.split(":").map(Number) as [number, number];
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+/** "General shift (9:00 AM – 6:00 PM)" — how a work schedule is shown everywhere. */
+export function shiftLabel(s: { name: string; startTime: string; endTime: string }): string {
+  return `${s.name} (${formatClock(s.startTime)} – ${formatClock(s.endTime)})`;
+}
+
 export function formatMinutes(total: number): string {
   const sign = total < 0 ? "-" : "";
   const abs = Math.abs(Math.round(total));

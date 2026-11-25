@@ -13,7 +13,10 @@ export type CheckInState = {
   onLeave: "none" | "full" | "half";
   wfhApproved: boolean;
   allowUnplannedRemote: boolean;
+  /** e.g. "Second shift (9:30 AM – 6:30 PM)". */
   scheduleLabel: string;
+  /** e.g. "9:30 AM". */
+  scheduleStart: string;
   checkInAt: string | null;
   checkOutAt: string | null;
   workMode: "office" | "remote" | null;
@@ -91,7 +94,7 @@ export function CheckInCard({ state }: { state: CheckInState }) {
         </div>
       </dl>
 
-      {state.lateMinutes > 0 && <p className="mt-2 text-xs text-c-warning">Checked in {state.lateMinutes} minutes after the {state.scheduleLabel.split("–")[0]} start.</p>}
+      {state.lateMinutes > 0 && <p className="mt-2 text-xs text-c-warning">Checked in {state.lateMinutes} minutes after the {state.scheduleStart} start.</p>}
 
       <div className="mt-4 flex flex-wrap gap-2">
         {!state.checkInAt && state.onLeave !== "full" && (
@@ -137,7 +140,7 @@ export function CheckInCard({ state }: { state: CheckInState }) {
       </div>
 
       <p className="mt-3 flex items-center gap-1.5 text-xs text-c-subtle">
-        <MapPin className="size-3.5" /> Schedule {state.scheduleLabel}
+        <MapPin className="size-3.5" /> {state.scheduleLabel}
         {state.wfhApproved && " · WFH approved today"}
         {state.onLeave === "half" && " · Half-day leave today"}
       </p>
