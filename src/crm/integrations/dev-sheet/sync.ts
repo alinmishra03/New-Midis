@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, inArray, lt, ne, or } from "drizzle-orm";
 import { db, type Tx } from "@/crm/db";
-import { departments, employees, projectMembers, projects, sheetSyncAliases, sheetSyncRecords, sheetSyncRuns, sheetSyncUploads, taskComments, tasks, users, type SyncRunFile } from "@/crm/db/schema";
+import { departments, employees, projectMembers, projects, sheetSyncAliases, sheetSyncRecords, sheetSyncRuns, sheetSyncUploads, taskComments, tasks, users, type SyncRowStatus, type SyncRunFile } from "@/crm/db/schema";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
 import { formatDate, zonedToInstant } from "@/crm/lib/time";
@@ -95,8 +95,10 @@ export async function runSheetSync(opts: { mode: SyncMode; trigger: SyncTrigger;
   const runId = run!.id;
   try {
     const data = opts.data;
-    const counts = await syncData(data, runId, opts.mode, opts.actorUserId);
-    await db.update(sheetSyncRuns).set({ status: "succeeded", spreadsheetTitle: data.title, counts, finishedAt: new Date() }).where(eq(sheetSyncRuns.id, runId));
+    const { counts, rows } = await syncData(data, runId, opts.mode, opts.actorUserId);
+    // Each file keeps the outcome of every one of its rows (shown next to the row in the spreadsheet view).
+    const files = opts.files?.map((f) => ({ ...f, rows: rows[f.tab] ?? [] })) ?? null;
+    await db.update(sheetSyncRuns).set({ status: "succeeded", spreadsheetTitle: data.title, counts, finishedAt: new Date(), ...(files ? { files } : {}) }).where(eq(sheetSyncRuns.id, runId));
     return { runId, ok: true as const, counts };
   } catch (e) {
     const known = e instanceof AppError || e instanceof SheetFormatError;
@@ -109,7 +111,7 @@ export async function runSheetSync(opts: { mode: SyncMode; trigger: SyncTrigger;
 
 /* ------------------------------------------------------------------ engine */
 
-async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUserId: string | null): Promise<SyncCounts> {
+async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUserId: string | null): Promise<{ counts: SyncCounts; rows: Record<string, SyncRowStatus[]> }> {
   const aw = readTable(data.tabs[TABS.allWebsite] ?? [], PROJECT_COLUMNS, TABS.allWebsite);
   const cr = readTable(data.tabs[TABS.clientReviewed] ?? [], PROJECT_COLUMNS, TABS.clientReviewed);
   const daily = readTable(data.tabs[TABS.daily] ?? [], DAILY_COLUMNS, TABS.daily);
@@ -127,6 +129,11 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
   const recByKey = new Map(existing.map((r) => [`${r.sourceTab}|${r.fingerprint}`, r]));
   const syncedProjectIds = new Set(existing.filter((r) => r.kind === "project" && r.projectId).map((r) => r.projectId!));
   const seen = new Set<string>();
+  // Which record each source row belongs to ("tab|sheet row" → fingerprint), and exact repeats of an earlier row.
+  // Used only to report each row's outcome; it doesn't affect what is imported.
+  const rowLinks = new Map<string, { tab: string; n: number; fp: string; dupOf?: number }>();
+  const link = (tab: string, n: number, fp: string, dupOf?: number) => rowLinks.set(`${tab}|${n}`, { tab, n, fp, ...(dupOf ? { dupOf } : {}) });
+  const sameRow = (a: Row, b: Row) => JSON.stringify(a.values) === JSON.stringify(b.values);
   const counts: SyncCounts = { projectsCreated: 0, projectsUpdated: 0, projectsMatched: 0, projectsLinked: 0, membersAdded: 0, tasksCreated: 0, tasksUpdated: 0, tasksMatched: 0, updatesAdded: 0, unchanged: 0, review: 0, ignored: 0, missing: 0, duplicateRows: 0, conflicts: 0 };
 
   /* ---------- writes are collected, then applied in one transaction ---------- */
@@ -216,6 +223,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
       if (!k) {
         // A row with details but no project name can't be imported: shown for review, never guessed.
         const fp = fingerprint("noname", JSON.stringify(r.values));
+        link(tab, r.rowNumber, fp, rows.find((x) => x.rowNumber < r.rowNumber && !nameKey(x.values["Project Name"]!) && sameRow(x, r))?.rowNumber);
         const ignored = recByKey.get(`${tab}|${fp}`)?.decision === "ignore";
         put({ sourceTab: tab, fingerprint: fp, rowNumber: r.rowNumber, kind: "project", source: r.values, state: ignored ? "ignored" : "review", reviewReason: ignored ? null : "missing_required", reviewDetail: ignored ? null : "Project Name is empty. Fill it in the sheet and upload again, or ignore the row." });
         if (ignored) counts.ignored!++;
@@ -229,6 +237,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
       if (tab === "client_reviewed" && knownKeys.has(key)) {
         const target = projectByKey.get(key);
         for (const r of group) {
+          link(tab, r.rowNumber, fingerprint(key), group.find((x) => x.rowNumber < r.rowNumber && sameRow(x, r))?.rowNumber);
           put({ sourceTab: tab, fingerprint: fingerprint(key), rowNumber: r.rowNumber, kind: "project_ref", source: r.values, state: "linked", projectId: target?.projectId ?? null, reviewReason: null, reviewDetail: null });
           // Developers listed in Client Reviewed are added as members too (additive; never removed).
           const people = splitPeople(r.values["Frontend Developer"]!, r.values["Backend Developer"]!);
@@ -240,6 +249,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
       const fpOf = (r: Row) => projectFp(key, r);
       const distinct = new Map<string, Row>();
       for (const r of group) if (!distinct.has(fpOf(r))) distinct.set(fpOf(r), r);
+      for (const r of group) link(tab, r.rowNumber, fpOf(r), group.find((x) => x.rowNumber < r.rowNumber && sameRow(x, r))?.rowNumber);
       const identical = distinct.size === 1 && group.every((r) => JSON.stringify(r.values) === JSON.stringify(group[0]!.values));
       const ambiguous = distinct.size > 1 || (!identical && group.length > 1);
       const refs: ProjectRef[] = [];
@@ -366,12 +376,15 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
   const suffixFreeKey = (key: string) => key.replace(/(website|site|frontend|backend)$/, "");
   const plans: DailyPlan[] = [];
   const fpCount = new Map<string, number>();
+  const fpFirstRow = new Map<string, number>();
   for (const r of daily) {
     const v = r.values;
     const people = splitPeople(v["Frontend Developer"]!, v["Backend Developer"]!);
     const raw = parseDate(v["Date"]!);
     const fp = fingerprint(raw.ok ? raw.date : textKey(v["Date"]!), nameKey(v["Project Name"]!), people.map(nameKey).sort().join(","), textKey(v["Daily Task / Deliverable"]!));
     fpCount.set(fp, (fpCount.get(fp) ?? 0) + 1);
+    if (!fpFirstRow.has(fp)) fpFirstRow.set(fp, r.rowNumber);
+    link("daily_work_update", r.rowNumber, fp, fpCount.get(fp)! > 1 ? fpFirstRow.get(fp) : undefined);
     if (fpCount.get(fp)! > 1) {
       counts.duplicateRows!++; // an exact repeat of an earlier row: the same record
       continue;
@@ -683,7 +696,19 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
   });
   const open = await db.select({ id: sheetSyncRecords.id }).from(sheetSyncRecords).where(eq(sheetSyncRecords.state, "review"));
   counts.review = open.length;
-  return counts;
+
+  // Each source row's outcome in this run, from the same decisions the import used.
+  const rowsOut: Record<string, SyncRowStatus[]> = {};
+  for (const l of rowLinks.values()) {
+    const u = upserts.get(`${l.tab}|${l.fp}`);
+    const prev = recByKey.get(`${l.tab}|${l.fp}`);
+    const wasImported = !!prev && (prev.state === "linked" || !!(prev.projectId || prev.taskId || prev.commentId || prev.applied));
+    const s: SyncRowStatus["s"] = l.dupOf ? "duplicate" : !u ? "review" : u.state === "review" ? "review" : u.state === "ignored" ? "ignored" : importing || wasImported ? "imported" : "ready";
+    const group = u?.groupKey && !l.dupOf ? fingerprint(u.groupKey).slice(0, 12) : undefined;
+    (rowsOut[l.tab] ??= []).push({ n: l.n, fp: l.fp, s, ...(s === "review" && u?.reviewReason ? { reason: u.reviewReason } : {}), ...(l.dupOf ? { dupOf: l.dupOf } : {}), ...(group ? { group } : {}) });
+  }
+  for (const list of Object.values(rowsOut)) list.sort((a, b) => a.n - b.n);
+  return { counts, rows: rowsOut };
 }
 
 /**

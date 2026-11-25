@@ -25,13 +25,17 @@ Limits: `.csv` files up to 900 KB each, 20,000 rows, 100 columns.
 
 1. **Settings → Integrations → CSV Import**: upload each file into its own box
    (*All Website*, *Client Reviewed website*, *Daily Work Update*). Each file is
-   read and checked on the server; the page shows the file name, rows,
-   encoding, separator and the columns found. A file with missing columns is
-   rejected with their names. Extra columns are ignored.
-2. **Preview import**: shows what would be created or matched, duplicates
-   skipped, and everything that needs attention (unknown people, unmatched or
-   ambiguous project names, bad dates, missing fields). Nothing is imported.
-3. Resolve the review items you can (see 5), then **Preview** again.
+   read and checked on the server, then shown below its upload box as a
+   spreadsheet: the file's own headings and cells exactly as uploaded (blank
+   cells stay blank, dates and long descriptions unchanged), numbered by sheet
+   row, with search, status filters, paging and expandable long text. A file
+   with missing columns is rejected with their names. Extra columns are shown
+   but not imported; columns with no heading and no values are left out.
+2. **Preview import**: fills the separate **Import status** column of every
+   row (Ready, Imported, Needs review, Duplicate, Ignored) with the reason, and
+   shows a summary of what would be created or matched. Nothing is imported.
+3. Resolve flagged rows from the row itself (**Resolve**, see 5), then
+   **Preview** again.
 4. **Import previewed changes**: applies exactly what was previewed, in one
    transaction (all or nothing). It's refused if the files, review decisions or
    mappings changed after the preview, or another run happened since.
@@ -80,13 +84,20 @@ departments go to review. Employees and accounts are never created.
 - A row that disappears from a file is flagged ("no longer in the sheet");
   nothing is deleted. A project or task deleted in the CRM isn't recreated.
 
-## 5. Review queue
+## 5. Flagged rows
 
 Unknown or ambiguous people; unmatched, ambiguous or edited project names;
 names that clash with an existing CRM project; several projects or developers
 in one row; missing start dates, statuses or required fields; unreadable dates
 (`23-11-12`, `05-11-2026`); non-project work ("learning back-end"); uncertain
 task matches; possible edits; conflicts; removed rows.
+
+Each flagged row shows its reason in the Import status column; **Resolve**
+opens a compact editor under the row. The uploaded cells are never edited:
+when a name is matched to an employee or project, the CRM value is shown
+under the original value (“→ …”) and the mapping is stored separately. Items
+that aren't on any uploaded row (e.g. a row imported earlier and since removed
+from the sheet) are listed under **Other items to review**.
 
 A Super Admin can map a sheet name to a Development employee or project
 (saved and reused by every later import), link or create projects, import a

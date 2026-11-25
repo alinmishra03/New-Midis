@@ -79,7 +79,7 @@ export const TAB_SPECS: Record<TabKey, { name: string; columns: readonly string[
 export const TAB_ORDER: TabKey[] = ["all_website", "client_reviewed", "daily_work_update"];
 export const isTabKey = (t: string): t is TabKey => t in TAB_SPECS;
 
-const headerIndex = (rows: string[][], required: readonly string[]) =>
+export const headerIndex = (rows: string[][], required: readonly string[]) =>
   rows.slice(0, 10).findIndex((r) => required.every((c) => r.map((h) => h.replace(/\s+/g, " ").trim().toLowerCase()).includes(c.toLowerCase())));
 
 /**

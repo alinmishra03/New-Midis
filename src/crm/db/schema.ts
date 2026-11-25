@@ -1148,7 +1148,14 @@ export const sheetSyncUploads = pgTable("sheet_sync_uploads", {
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export type SyncRunFile = { tab: string; fileName: string; sha256: string; dataRows: number };
+/**
+ * One source row's outcome in a preview/import: sheet row number, the record it
+ * belongs to (fingerprint), and ready / already imported / needs review /
+ * ignored / exact duplicate of an earlier row. Stored inside `files` (jsonb), so
+ * no schema change.
+ */
+export type SyncRowStatus = { n: number; fp: string; s: "ready" | "imported" | "review" | "ignored" | "duplicate"; reason?: string; dupOf?: number; group?: string };
+export type SyncRunFile = { tab: string; fileName: string; sha256: string; dataRows: number; rows?: SyncRowStatus[] };
 
 /** One row per preview or import, with the files used, counts and any error. */
 export const sheetSyncRuns = pgTable(
