@@ -1,8 +1,9 @@
 "use client";
 
-import { Camera, Download, KeyRound, Upload } from "lucide-react";
+import { AtSign, Camera, Download, KeyRound, Upload } from "lucide-react";
 import { useState } from "react";
 import {
+  changeAccountEmailAction,
   createEmployeeAction,
   importEmployeesAction,
   issueAccessLinkAction,
@@ -10,7 +11,7 @@ import {
   updatePersonalAction,
   uploadPhotoAction,
 } from "@/app/crm/(app)/employees/actions";
-import { ActionForm, CopyField, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
+import { ActionForm, CheckboxField, CopyField, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -245,6 +246,41 @@ export function AccessLinkButton({ userId, invited, autoOpen = false }: { userId
           </div>
         </ActionForm>
       )}
+    </Dialog>
+  );
+}
+
+/** HR / Super Admin: correct the address an employee signs in with and receives portal email at. */
+export function ChangeEmailButton({ employeeId, currentEmail, invited }: { employeeId: string; currentEmail: string; invited: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}
+      size="md"
+      title="Change email address"
+      description="Changes the address they sign in with and receive all portal emails at. Their password, role and personal details stay the same. Any activation or reset link already sent stops working."
+      trigger={(o) => (
+        <button type="button" onClick={o} className={buttonClass("secondary", "sm")}>
+          <AtSign /> Change email
+        </button>
+      )}
+    >
+      <ActionForm action={changeAccountEmailAction} onSuccess={() => setOpen(false)} className="space-y-4">
+        <input type="hidden" name="id" value={employeeId} />
+        <p className="text-[0.8125rem] text-c-muted">
+          Current: <span className="text-c-fg">{currentEmail}</span>
+        </p>
+        <TextField label="New email address" name="email" type="email" required autoComplete="off" />
+        {invited ? (
+          <CheckboxField name="sendInvite" defaultChecked label="Email a new activation link to the new address" hint="They haven't activated their account yet." />
+        ) : (
+          <p className="text-[0.8125rem] text-c-muted">They&apos;ll sign in with the new address from now on. If they also need a new password, use &ldquo;Reset password&rdquo;.</p>
+        )}
+        <div className="flex justify-end gap-2">
+          <SubmitButton pendingLabel="Saving…">Change email</SubmitButton>
+        </div>
+      </ActionForm>
     </Dialog>
   );
 }

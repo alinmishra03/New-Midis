@@ -7,7 +7,7 @@ import { z } from "zod";
 import { db } from "@/crm/db";
 import { departments, designations, employees, passwordResetRequests, roles, users } from "@/crm/db/schema";
 import { assertCan, can, ForbiddenError, type Viewer } from "@/crm/auth/dal";
-import { issueToken, tokenTtlLabel, tokenUrl } from "@/crm/auth/tokens";
+import { issueToken, revokeToken, tokenTtlLabel, tokenUrl } from "@/crm/auth/tokens";
 import { AppError, fail, ok, parseForm, runAction, setFlash, zId, type ActionState } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
 import { parseCsv, toCsv } from "@/crm/lib/csv";
@@ -15,7 +15,9 @@ import { fileFrom, uploadFrom } from "@/crm/lib/storage";
 import { emailAccessLink } from "@/crm/services/account-emails";
 import { AccountError, createEmployeeWithAccount } from "@/crm/services/accounts";
 import {
+  accountEmailSchema,
   assertCanAssignRole,
+  changeAccountEmail,
   deactivateEmployee,
   employeeSchema,
   personalSchema,
@@ -154,6 +156,29 @@ export async function issueAccessLinkAction(_prev: ActionState, fd: FormData): P
       mail.ok ? `Link created and emailed to the employee — valid ${tokenTtlLabel(type)}, single use.` : `Link created — valid ${tokenTtlLabel(type)}, single use. Email not sent: ${mail.message}`,
       { link: tokenUrl(token, await origin()), type, emailed: mail.ok ? "1" : "0", emailNote: mail.ok ? "" : mail.message },
     );
+  });
+}
+
+/**
+ * Changes the email an employee signs in with and receives portal email at
+ * (account + directory address together). If they haven't activated yet, a
+ * fresh activation link goes to the NEW address; earlier links stop working.
+ */
+export async function changeAccountEmailAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async (viewer) => {
+    const id = zId.parse(fd.get("id"));
+    const { email } = parseForm(accountEmailSchema, fd);
+    const changed = await changeAccountEmail(viewer, id, email);
+    if (changed.status !== "invited" || fd.get("sendInvite") !== "on") {
+      return ok(changed.status === "invited" ? "Email address changed. Use “Activation link” to send them a new link." : "Email address changed. They now sign in with the new address.");
+    }
+    // The change is committed; the new invitation is best-effort and can't undo it.
+    const { token } = await issueToken(changed.userId, "invite", viewer.userId);
+    const mail = await emailAccessLink(changed.userId, "invite", token, viewer.userId);
+    if (mail.ok) return ok("Email address changed and a new activation link was emailed to it (valid 7 days).");
+    // Nobody received this link, so don't leave it usable.
+    await revokeToken(token);
+    return ok(`Email address changed, but the activation email wasn't sent (${mail.message}). Use “Activation link” to get a link for them.`);
   });
 }
 

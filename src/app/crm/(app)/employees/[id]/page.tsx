@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download, FileText, Mail, MapPin, Pencil, Phone, UserX } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
-import { AccessLinkButton, PersonalForm, PhotoUpload } from "@/components/crm/employee-forms";
+import { AccessLinkButton, ChangeEmailButton, PersonalForm, PhotoUpload } from "@/components/crm/employee-forms";
 import {
   Avatar,
   Badge,
@@ -104,6 +104,9 @@ export default async function EmployeeProfilePage({ params, searchParams }: Page
             )}
             {can(viewer, "users.invite") && employment?.account && !access.isSelf && employment.account.status !== "disabled" && (
               <AccessLinkButton userId={employment.account.userId} invited={employment.account.status === "invited"} autoOpen={sp.invite === "1"} />
+            )}
+            {access.manage && can(viewer, "users.invite") && employment?.account && employment.account.status !== "disabled" && (
+              <ChangeEmailButton employeeId={basic.id} currentEmail={basic.officialEmail} invited={employment.account.status === "invited"} />
             )}
             {access.manage && !access.isSelf && !exited && (
               <ConfirmAction
