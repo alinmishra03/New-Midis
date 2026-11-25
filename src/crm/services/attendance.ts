@@ -5,8 +5,8 @@ import { attendanceBreaks, attendanceRecords, companySettings, employees, leaveR
 import type { Viewer } from "@/crm/auth/dal";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
-import { addDays, isoWeekday, minutesFromHHMM, todayIn, zonedDate, zonedMinutes, type ISODate } from "@/crm/lib/time";
-import { getCompany, getScheduleForEmployee, publicHolidaySet, type Schedule } from "./company";
+import { addDays, isoWeekday, minutesFromHHMM, shiftLabel, todayIn, zonedDate, zonedMinutes, type ISODate } from "@/crm/lib/time";
+import { getCompany, getDefaultSchedule, getScheduleForEmployee, publicHolidaySet, type Schedule } from "./company";
 
 /**
  * Attendance rules
@@ -301,20 +301,24 @@ export async function attendanceForDay(employeeIds: string[] | "all", date: ISOD
     empConds.push(inArray(employees.id, employeeIds));
   }
   const people = await db
-    .select({ id: employees.id, firstName: employees.firstName, lastName: employees.lastName, photoFileId: employees.photoFileId, employeeCode: employees.employeeCode })
+    .select({ id: employees.id, firstName: employees.firstName, lastName: employees.lastName, photoFileId: employees.photoFileId, employeeCode: employees.employeeCode, workScheduleId: employees.workScheduleId })
     .from(employees)
     .where(and(...empConds))
     .orderBy(asc(employees.firstName));
   const ids = people.map((p) => p.id);
   if (!ids.length) return [];
-  const [recs, leaves, wfh] = await Promise.all([
+  const [recs, leaves, wfh, schedules, fallback] = await Promise.all([
     db.select().from(attendanceRecords).where(and(eq(attendanceRecords.workDate, date), inArray(attendanceRecords.employeeId, ids))),
     db.select().from(leaveRequests).where(and(eq(leaveRequests.status, "approved"), lte(leaveRequests.startDate, date), gte(leaveRequests.endDate, date), inArray(leaveRequests.employeeId, ids))),
     db.select().from(wfhRequests).where(and(eq(wfhRequests.status, "approved"), lte(wfhRequests.startDate, date), gte(wfhRequests.endDate, date), inArray(wfhRequests.employeeId, ids))),
+    db.select().from(workSchedules),
+    getDefaultSchedule(),
   ]);
   return people.map((p) => {
     const record = recs.find((r) => r.employeeId === p.id) ?? null;
     const leave = leaves.find((l) => l.employeeId === p.id) ?? null;
-    return { ...p, name: `${p.firstName} ${p.lastName}`.trim(), record, onLeave: leave ? leave.halfDay : null, wfh: wfh.some((w) => w.employeeId === p.id) };
+    // The employee's own shift, else the company default (same rule as attendance calculations).
+    const shift = schedules.find((s) => s.id === p.workScheduleId) ?? fallback;
+    return { ...p, name: `${p.firstName} ${p.lastName}`.trim(), record, onLeave: leave ? leave.halfDay : null, wfh: wfh.some((w) => w.employeeId === p.id), shift: shiftLabel(shift) };
   });
 }

@@ -8,7 +8,7 @@ import { can, requireViewer, scopeFor } from "@/crm/auth/dal";
 import { isIsoDate, yearMonthOr } from "@/crm/lib/params";
 import { db } from "@/crm/db";
 import { employees, leaveRequests, wfhRequests } from "@/crm/db/schema";
-import { addDays, daysBetweenInclusive, endOfMonth, formatDate, formatMinutes, formatMonth, formatTime, isoWeekday, startOfMonth, todayIn } from "@/crm/lib/time";
+import { addDays, daysBetweenInclusive, endOfMonth, formatDate, formatMinutes, formatMonth, formatTime, isoWeekday, shiftLabel, startOfMonth, todayIn } from "@/crm/lib/time";
 import { attendanceForDay, monthSummary, recordsBetween } from "@/crm/services/attendance";
 import { listCorrections } from "@/crm/services/attendance-corrections";
 import { getCompany, getHolidaysBetween, getScheduleForEmployee } from "@/crm/services/company";
@@ -115,7 +115,7 @@ async function MyAttendance({ month }: { month: string }) {
       <Card>
         <CardHeader
           title={formatMonth(from)}
-          description={`Schedule ${schedule.startTime}–${schedule.endTime}, late after ${schedule.lateGraceMinutes} min`}
+          description={`${shiftLabel(schedule)} · late after ${schedule.lateGraceMinutes} min`}
           action={
             <div className="flex gap-1">
               <ButtonLink href={`/crm/attendance?month=${prev}`} size="icon" variant="ghost" aria-label="Previous month">
@@ -292,7 +292,7 @@ async function TeamDay({ date }: { date: string }) {
                 return (
                   <tr key={r.id}>
                     <td>
-                      <PersonCell name={r.name} sub={r.employeeCode} photoFileId={r.photoFileId} href={`/crm/employees/${r.id}?tab=attendance`} />
+                      <PersonCell name={r.name} sub={`${r.employeeCode} · ${r.shift}`} photoFileId={r.photoFileId} href={`/crm/employees/${r.id}?tab=attendance`} />
                     </td>
                     <td>
                       {rec?.checkInAt ? (

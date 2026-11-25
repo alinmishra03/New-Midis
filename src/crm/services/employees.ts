@@ -9,8 +9,8 @@ import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
 import { isUuid } from "@/crm/lib/params";
 import { IMAGE_TYPES, storeUpload, type UploadInput } from "@/crm/lib/storage";
-import { todayIn } from "@/crm/lib/time";
-import { getCompany } from "./company";
+import { shiftLabel, todayIn } from "@/crm/lib/time";
+import { getCompany, getDefaultSchedule } from "./company";
 import { notify } from "./notifications";
 
 /* =============================================================== listing */
@@ -189,7 +189,7 @@ export async function getEmployeeProfile(viewer: Viewer, employeeId: string) {
           joiningDate: row.joiningDate,
           exitDate: row.exitDate,
           employmentType: row.employmentType,
-          schedule: schedule ? `${schedule.name} (${schedule.startTime}–${schedule.endTime})` : "Company default",
+          schedule: schedule ? shiftLabel(schedule) : `${shiftLabel(await getDefaultSchedule())} · company default`,
           workScheduleId: row.workScheduleId,
           account: user ? { status: user.status, role: role?.name ?? "—", roleKey: role?.key ?? "", lastLoginAt: user.lastLoginAt, userId: user.id } : null,
         }
@@ -518,13 +518,13 @@ export async function employeeFormOptions() {
       .where(inArray(employees.employmentStatus, [...ACTIVE_STATUSES]))
       .orderBy(asc(employees.firstName)),
     db.select({ key: roles.key, name: roles.name }).from(roles).orderBy(asc(roles.name)),
-    db.select({ id: workSchedules.id, name: workSchedules.name, isDefault: workSchedules.isDefault }).from(workSchedules).orderBy(asc(workSchedules.name)),
+    db.select({ id: workSchedules.id, name: workSchedules.name, startTime: workSchedules.startTime, endTime: workSchedules.endTime, isDefault: workSchedules.isDefault }).from(workSchedules).orderBy(asc(workSchedules.startTime), asc(workSchedules.name)),
   ]);
   return {
     departments: depts.map((d) => ({ value: d.id, label: d.name })),
     designations: desigs.map((d) => ({ value: d.id, label: d.title })),
     managers: mgrs.map((m) => ({ value: m.id, label: `${m.firstName} ${m.lastName}`.trim() + ` (${m.code})` })),
     roles: rolesList.map((r) => ({ value: r.key, label: r.name })),
-    schedules: schedules.map((s) => ({ value: s.id, label: s.name + (s.isDefault ? " (default)" : "") })),
+    schedules: schedules.map((s) => ({ value: s.id, label: shiftLabel(s) + (s.isDefault ? " · default" : "") })),
   };
 }

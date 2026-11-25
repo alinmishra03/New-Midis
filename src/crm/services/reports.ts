@@ -13,6 +13,7 @@ import {
   performanceReviews,
   reviewCycles,
   tasks,
+  workSchedules,
 } from "@/crm/db/schema";
 import { can, ForbiddenError, getTeamEmployeeIds, type Viewer } from "@/crm/auth/dal";
 import { uuidOrUndefined } from "@/crm/lib/params";
@@ -72,7 +73,7 @@ async function scopeIds(viewer: Viewer, f: ReportFilters): Promise<string[]> {
 async function people(ids: string[]) {
   if (!ids.length) return [];
   return db
-    .select({ id: employees.id, code: employees.employeeCode, firstName: employees.firstName, lastName: employees.lastName, department: departments.name, designation: designations.title, joiningDate: employees.joiningDate, exitDate: employees.exitDate, status: employees.employmentStatus, type: employees.employmentType })
+    .select({ id: employees.id, code: employees.employeeCode, firstName: employees.firstName, lastName: employees.lastName, department: departments.name, designation: designations.title, joiningDate: employees.joiningDate, exitDate: employees.exitDate, status: employees.employmentStatus, type: employees.employmentType, workScheduleId: employees.workScheduleId })
     .from(employees)
     .leftJoin(departments, eq(departments.id, employees.departmentId))
     .leftJoin(designations, eq(designations.id, employees.designationId))
@@ -141,12 +142,14 @@ export async function buildReport(viewer: Viewer, key: ReportKey, f: ReportFilte
           ],
         };
       }
-      const schedule = await getDefaultSchedule();
+      // Working days follow each employee's own shift (or the company default).
+      const [fallback, schedules] = await Promise.all([getDefaultSchedule(), db.select().from(workSchedules)]);
       const holidays = await publicHolidaySet(f.from, f.to);
       const leaves = ids.length
         ? await db.select().from(leaveRequests).where(and(inArray(leaveRequests.employeeId, ids), eq(leaveRequests.status, "approved"), lte(leaveRequests.startDate, f.to), gte(leaveRequests.endDate, f.from)))
         : [];
       const rows = list.map((p) => {
+        const schedule = schedules.find((s) => s.id === p.workScheduleId) ?? fallback;
         const mine = recs.filter((r) => r.employeeId === p.id);
         const byDate = new Set(mine.map((r) => r.workDate));
         let working = 0;

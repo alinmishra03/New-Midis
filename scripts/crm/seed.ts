@@ -76,22 +76,16 @@ async function main() {
     }
   }
 
-  // A default working schedule. MIDIS should confirm the real hours and
-  // working days in Settings → Work schedules.
+  // MIDIS's two shifts. General is the company default; HR assigns Second
+  // shift per employee. Both: Mon–Fri, 9 hours incl. a 1-hour break (8 h = full day).
+  // Inserted only if missing (by name): existing schedules are never changed.
+  const shiftRules = { workingDays: [1, 2, 3, 4, 5], lateGraceMinutes: 15, earlyLeaveGraceMinutes: 15, fullDayMinutes: 480, halfDayMinutes: 240, breakAllowanceMinutes: 60 };
   await db
     .insert(workSchedules)
-    .values({
-      name: "General shift",
-      isDefault: true,
-      startTime: "09:30",
-      endTime: "18:30",
-      workingDays: [1, 2, 3, 4, 5],
-      lateGraceMinutes: 15,
-      earlyLeaveGraceMinutes: 15,
-      fullDayMinutes: 480,
-      halfDayMinutes: 240,
-      breakAllowanceMinutes: 60,
-    })
+    .values([
+      { name: "General shift", isDefault: true, startTime: "09:00", endTime: "18:00", ...shiftRules },
+      { name: "Second shift", isDefault: false, startTime: "09:30", endTime: "18:30", ...shiftRules },
+    ])
     .onConflictDoNothing();
 
   // Leave types. Quotas are starting values for HR to replace with MIDIS's
