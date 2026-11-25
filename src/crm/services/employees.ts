@@ -1,8 +1,8 @@
 import "server-only";
-import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/crm/db";
-import { departments, designations, employees, roles, salaryStructures, users, workSchedules } from "@/crm/db/schema";
+import { authTokens, departments, designations, employees, roles, salaryStructures, users, workSchedules } from "@/crm/db/schema";
 import { can, ForbiddenError, isInTeam, type Viewer } from "@/crm/auth/dal";
 import { deleteAllSessionsForUser } from "@/crm/auth/session";
 import { AppError } from "@/crm/lib/actions";
@@ -370,6 +370,72 @@ export async function updatePersonal(viewer: Viewer, employeeId: string, input: 
   await audit({ actorUserId: viewer.userId, action: "employee.personal_update", entityType: "employee", entityId: employeeId, summary: "Updated personal details", metadata: { fields: Object.keys(input) } });
   const target = await db.query.employees.findFirst({ where: eq(employees.id, employeeId), columns: { userId: true } });
   await notify([target?.userId], { type: "profile_updated", title: "HR updated your personal details", link: "/crm/profile" });
+}
+
+export const accountEmailSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address.")).pipe(z.string().max(254)),
+});
+
+const isUniqueViolation = (e: unknown): boolean => {
+  const err = e as { code?: string; cause?: unknown } | null;
+  return !!err && (err.code === "23505" || isUniqueViolation(err.cause));
+};
+
+/**
+ * Changes the address an employee signs in with and receives email at.
+ * `users.email` (sign-in + every outgoing email) and `employees.official_email`
+ * (shown in the directory) always change together, in one transaction.
+ *
+ * - Same rules as editing the record (manageBlocker): HR/Finance/Super Admin
+ *   accounts need a Super Admin. Also needs users.invite, as for access links.
+ * - Refuses an address already used by another account or employee.
+ * - Revokes every unused activation/reset link: they were sent to the old address.
+ * - Passwords, sessions, roles and personal details are not touched.
+ */
+export async function changeAccountEmail(viewer: Viewer, employeeId: string, newEmail: string) {
+  if (!can(viewer, "users.invite")) throw new ForbiddenError();
+  await assertCanManageEmployee(viewer, employeeId);
+  const email = accountEmailSchema.parse({ email: newEmail }).email;
+  const emp = await db.query.employees.findFirst({ where: eq(employees.id, employeeId), columns: { id: true, userId: true, firstName: true, lastName: true, officialEmail: true } });
+  if (!emp) throw new AppError("Employee not found.");
+  if (!emp.userId) throw new AppError("This employee has no portal account.");
+  const user = await db.query.users.findFirst({ where: eq(users.id, emp.userId), columns: { id: true, email: true, status: true } });
+  if (!user) throw new AppError("This employee has no portal account.");
+  if (user.status === "disabled") throw new AppError("This account is deactivated. Reactivate the employee first.");
+  if (user.email === email && emp.officialEmail.toLowerCase() === email) throw new AppError("That's already their email address.");
+
+  const [clashUser] = await db.select({ id: users.id }).from(users).where(and(eq(users.email, email), ne(users.id, user.id))).limit(1);
+  const [clashEmp] = await db.select({ id: employees.id }).from(employees).where(and(sql`lower(${employees.officialEmail}) = ${email}`, ne(employees.id, emp.id))).limit(1);
+  if (clashUser || clashEmp) throw new AppError("Another account already uses this email address.");
+
+  try {
+    const revoked = await db.transaction(async (tx) => {
+      await tx.update(users).set({ email }).where(eq(users.id, user.id));
+      await tx.update(employees).set({ officialEmail: email }).where(eq(employees.id, emp.id));
+      const links = await tx
+        .update(authTokens)
+        .set({ usedAt: new Date() })
+        .where(and(eq(authTokens.userId, user.id), isNull(authTokens.usedAt)))
+        .returning({ id: authTokens.id });
+      await audit(
+        {
+          actorUserId: viewer.userId,
+          action: "user.email_change",
+          entityType: "user",
+          entityId: user.id,
+          summary: `Changed the account email of ${emp.firstName} ${emp.lastName}`.trim(),
+          metadata: { employeeId: emp.id, from: user.email, to: email, linksRevoked: links.length },
+        },
+        tx,
+      );
+      return links.length;
+    });
+    await notify([user.id], { type: "profile_updated", title: "Your sign-in email address was changed", body: `You now sign in with ${email}.`, link: "/crm/profile" });
+    return { userId: user.id, status: user.status, linksRevoked: revoked };
+  } catch (e) {
+    if (isUniqueViolation(e)) throw new AppError("Another account already uses this email address.");
+    throw e;
+  }
 }
 
 export async function setPhoto(viewer: Viewer, employeeId: string, file: UploadInput) {

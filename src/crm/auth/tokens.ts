@@ -37,6 +37,11 @@ export async function issueToken(
   return { token, expiresAt };
 }
 
+/** Cancels a just-issued token that was never delivered. */
+export async function revokeToken(token: string) {
+  await db.update(authTokens).set({ usedAt: new Date() }).where(and(eq(authTokens.tokenHash, hashToken(token)), isNull(authTokens.usedAt)));
+}
+
 /** Looks a token up without using it (to render the set-password page). */
 export async function peekToken(token: string) {
   if (!token || token.length > 100) return null;
