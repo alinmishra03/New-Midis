@@ -29,7 +29,7 @@ export async function previewAction(): Promise<ActionState> {
     const r = await previewImport(viewer);
     if (!r.ok) return fail(`Preview failed: ${r.error}`);
     const c = r.counts;
-    return ok(`Preview ready: ${c.projectsCreated} projects and ${c.tasksCreated} tasks to create, ${c.updatesAdded} daily updates to add, ${c.review} items need review. Nothing was imported.`);
+    return ok(`Preview ready: ${c.projectsCreated} projects and ${c.tasksCreated} tasks to create, ${c.updatesAdded} daily updates to add. Nothing was imported; see the summary for rows that can't be imported.`);
   });
 }
 
@@ -38,7 +38,7 @@ export async function importAction(_prev: ActionState, fd: FormData): Promise<Ac
     const r = await runImport(viewer, zId.parse(fd.get("previewRunId")));
     if (!r.ok) return fail(`Import failed — nothing was changed: ${r.error}`);
     const c = r.counts;
-    return ok(`Imported: ${c.projectsCreated} projects and ${c.tasksCreated} tasks created, ${c.projectsUpdated + c.tasksUpdated} updated, ${c.updatesAdded} daily updates added. ${c.review} items need review.`);
+    return ok(`Imported: ${c.projectsCreated} projects and ${c.tasksCreated} tasks created, ${c.projectsUpdated + c.tasksUpdated} updated, ${c.updatesAdded} daily updates added. See the summary for rows that weren't imported.`);
   });
 }
 
