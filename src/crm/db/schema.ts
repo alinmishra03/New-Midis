@@ -1114,3 +1114,120 @@ export const auditLogs = pgTable(
     index("audit_logs_actor_idx").on(t.actorUserId),
   ],
 );
+
+/* ========================================================================== */
+/* Development team sheet → CRM: one-way CSV import (Settings → Integrations) */
+/* ========================================================================== */
+
+/**
+ * Left from the earlier Google Sheets API version (automatic-import flag).
+ * No longer used; kept so no existing data is dropped.
+ */
+export const sheetSyncSettings = pgTable("sheet_sync_settings", {
+  id: smallint("id").primaryKey().default(1),
+  autoImport: boolean("auto_import").notNull().default(false),
+  updatedById: uuid("updated_by_id").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: updatedAt(),
+});
+
+/** The CSV file currently uploaded for each tab (one per tab; a new upload replaces it). */
+export const sheetSyncUploads = pgTable("sheet_sync_uploads", {
+  /** "all_website" | "client_reviewed" | "daily_work_update" */
+  tab: text("tab").primaryKey(),
+  fileName: text("file_name").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  /** SHA-256 of the uploaded bytes: a preview is only importable while the files are unchanged. */
+  sha256: text("sha256").notNull(),
+  encoding: text("encoding").notNull(),
+  delimiter: text("delimiter").notNull(),
+  columns: jsonb("columns").$type<string[]>().notNull(),
+  dataRows: integer("data_rows").notNull(),
+  /** The parsed cells, as the server read them (never taken from the browser). */
+  rows: jsonb("rows").$type<string[][]>().notNull(),
+  uploadedById: uuid("uploaded_by_id").references(() => users.id, { onDelete: "set null" }),
+  uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SyncRunFile = { tab: string; fileName: string; sha256: string; dataRows: number };
+
+/** One row per preview or import, with the files used, counts and any error. */
+export const sheetSyncRuns = pgTable(
+  "sheet_sync_runs",
+  {
+    id: id(),
+    /** "manual" (CSV upload). Earlier Google API runs may say "scheduled". */
+    trigger: text("trigger").notNull(),
+    /** "check" = preview (nothing written to projects/tasks) | "import" */
+    mode: text("mode").notNull(),
+    /** "running" | "succeeded" | "failed" */
+    status: text("status").notNull().default("running"),
+    spreadsheetTitle: text("spreadsheet_title"),
+    /** The uploaded files this run used (names, hashes, row counts). */
+    files: jsonb("files").$type<SyncRunFile[]>(),
+    counts: jsonb("counts").$type<Record<string, number>>(),
+    error: text("error"),
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: ts("finished_at"),
+  },
+  (t) => [index("sheet_sync_runs_started_idx").on(t.startedAt)],
+);
+
+/**
+ * One row per spreadsheet row (or per unknown person name), identified by a
+ * content fingerprint rather than its position, so sorting or moving rows never
+ * creates duplicates. Holds the CRM record it maps to, the source values last
+ * seen, the values last written (to detect CRM-side edits), and review state.
+ */
+export const sheetSyncRecords = pgTable(
+  "sheet_sync_records",
+  {
+    id: id(),
+    /** "all_website" | "client_reviewed" | "daily_work_update" | "people" */
+    sourceTab: text("source_tab").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    /** Row number when last seen (1 = header). Informational only. */
+    rowNumber: integer("row_number").notNull(),
+    /** "project" | "project_ref" | "task_update" | "person" */
+    kind: text("kind").notNull(),
+    /** Daily rows: project|employee|start date — the task this row belongs to. */
+    groupKey: text("group_key"),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+    taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    commentId: uuid("comment_id").references(() => taskComments.id, { onDelete: "set null" }),
+    /** Last-seen spreadsheet values. */
+    source: jsonb("source").$type<Record<string, string>>().notNull(),
+    /** Values last written to the CRM record (sheet-owned fields only). */
+    applied: jsonb("applied").$type<Record<string, string | null>>(),
+    /** "pending" | "linked" | "review" | "ignored" | "missing" */
+    state: text("state").notNull(),
+    reviewReason: text("review_reason"),
+    reviewDetail: text("review_detail"),
+    /** A Super Admin's decision on a review item: "ignore" | "create" | "link" | "separate" | "attach". */
+    decision: text("decision"),
+    decisionData: jsonb("decision_data").$type<Record<string, string>>(),
+    resolvedById: uuid("resolved_by_id").references(() => users.id, { onDelete: "set null" }),
+    resolvedAt: ts("resolved_at"),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastRunId: uuid("last_run_id").references(() => sheetSyncRuns.id, { onDelete: "set null" }),
+  },
+  (t) => [uniqueIndex("sheet_sync_records_fp_uq").on(t.sourceTab, t.fingerprint), index("sheet_sync_records_state_idx").on(t.state), index("sheet_sync_records_group_idx").on(t.groupKey)],
+);
+
+/** Super Admin mappings for names the sync can't match on its own (people and project names). */
+export const sheetSyncAliases = pgTable(
+  "sheet_sync_aliases",
+  {
+    id: id(),
+    /** "person" | "project" */
+    kind: text("kind").notNull(),
+    /** Normalised spreadsheet text. */
+    alias: text("alias").notNull(),
+    employeeId: uuid("employee_id").references(() => employees.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+    createdById: uuid("created_by_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("sheet_sync_aliases_uq").on(t.kind, t.alias)],
+);
