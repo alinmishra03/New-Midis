@@ -25,20 +25,19 @@ Limits: `.csv` files up to 900 KB each, 20,000 rows, 100 columns.
 
 1. **Settings → Integrations → CSV Import**: upload each file into its own box
    (*All Website*, *Client Reviewed website*, *Daily Work Update*). Each file is
-   read and checked on the server, then shown below its upload box as a
-   spreadsheet: the file's own headings and cells exactly as uploaded (blank
-   cells stay blank, dates and long descriptions unchanged), numbered by sheet
-   row, with search, status filters, paging and expandable long text. A file
-   with missing columns is rejected with their names. Extra columns are shown
-   but not imported; columns with no heading and no values are left out.
-2. **Preview import**: fills the separate **Import status** column of every
-   row (Ready, Imported, Needs review, Duplicate, Ignored) with the reason, and
-   shows a summary of what would be created or matched. Nothing is imported.
-3. Resolve flagged rows from the row itself (**Resolve**, see 5), then
-   **Preview** again.
-4. **Import previewed changes**: applies exactly what was previewed, in one
-   transaction (all or nothing). It's refused if the files, review decisions or
-   mappings changed after the preview, or another run happened since.
+   read and checked on the server, then shown below its upload box exactly as
+   uploaded: every column in file order with its own heading, every row in
+   file order with its row number, every cell unchanged (blank cells stay
+   blank; dates and long descriptions as written). Search, paging and a
+   "show all text in full" switch help reading it. A file with missing
+   required columns is rejected with their names.
+2. **Preview import**: a read-only summary of what an import would create
+   (projects, tasks, daily updates), what is already in the CRM, duplicate
+   rows, and which rows can't be imported and why. Nothing is imported.
+3. **Import previewed changes**: applies exactly what was previewed, in one
+   transaction (all or nothing), and shows the result the same way. It's
+   refused if the files changed after the preview or another run happened
+   since.
 
 Repeat whenever the sheet changes. Uploading the same files again, or the same
 rows in a different order, never duplicates anything.
@@ -84,30 +83,30 @@ departments go to review. Employees and accounts are never created.
 - A row that disappears from a file is flagged ("no longer in the sheet");
   nothing is deleted. A project or task deleted in the CRM isn't recreated.
 
-## 5. Flagged rows
+## 5. Rows that can't be imported
 
-Unknown or ambiguous people; unmatched, ambiguous or edited project names;
-names that clash with an existing CRM project; several projects or developers
-in one row; missing start dates, statuses or required fields; unreadable dates
-(`23-11-12`, `05-11-2026`); non-project work ("learning back-end"); uncertain
-task matches; possible edits; conflicts; removed rows.
+The import never guesses. A row is left out of the import — but stays in the
+uploaded file, unchanged and visible — when, for example: a developer's name
+matches no Development employee (or more than one); the project name matches
+no project, or clashes with a CRM project the import didn't create; a cell
+names several projects or developers; a start date, status or required field
+is missing; a date can't be read with certainty (`23-11-12`, `05-11-2026`);
+the row looks like non-project work; it may be a different deliverable from
+the task it would join; or it conflicts with an edit made in the CRM.
 
-Each flagged row shows its reason in the Import status column; **Resolve**
-opens a compact editor under the row. The uploaded cells are never edited:
-when a name is matched to an employee or project, the CRM value is shown
-under the original value (“→ …”) and the mapping is stored separately. Items
-that aren't on any uploaded row (e.g. a row imported earlier and since removed
-from the sheet) are listed under **Other items to review**.
+These rows are listed under each file with their row number and reason —
+read-only, with nothing to resolve in the CRM. To import them, correct the
+sheet and upload it again; rows already imported are recognised and never
+created twice.
 
-A Super Admin can map a sheet name to a Development employee or project
-(saved and reused by every later import), link or create projects, import a
-row as its own task or as an update to an existing task (with a chosen
-project, person or date), keep the sheet's or the CRM's value, or skip a row.
+Name mappings and row decisions saved earlier (before this screen was
+simplified) still apply and stay in the database; there is no screen to add
+or change them.
 
 ## 6. Permissions and security
 
-- Super Admin only: the page, uploads, preview, import and every decision
-  (checked on the server in each action). Other roles get "not found".
+- Super Admin only: the page, uploads, preview and import (checked on the
+  server in each action). Other roles get "not found".
 - Files are validated on the server (extension, type, size, encoding,
   structure, required columns). The cells are parsed by the server and stored
   in `sheet_sync_uploads`; nothing the browser sends is trusted as data.
