@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [{ "path": "/crm/api/integrations/google-sheets/sync", "schedule": "30 3 * * *" }]
+}

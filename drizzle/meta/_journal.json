@@ -8,6 +8,13 @@
       "when": 1795162924250,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795593363275,
+      "tag": "0001_google_sheets_sync",
+      "breakpoints": true
     }
   ]
 }
