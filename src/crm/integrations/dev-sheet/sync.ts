@@ -1,12 +1,11 @@
 import "server-only";
 import { and, desc, eq, inArray, lt, ne, or } from "drizzle-orm";
 import { db, type Tx } from "@/crm/db";
-import { departments, employees, projectMembers, projects, sheetSyncAliases, sheetSyncRecords, sheetSyncRuns, taskComments, tasks } from "@/crm/db/schema";
+import { departments, employees, projectMembers, projects, sheetSyncAliases, sheetSyncRecords, sheetSyncRuns, sheetSyncUploads, taskComments, tasks, users, type SyncRunFile } from "@/crm/db/schema";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
 import { formatDate, zonedToInstant } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
-import { readTabs, SheetsError } from "./client";
 import {
   DAILY_COLUMNS,
   PROJECT_COLUMNS,
@@ -32,10 +31,11 @@ import {
 } from "./parse";
 
 /*
- * One-way sync: Development team Google Sheet → CRM Projects and Tasks.
+ * One-way import: the Development team sheet's three tabs, uploaded as CSV
+ * files (Settings → Integrations), → CRM Projects and Tasks.
  *
- * - "check" reads the sheet and records what WOULD happen (and the review
- *   queue) without touching projects or tasks. "import" applies it, in one
+ * - "check" (Preview) records what WOULD happen (and the review queue)
+ *   without touching projects or tasks. "import" applies it, in one
  *   transaction: all or nothing.
  * - Rows are identified by a fingerprint of their content, not their position,
  *   so sorting/moving rows never duplicates anything.
@@ -47,7 +47,7 @@ import {
  */
 
 export type SyncMode = "check" | "import";
-export type SyncTrigger = "manual" | "scheduled";
+export type SyncTrigger = "manual";
 export type SheetData = { title: string; tabs: Record<string, string[][]> };
 export type SyncCounts = Record<string, number>;
 
@@ -68,6 +68,8 @@ export const REVIEW_REASONS: Record<string, string> = {
   uncertain_task_match: "May be a different deliverable from the task it would join",
   possible_edit: "Looks like an edited copy of a row already imported",
   task_deleted_in_crm: "The task for this work was deleted in the CRM",
+  missing_required: "A required field is empty",
+  edited_project_row: "Project row changed and more than one earlier row could be the same project",
   conflict: "Changed both in the sheet and in the CRM",
   removed_from_sheet: "Row no longer in the sheet",
 };
@@ -80,7 +82,7 @@ type Review = { reason: keyof typeof REVIEW_REASONS; detail?: string };
 
 /* ------------------------------------------------------------------ runner */
 
-export async function runSheetSync(opts: { mode: SyncMode; trigger: SyncTrigger; actorUserId: string | null; read?: () => Promise<SheetData> }) {
+export async function runSheetSync(opts: { mode: SyncMode; trigger: SyncTrigger; actorUserId: string | null; data: SheetData; files?: SyncRunFile[] }) {
   // One run at a time. A run stuck for LOCK_MINUTES (e.g. a killed function) is closed as failed.
   await db
     .update(sheetSyncRuns)
@@ -89,17 +91,17 @@ export async function runSheetSync(opts: { mode: SyncMode; trigger: SyncTrigger;
   const busy = await db.query.sheetSyncRuns.findFirst({ where: eq(sheetSyncRuns.status, "running"), columns: { id: true } });
   if (busy) throw new AppError("A sync is already running. Try again in a few minutes.");
 
-  const [run] = await db.insert(sheetSyncRuns).values({ trigger: opts.trigger, mode: opts.mode, actorUserId: opts.actorUserId }).returning({ id: sheetSyncRuns.id });
+  const [run] = await db.insert(sheetSyncRuns).values({ trigger: opts.trigger, mode: opts.mode, actorUserId: opts.actorUserId, files: opts.files ?? null }).returning({ id: sheetSyncRuns.id });
   const runId = run!.id;
   try {
-    const data = await (opts.read ?? (() => readTabs([TABS.allWebsite, TABS.clientReviewed, TABS.daily])))();
+    const data = opts.data;
     const counts = await syncData(data, runId, opts.mode, opts.actorUserId);
     await db.update(sheetSyncRuns).set({ status: "succeeded", spreadsheetTitle: data.title, counts, finishedAt: new Date() }).where(eq(sheetSyncRuns.id, runId));
     return { runId, ok: true as const, counts };
   } catch (e) {
-    const known = e instanceof SheetsError || e instanceof AppError || e instanceof SheetFormatError;
-    const message = e instanceof SheetsError ? e.safeMessage : known ? (e as Error).message : "The sync failed unexpectedly. Nothing was changed.";
-    if (!known) console.error(`[sheets sync] failed: ${e instanceof Error ? e.name : "error"}`);
+    const known = e instanceof AppError || e instanceof SheetFormatError;
+    const message = known ? (e as Error).message : "The import failed unexpectedly. Nothing was changed.";
+    if (!known) console.error(`[sheet import] failed: ${e instanceof Error ? e.name : "error"}`);
     await db.update(sheetSyncRuns).set({ status: "failed", error: message, finishedAt: new Date() }).where(eq(sheetSyncRuns.id, runId));
     return { runId, ok: false as const, error: message };
   }
@@ -125,7 +127,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
   const recByKey = new Map(existing.map((r) => [`${r.sourceTab}|${r.fingerprint}`, r]));
   const syncedProjectIds = new Set(existing.filter((r) => r.kind === "project" && r.projectId).map((r) => r.projectId!));
   const seen = new Set<string>();
-  const counts: SyncCounts = { projectsCreated: 0, projectsUpdated: 0, projectsLinked: 0, membersAdded: 0, tasksCreated: 0, tasksUpdated: 0, updatesAdded: 0, unchanged: 0, review: 0, ignored: 0, missing: 0, duplicateRows: 0, conflicts: 0 };
+  const counts: SyncCounts = { projectsCreated: 0, projectsUpdated: 0, projectsMatched: 0, projectsLinked: 0, membersAdded: 0, tasksCreated: 0, tasksUpdated: 0, tasksMatched: 0, updatesAdded: 0, unchanged: 0, review: 0, ignored: 0, missing: 0, duplicateRows: 0, conflicts: 0 };
 
   /* ---------- writes are collected, then applied in one transaction ---------- */
   type Upsert = Omit<typeof sheetSyncRecords.$inferInsert, "id">;
@@ -197,20 +199,45 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
     }
   }
 
+  /** Project row identity: name + URL + developers (not position). */
+  const projectFp = (key: string, r: Row) => fingerprint(key, urlKey(r.values["Project URL"]!), splitPeople(r.values["Frontend Developer"]!, r.values["Backend Developer"]!).map(nameKey).sort().join(","));
+  const presentProjectRows = new Set<string>();
+  for (const [tab, rows] of [["all_website", aw], ["client_reviewed", cr]] as const) {
+    for (const r of rows) {
+      const k = nameKey(r.values["Project Name"]!);
+      if (k) presentProjectRows.add(`${tab}|${projectFp(k, r)}`);
+    }
+  }
+
   function planProjectRows(rows: Row[], tab: TabKey, tabName: string, knownKeys: Set<string>) {
     const groups = new Map<string, Row[]>();
     for (const r of rows) {
       const k = nameKey(r.values["Project Name"]!);
-      if (!k) continue; // nameless rows carry nothing to import
+      if (!k) {
+        // A row with details but no project name can't be imported: shown for review, never guessed.
+        const fp = fingerprint("noname", JSON.stringify(r.values));
+        const ignored = recByKey.get(`${tab}|${fp}`)?.decision === "ignore";
+        put({ sourceTab: tab, fingerprint: fp, rowNumber: r.rowNumber, kind: "project", source: r.values, state: ignored ? "ignored" : "review", reviewReason: ignored ? null : "missing_required", reviewDetail: ignored ? null : "Project Name is empty. Fill it in the sheet and upload again, or ignore the row." });
+        if (ignored) counts.ignored!++;
+        else counts.review!++;
+        continue;
+      }
       groups.set(k, [...(groups.get(k) ?? []), r]);
     }
     for (const [key, group] of groups) {
       // Client Reviewed rows for a project already in All Website: just a reference.
       if (tab === "client_reviewed" && knownKeys.has(key)) {
-        for (const r of group) put({ sourceTab: tab, fingerprint: fingerprint(key), rowNumber: r.rowNumber, kind: "project_ref", source: r.values, state: "linked", projectId: projectByKey.get(key)?.projectId ?? null, reviewReason: null, reviewDetail: null });
+        const target = projectByKey.get(key);
+        for (const r of group) {
+          put({ sourceTab: tab, fingerprint: fingerprint(key), rowNumber: r.rowNumber, kind: "project_ref", source: r.values, state: "linked", projectId: target?.projectId ?? null, reviewReason: null, reviewDetail: null });
+          // Developers listed in Client Reviewed are added as members too (additive; never removed).
+          const people = splitPeople(r.values["Frontend Developer"]!, r.values["Backend Developer"]!);
+          people.forEach(person);
+          if (importing && target?.state === "ready") ops.push((tx) => addMembers(target.projectId, people, tx));
+        }
         continue;
       }
-      const fpOf = (r: Row) => fingerprint(key, urlKey(r.values["Project URL"]!), splitPeople(r.values["Frontend Developer"]!, r.values["Backend Developer"]!).map(nameKey).sort().join(","));
+      const fpOf = (r: Row) => projectFp(key, r);
       const distinct = new Map<string, Row>();
       for (const r of group) if (!distinct.has(fpOf(r))) distinct.set(fpOf(r), r);
       const identical = distinct.size === 1 && group.every((r) => JSON.stringify(r.values) === JSON.stringify(group[0]!.values));
@@ -247,6 +274,17 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
       put({ ...base, state: "ignored", reviewReason: null, reviewDetail: "The project was deleted in the CRM; it won't be recreated." });
       counts.ignored!++;
       return { projectId: null, state: "review", ownsFields: false };
+    }
+    // No earlier link for this row (a preview may have recorded it as pending): could it be an edited row?
+    if ((!rec || (rec.state === "pending" && !rec.projectId && !rec.applied)) && !ambiguous) {
+      const earlier = existing.filter((x) => x.kind === "project" && x.projectId && nameKey(x.source["Project Name"] ?? "") === key && !presentProjectRows.has(`${x.sourceTab}|${x.fingerprint}`) && x.state !== "ignored");
+      if (earlier.length === 1) {
+        // The same project with an edited URL or developers: update it, never create a second one.
+        const old = earlier[0]!;
+        put({ sourceTab: old.sourceTab, fingerprint: old.fingerprint, rowNumber: old.rowNumber, kind: old.kind, source: old.source, state: "ignored", reviewReason: null, reviewDetail: `Replaced by ${tabName} row ${r.rowNumber} (edited in the sheet).` });
+        return updateProject(base, old, v, status, people, tabName);
+      }
+      if (earlier.length > 1) return review("edited_project_row", `“${v["Project Name"]}” changed in the sheet and more than one earlier row could be the same project. Link it to the right project.`);
     }
     if (ambiguous && !rec?.decision) return review("ambiguous_duplicate", `“${v["Project Name"]}” appears ${variants > 1 ? `${variants} times with different details` : "more than once"} in “${tabName}”. Decide whether this row is its own project, an existing project, or should be ignored.`);
     const linkTo = rec?.decision === "link" ? rec.decisionData?.projectId : projectAlias.get(key);
@@ -292,6 +330,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
       return { projectId: null, state: "review", ownsFields: false };
     }
     const ref: ProjectRef = { projectId: current.id, state: "ready", ownsFields };
+    counts.projectsMatched!++;
     if (importing) ops.push((tx) => addMembers(current.id, people, tx));
     if (!ownsFields) {
       put({ ...base, state: importing ? "linked" : rec.state === "linked" ? "linked" : "pending", projectId: current.id, reviewReason: null, reviewDetail: null });
@@ -321,7 +360,10 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
   planProjectRows(cr, "client_reviewed", TABS.clientReviewed, new Set(aw.map((r) => nameKey(r.values["Project Name"]!)).filter(Boolean)));
 
   /* ---------- daily rows → tasks + dated updates ---------- */
-  type DailyPlan = { r: Row; fp: string; rec?: RecordRow; date: string; start: string | null; end: string | null; projectRef?: ProjectRef; employeeId?: string; groupKey?: string; review?: Review };
+  type DailyPlan = { r: Row; fp: string; rec?: RecordRow; date: string; start: string | null; end: string | null; projectRef?: ProjectRef; normalisedKey?: string; employeeId?: string; groupKey?: string; review?: Review };
+  const SUFFIX = /\b(website|web site|live site|site|frontend|front end|backend|back end)\b/gi;
+  const suffixFree = (name: string) => nameKey(name.replace(/[_-]+/g, " ").replace(SUFFIX, " "));
+  const suffixFreeKey = (key: string) => key.replace(/(website|site|frontend|backend)$/, "");
   const plans: DailyPlan[] = [];
   const fpCount = new Map<string, number>();
   for (const r of daily) {
@@ -348,7 +390,9 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
     // Project
     const pk = nameKey(v["Project Name"]!);
     const chosenProject = rec?.decisionData?.projectId;
-    if (!dateP.ok) p.review = { reason: "ambiguous_date", detail: `Date “${v["Date"]}” can't be read with certainty.` };
+    const missing = (["Date", "Project Name", "Daily Task / Deliverable"] as const).filter((c) => !v[c] && !(c === "Date" && rec?.decisionData?.date) && !(c === "Project Name" && (chosenProject || rec?.decision === "attach")));
+    if (missing.length) p.review = { reason: "missing_required", detail: `${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} empty. Fill ${missing.length === 1 ? "it" : "them"} in the sheet and upload again, or decide here.` };
+    else if (!dateP.ok) p.review = { reason: "ambiguous_date", detail: `Date “${v["Date"]}” can't be read with certainty.` };
     else if (rec?.decision === "attach") {
       // The project is the chosen task's project.
     } else if (chosenProject) {
@@ -363,7 +407,18 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
     } else if (projectByKey.has(pk)) {
       p.projectRef = projectByKey.get(pk)!;
       if (p.projectRef.state === "review") p.review = { reason: "project_needs_review", detail: `Project “${v["Project Name"]}” is in the review queue. Resolve it first.` };
-    } else p.review = { reason: "unmatched_project", detail: `“${v["Project Name"]}” isn't in “${TABS.allWebsite}” or “${TABS.clientReviewed}”. Map it to a project, or ignore the row.` };
+    } else {
+      // Harmless suffixes ("MTC_BACKEND", "NeoCloudz Frontend", "… Website") are dropped only when that
+      // leaves exactly one project in the sheet; otherwise the name goes to review.
+      const stripped = suffixFree(v["Project Name"]!);
+      const candidates = stripped ? [...projectByKey.keys()].filter((k) => k === stripped || suffixFreeKey(k) === stripped) : [];
+      const only = candidates.length === 1 ? projectByKey.get(candidates[0]!)! : null;
+      if (only && only.state === "ready") {
+        p.projectRef = only;
+        p.normalisedKey = candidates[0]!;
+      } else if (only) p.review = { reason: "project_needs_review", detail: `“${v["Project Name"]}” matches a project that is in the review queue. Resolve it first.` };
+      else p.review = { reason: "unmatched_project", detail: candidates.length > 1 ? `“${v["Project Name"]}” could be ${candidates.length} different projects. Map it to the right one.` : `“${v["Project Name"]}” isn't in “${TABS.allWebsite}” or “${TABS.clientReviewed}”. Map it to a project, or ignore the row.` };
+    }
     // Person
     if (!p.review) {
       const chosen = rec?.decisionData?.employeeId;
@@ -384,7 +439,9 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
       if (rec?.decision === "attach") p.groupKey = `task:${rec.decisionData?.taskId}`;
       else if (rec?.decision === "separate") p.groupKey = `row:${fp}`;
       // Stable across runs: the sheet's project name (or the project a Super Admin chose), developer and start date.
-      else p.groupKey = `${chosenProject ? `pid:${chosenProject}` : `pk:${pk}`}|${p.employeeId}|${p.start}`;
+      else p.groupKey = `${chosenProject ? `pid:${chosenProject}` : `pk:${p.normalisedKey ?? pk}`}|${p.employeeId}|${p.start}`;
+      // A row already imported stays with its task even if its start date or name is edited later.
+      if (rec?.commentId && rec.groupKey) p.groupKey = rec.groupKey;
     }
   }
 
@@ -445,6 +502,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
     const deleted = !attachTo && prior.length > 0 && !taskId;
     const existingTask = taskId ? crmTasks.find((t) => t.id === taskId) ?? (attachTo ? await db.query.tasks.findFirst({ where: eq(tasks.id, attachTo) }) : undefined) : undefined;
     const putRow = (p: DailyPlan, extra: Partial<Upsert> & { state: string }) => put({ sourceTab: "daily_work_update", fingerprint: p.fp, rowNumber: p.r.rowNumber, kind: "task_update", source: p.r.values, groupKey, reviewReason: null, reviewDetail: null, ...extra });
+    if (existingTask && !attachTo) counts.tasksMatched!++;
     if (deleted || (taskId && !existingTask)) {
       for (const p of g) {
         if (p.rec?.commentId || p.rec?.state === "linked") putRow(p, { state: "linked", taskId: null });
@@ -461,6 +519,13 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
     // Desired sheet-owned task values from every row of the deliverable still in the sheet.
     const allRows = g; // rows in this run (previous rows of the group are in g too, if still in the sheet)
     const first = allRows[0]!;
+    // Title and description come from the row that created the task (if it's gone from the sheet, its last
+    // seen values), so removing or reordering rows never retitles a task.
+    const anchorLive = anchor ? g.find((x) => x.fp === anchor.fingerprint) : undefined;
+    const anchorText = anchorLive?.r.values["Daily Task / Deliverable"] ?? anchor?.source["Daily Task / Deliverable"] ?? first.r.values["Daily Task / Deliverable"]!;
+    const anchorStartRaw = anchorLive?.r.values["Start Date"] ?? anchor?.source["Start Date"];
+    const anchorStartP = anchorStartRaw !== undefined ? parseDate(anchorStartRaw) : null;
+    const anchorStart = anchorStartP ? (anchorStartP.ok ? anchorStartP.date : null) : first.start;
     const latestWith = <T,>(f: (p: DailyPlan) => T | null) => [...allRows].reverse().map(f).find((x) => x != null) ?? null;
     const status = latestWith((p) => taskStatus(p.r.values["Status"]!));
     const priority = latestWith((p) => taskPriority(p.r.values["Priority"]!));
@@ -475,8 +540,8 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
     const desired: Record<string, string | null> = attachTo
       ? {}
       : {
-          title: taskTitle(first.r.values["Daily Task / Deliverable"]!),
-          description: `${first.r.values["Daily Task / Deliverable"]}\n\nImported from the “${TABS.daily}” tab${first.start ? ` (started ${formatDate(first.start)})` : ""}. Daily updates from the sheet are listed in the comments.${priority ? "" : "\nPriority not set in the sheet."}`,
+          title: taskTitle(anchorText),
+          description: `${anchorText}\n\nImported from the “${TABS.daily}” tab${anchorStart ? ` (started ${formatDate(anchorStart)})` : ""}. Daily updates from the sheet are listed in the comments.${priority ? "" : "\nPriority not set in the sheet."}`,
           status: status ?? "todo",
           priority: priority ?? "medium",
           dueDate: due,
@@ -517,7 +582,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
         conflictHolds.push(held); // re-applied after the per-row pass, which would otherwise mark the row linked
       } else if (anchor.state === "review" && anchor.reviewReason === "conflict" || anchor.decision === "use_sheet" || anchor.decision === "keep_crm") {
         put({ sourceTab: "daily_work_update", fingerprint: anchor.fingerprint, rowNumber: anchor.rowNumber, kind: "task_update", source: anchor.source, groupKey, state: "linked", applied, reviewReason: null, reviewDetail: null, decision: null, decisionData: null });
-      } else if (JSON.stringify(applied) !== JSON.stringify(anchor.applied)) upserts.set(`daily_work_update|${anchor.fingerprint}`, { ...(upserts.get(`daily_work_update|${anchor.fingerprint}`) ?? { sourceTab: "daily_work_update", fingerprint: anchor.fingerprint, rowNumber: anchor.rowNumber, kind: "task_update", source: anchor.source, state: anchor.state }), applied });
+      } else if (JSON.stringify(applied) !== JSON.stringify(anchor.applied)) upserts.set(`daily_work_update|${anchor.fingerprint}`, { ...(upserts.get(`daily_work_update|${anchor.fingerprint}`) ?? { sourceTab: "daily_work_update", fingerprint: anchor.fingerprint, rowNumber: anchor.rowNumber, kind: "task_update", source: anchor.source, state: anchor.state, reviewReason: anchor.reviewReason, reviewDetail: anchor.reviewDetail }), applied });
       if (Object.keys(changes).length) {
         counts.tasksUpdated!++;
         if (importing) {
@@ -557,7 +622,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
       }
       putRow(p, { state: "linked", ...(isAnchor ? { applied: desired } : {}) });
       const v = p.r.values;
-      const body = [`Daily update · ${formatDate(p.date)}`, v["Daily Task / Deliverable"], [`Status: ${v["Status"] || "not set"}`, `Priority: ${v["Priority"] || "not set"}`, p.end ? `End date: ${formatDate(p.end)}` : null].filter(Boolean).join(" · ")].join("\n");
+      const body = [`Daily update · ${formatDate(p.date)}`, v["Daily Task / Deliverable"], [`Status: ${v["Status"] || "not set"}`, `Priority: ${v["Priority"] || "not set"}`, p.end ? `End date: ${formatDate(p.end)}` : null].filter(Boolean).join(" · "), v["Project URL"] ? `URL: ${v["Project URL"]}` : null].filter(Boolean).join("\n");
       ops.push(async (tx) => {
         const [c] = await tx.insert(taskComments).values({ taskId: taskRef.id!, authorId: employeeId, body, createdAt: zonedToInstant(p.date, "12:00", company.timezone) }).returning({ id: taskComments.id });
         const u = upserts.get(`daily_work_update|${p.fp}`)!;
@@ -580,13 +645,26 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
   /* ---------- write ---------- */
   const writeRecords = async (t: Tx) => {
     for (const full of upserts.values()) {
-      // A check changes nothing it would need later: no "last written" values, no consumed decisions,
-      // and no link that only an import establishes.
-      const u: Upsert = importing ? full : { ...full, applied: undefined, decision: undefined, decisionData: undefined };
+      let u: Upsert = full;
       if (!importing) {
-        const prev = recByKey.get(`${u.sourceTab}|${u.fingerprint}`);
-        if (prev?.state === "linked" && u.state === "linked") u.state = "linked";
-        else if (u.state === "linked" && !prev) u.state = "pending";
+        // A preview records only what the review queue needs: new rows (as pending) and review flags.
+        // Links, "last written" values, decisions and linked/ignored transitions are left for a real import.
+        const prev = recByKey.get(`${full.sourceTab}|${full.fingerprint}`);
+        const flagged = full.state === "review";
+        const state = flagged ? "review" : !prev ? "pending" : prev.state === "review" || prev.state === "missing" ? "pending" : prev.state;
+        u = {
+          sourceTab: full.sourceTab,
+          fingerprint: full.fingerprint,
+          rowNumber: full.rowNumber,
+          kind: full.kind,
+          source: full.source,
+          groupKey: prev ? undefined : full.groupKey ?? null,
+          state,
+          reviewReason: flagged ? full.reviewReason ?? null : state === prev?.state ? prev?.reviewReason ?? null : null,
+          reviewDetail: flagged ? full.reviewDetail ?? null : state === prev?.state ? prev?.reviewDetail ?? null : null,
+          lastSeenAt: full.lastSeenAt,
+          lastRunId: runId,
+        };
       }
       await t
         .insert(sheetSyncRecords)
@@ -601,7 +679,7 @@ async function syncData(data: SheetData, runId: string, mode: SyncMode, actorUse
   await db.transaction(async (tx) => {
     for (const op of ops) await op(tx);
     await writeRecords(tx);
-    if (importing) await audit({ actorUserId, action: "sheets.import", entityType: "integration", entityId: "google_sheets", summary: `Development team sheet imported: ${counts.projectsCreated} projects and ${counts.tasksCreated} tasks created, ${counts.updatesAdded} daily updates added`, metadata: counts }, tx);
+    if (importing) await audit({ actorUserId, action: "sheets.import", entityType: "integration", entityId: "dev_sheet", summary: `Development team sheet (CSV) imported: ${counts.projectsCreated} projects and ${counts.tasksCreated} tasks created, ${counts.updatesAdded} daily updates added`, metadata: counts }, tx);
   });
   const open = await db.select({ id: sheetSyncRecords.id }).from(sheetSyncRecords).where(eq(sheetSyncRecords.state, "review"));
   counts.review = open.length;
@@ -633,8 +711,10 @@ export function reconcile(desired: Record<string, string | null>, applied: Recor
 
 /* ------------------------------------------------------------- read side */
 
+export type UploadSummary = Omit<typeof sheetSyncUploads.$inferSelect, "rows"> & { uploadedBy: string | null };
+
 export async function syncOverview() {
-  const [runs, lastOk, open, aliases, settings] = await Promise.all([
+  const [runs, lastOk, open, aliases, uploads] = await Promise.all([
     db.select().from(sheetSyncRuns).orderBy(desc(sheetSyncRuns.startedAt)).limit(20),
     db.query.sheetSyncRuns.findFirst({ where: eq(sheetSyncRuns.status, "succeeded"), orderBy: desc(sheetSyncRuns.startedAt) }),
     db.select().from(sheetSyncRecords).where(eq(sheetSyncRecords.state, "review")).orderBy(sheetSyncRecords.sourceTab, sheetSyncRecords.rowNumber),
@@ -643,8 +723,14 @@ export async function syncOverview() {
       .from(sheetSyncAliases)
       .leftJoin(employees, eq(employees.id, sheetSyncAliases.employeeId))
       .leftJoin(projects, eq(projects.id, sheetSyncAliases.projectId)),
-    db.query.sheetSyncSettings.findFirst(),
+    db
+      .select({ tab: sheetSyncUploads.tab, fileName: sheetSyncUploads.fileName, sizeBytes: sheetSyncUploads.sizeBytes, sha256: sheetSyncUploads.sha256, encoding: sheetSyncUploads.encoding, delimiter: sheetSyncUploads.delimiter, columns: sheetSyncUploads.columns, dataRows: sheetSyncUploads.dataRows, uploadedById: sheetSyncUploads.uploadedById, uploadedAt: sheetSyncUploads.uploadedAt, uploadedBy: users.email })
+      .from(sheetSyncUploads)
+      .leftJoin(users, eq(users.id, sheetSyncUploads.uploadedById)),
   ]);
+  const actorIds = [...new Set(runs.map((r) => r.actorUserId).filter(Boolean))] as string[];
+  const actors = actorIds.length ? await db.select({ id: users.id, email: users.email, firstName: employees.firstName, lastName: employees.lastName }).from(users).leftJoin(employees, eq(employees.userId, users.id)).where(inArray(users.id, actorIds)) : [];
+  const actorName = new Map(actors.map((a) => [a.id, a.firstName ? `${a.firstName} ${a.lastName}`.trim() : a.email]));
   const lastImport = await db.query.sheetSyncRuns.findFirst({ where: and(eq(sheetSyncRuns.status, "succeeded"), eq(sheetSyncRuns.mode, "import")), orderBy: desc(sheetSyncRuns.startedAt) });
-  return { runs, lastOk: lastOk ?? null, lastImport: lastImport ?? null, open, aliases, autoImport: settings?.autoImport ?? false };
+  return { runs: runs.map((r) => ({ ...r, actorName: r.actorUserId ? actorName.get(r.actorUserId) ?? "—" : "—" })), lastOk: lastOk ?? null, lastImport: lastImport ?? null, open, aliases, uploads: uploads as UploadSummary[] };
 }

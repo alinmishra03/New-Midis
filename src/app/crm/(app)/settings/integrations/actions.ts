@@ -1,32 +1,44 @@
 "use server";
 
 import { z } from "zod";
-import { decideRow, mapPerson, mapProjectName, removeAlias, setAutoImport, assertSuperAdmin, type RowDecision } from "@/crm/integrations/google-sheets/admin";
-import { runSheetSync } from "@/crm/integrations/google-sheets/sync";
+import { decideRow, mapPerson, mapProjectName, previewImport, removeAlias, removeUpload, runImport, stageUpload, TAB_SPECS, isTabKey, type RowDecision } from "@/crm/integrations/dev-sheet/admin";
 import { fail, ok, runAction, zId, type ActionState } from "@/crm/lib/actions";
 
 /** Super Admin only (checked again in every service call). */
 
-export async function syncNowAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
+export async function uploadCsvAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async (viewer) => {
-    assertSuperAdmin(viewer);
-    const mode = fd.get("mode") === "import" ? "import" : "check";
-    const r = await runSheetSync({ mode, trigger: "manual", actorUserId: viewer.userId });
-    if (!r.ok) return fail(`Sync failed: ${r.error}`);
-    const c = r.counts;
-    return ok(
-      mode === "import"
-        ? `Imported: ${c.projectsCreated} projects and ${c.tasksCreated} tasks created, ${c.projectsUpdated + c.tasksUpdated} updated, ${c.updatesAdded} daily updates added. ${c.review} items need review.`
-        : `Checked: would create ${c.projectsCreated} projects and ${c.tasksCreated} tasks, update ${c.projectsUpdated + c.tasksUpdated}, add ${c.updatesAdded} daily updates. ${c.review} items need review. Nothing was imported.`,
-    );
+    const tab = String(fd.get("tab") ?? "");
+    const file = fd.get("file");
+    if (!(file instanceof File) || !file.name) return fail("Choose a CSV file.");
+    const r = await stageUpload(viewer, tab, { name: file.name, type: file.type, size: file.size, bytes: () => file.arrayBuffer() });
+    const name = isTabKey(tab) ? TAB_SPECS[tab].name : tab;
+    return ok(`“${r.fileName}” accepted for ${name}: ${r.dataRows} rows${r.extra.length ? ` (ignored extra columns: ${r.extra.join(", ")})` : ""}. Nothing is imported until you preview and import.`);
   });
 }
 
-export async function autoImportAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
+export async function removeUploadAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   return runAction(async (viewer) => {
-    const on = fd.get("on") === "1";
-    await setAutoImport(viewer, on);
-    return ok(on ? "The daily sync will now import changes." : "The daily sync will only check the sheet (no import).");
+    await removeUpload(viewer, String(fd.get("tab") ?? ""));
+    return ok("File removed. Nothing in the CRM changed.");
+  });
+}
+
+export async function previewAction(): Promise<ActionState> {
+  return runAction(async (viewer) => {
+    const r = await previewImport(viewer);
+    if (!r.ok) return fail(`Preview failed: ${r.error}`);
+    const c = r.counts;
+    return ok(`Preview ready: ${c.projectsCreated} projects and ${c.tasksCreated} tasks to create, ${c.updatesAdded} daily updates to add, ${c.review} items need review. Nothing was imported.`);
+  });
+}
+
+export async function importAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  return runAction(async (viewer) => {
+    const r = await runImport(viewer, zId.parse(fd.get("previewRunId")));
+    if (!r.ok) return fail(`Import failed — nothing was changed: ${r.error}`);
+    const c = r.counts;
+    return ok(`Imported: ${c.projectsCreated} projects and ${c.tasksCreated} tasks created, ${c.projectsUpdated + c.tasksUpdated} updated, ${c.updatesAdded} daily updates added. ${c.review} items need review.`);
   });
 }
 
@@ -36,7 +48,7 @@ export async function mapPersonAction(_prev: ActionState, fd: FormData): Promise
     const target = String(fd.get("employeeId") ?? "");
     if (!target) return fail("Choose an employee, or Ignore.");
     await mapPerson(viewer, id, target === "ignore" ? "ignore" : zId.parse(target));
-    return ok("Saved. It's applied on the next sync.");
+    return ok("Saved. Preview again to see the effect.");
   });
 }
 
@@ -46,7 +58,7 @@ export async function mapProjectNameAction(_prev: ActionState, fd: FormData): Pr
     const target = String(fd.get("projectId") ?? "");
     if (!target) return fail("Choose a project, or Ignore.");
     await mapProjectName(viewer, name, target === "ignore" ? "ignore" : zId.parse(target));
-    return ok("Saved. It's applied on the next sync.");
+    return ok("Saved. Preview again to see the effect.");
   });
 }
 
@@ -87,7 +99,7 @@ export async function decideRowAction(_prev: ActionState, fd: FormData): Promise
         return fail("Choose what to do.");
     }
     await decideRow(viewer, id, d);
-    return ok("Saved. It's applied on the next sync.");
+    return ok("Saved. Preview again to see the effect.");
   });
 }
 

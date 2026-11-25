@@ -1116,30 +1116,54 @@ export const auditLogs = pgTable(
 );
 
 /* ========================================================================== */
-/* Google Sheets sync (Development team) — one-way, sheet → CRM               */
+/* Development team sheet → CRM: one-way CSV import (Settings → Integrations) */
 /* ========================================================================== */
 
-/** Single row. Automatic import stays off until a Super Admin turns it on. */
+/**
+ * Left from the earlier Google Sheets API version (automatic-import flag).
+ * No longer used; kept so no existing data is dropped.
+ */
 export const sheetSyncSettings = pgTable("sheet_sync_settings", {
   id: smallint("id").primaryKey().default(1),
-  /** When on, the daily job imports; when off it only checks the sheet. */
   autoImport: boolean("auto_import").notNull().default(false),
   updatedById: uuid("updated_by_id").references(() => users.id, { onDelete: "set null" }),
   updatedAt: updatedAt(),
 });
 
-/** One row per sync attempt (manual or scheduled), with counts and any error. */
+/** The CSV file currently uploaded for each tab (one per tab; a new upload replaces it). */
+export const sheetSyncUploads = pgTable("sheet_sync_uploads", {
+  /** "all_website" | "client_reviewed" | "daily_work_update" */
+  tab: text("tab").primaryKey(),
+  fileName: text("file_name").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  /** SHA-256 of the uploaded bytes: a preview is only importable while the files are unchanged. */
+  sha256: text("sha256").notNull(),
+  encoding: text("encoding").notNull(),
+  delimiter: text("delimiter").notNull(),
+  columns: jsonb("columns").$type<string[]>().notNull(),
+  dataRows: integer("data_rows").notNull(),
+  /** The parsed cells, as the server read them (never taken from the browser). */
+  rows: jsonb("rows").$type<string[][]>().notNull(),
+  uploadedById: uuid("uploaded_by_id").references(() => users.id, { onDelete: "set null" }),
+  uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SyncRunFile = { tab: string; fileName: string; sha256: string; dataRows: number };
+
+/** One row per preview or import, with the files used, counts and any error. */
 export const sheetSyncRuns = pgTable(
   "sheet_sync_runs",
   {
     id: id(),
-    /** "manual" | "scheduled" */
+    /** "manual" (CSV upload). Earlier Google API runs may say "scheduled". */
     trigger: text("trigger").notNull(),
-    /** "check" (nothing written to projects/tasks) | "import" */
+    /** "check" = preview (nothing written to projects/tasks) | "import" */
     mode: text("mode").notNull(),
     /** "running" | "succeeded" | "failed" */
     status: text("status").notNull().default("running"),
     spreadsheetTitle: text("spreadsheet_title"),
+    /** The uploaded files this run used (names, hashes, row counts). */
+    files: jsonb("files").$type<SyncRunFile[]>(),
     counts: jsonb("counts").$type<Record<string, number>>(),
     error: text("error"),
     actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),

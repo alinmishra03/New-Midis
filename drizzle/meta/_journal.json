@@ -15,6 +15,13 @@
       "when": 1795593363275,
       "tag": "0001_google_sheets_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795596083132,
+      "tag": "0002_csv_import",
+      "breakpoints": true
     }
   ]
 }

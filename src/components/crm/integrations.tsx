@@ -1,48 +1,64 @@
 "use client";
 
-import { RefreshCw, Search } from "lucide-react";
+import { Eye, Upload, X, DatabaseZap } from "lucide-react";
 import { useState } from "react";
 import {
-  autoImportAction,
   decideRowAction,
+  importAction,
   mapPersonAction,
   mapProjectNameAction,
+  previewAction,
   removeAliasAction,
-  syncNowAction,
+  removeUploadAction,
+  uploadCsvAction,
 } from "@/app/crm/(app)/settings/integrations/actions";
-import { ActionForm, SelectField, SubmitButton, TextField } from "./forms";
+import { ActionForm, SelectField, SubmitButton, TextField, inputClass } from "./forms";
 
 type Opt = { value: string; label: string };
 
-/** "Check" reads the sheet and reports without changing projects or tasks; "Sync now" imports. */
-export function SyncButtons({ disabled }: { disabled: boolean }) {
+/** One tab's CSV upload. The file is read and checked on the server; nothing is imported yet. */
+export function CsvUploadForm({ tab, label, hasFile }: { tab: string; label: string; hasFile: boolean }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      <ActionForm action={syncNowAction}>
-        <input type="hidden" name="mode" value="check" />
-        <SubmitButton variant="secondary" disabled={disabled} pendingLabel="Checking…">
-          <Search /> Check sheet (no import)
-        </SubmitButton>
-      </ActionForm>
-      <ActionForm action={syncNowAction}>
-        <input type="hidden" name="mode" value="import" />
-        <SubmitButton disabled={disabled} pendingLabel="Syncing…">
-          <RefreshCw /> Sync now
-        </SubmitButton>
-      </ActionForm>
-    </div>
+    <ActionForm action={uploadCsvAction} resetOnSuccess className="flex flex-wrap items-end gap-2">
+      <input type="hidden" name="tab" value={tab} />
+      <label className="min-w-56 flex-1 text-[0.8125rem] font-medium">
+        <span className="mb-1.5 block">{hasFile ? `Replace the ${label} CSV` : `${label} CSV`}</span>
+        <input type="file" name="file" accept=".csv,text/csv" required className={inputClass} />
+      </label>
+      <SubmitButton size="sm" variant={hasFile ? "secondary" : "primary"} pendingLabel="Checking…">
+        <Upload /> Upload
+      </SubmitButton>
+    </ActionForm>
   );
 }
 
-export function AutoImportToggle({ on }: { on: boolean }) {
+export function RemoveUploadButton({ tab }: { tab: string }) {
   return (
-    <ActionForm action={autoImportAction} className="flex flex-wrap items-center gap-3">
-      <input type="hidden" name="on" value={on ? "0" : "1"} />
-      <span className="text-[0.8125rem] text-c-muted">{on ? "The daily sync imports changes automatically." : "The daily sync only checks the sheet; nothing is imported until you turn this on."}</span>
-      <SubmitButton variant="secondary" size="sm">
-        {on ? "Turn automatic import off" : "Turn automatic import on"}
+    <ActionForm action={removeUploadAction}>
+      <input type="hidden" name="tab" value={tab} />
+      <SubmitButton variant="ghost" size="sm">
+        <X /> Remove file
       </SubmitButton>
     </ActionForm>
+  );
+}
+
+/** Preview never writes projects or tasks; Import applies exactly the previewed files and decisions. */
+export function PreviewImportButtons({ canPreview, previewRunId }: { canPreview: boolean; previewRunId: string | null }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <ActionForm action={previewAction}>
+        <SubmitButton variant="secondary" disabled={!canPreview} pendingLabel="Previewing…">
+          <Eye /> Preview import
+        </SubmitButton>
+      </ActionForm>
+      <ActionForm action={importAction}>
+        <input type="hidden" name="previewRunId" value={previewRunId ?? ""} />
+        <SubmitButton disabled={!previewRunId} pendingLabel="Importing…">
+          <DatabaseZap /> Import previewed changes
+        </SubmitButton>
+      </ActionForm>
+    </div>
   );
 }
 
