@@ -107,7 +107,11 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader title="Today's attendance" action={<ViewAll href="/crm/attendance">History</ViewAll>} />
             <CardBody>
-              <CheckInCard state={checkIn} />
+              {today?.exempt ? (
+                <p className="text-sm text-c-muted">You don&apos;t need to check in or out — attendance isn&apos;t recorded for your role.</p>
+              ) : (
+                <CheckInCard state={checkIn} />
+              )}
             </CardBody>
           </Card>
           <Card>
@@ -202,7 +206,7 @@ async function CompanySection({ admin }: { admin: boolean }) {
     hrActionItems(),
     admin ? adminOverview() : null,
   ]);
-  const expected = Math.max(0, stats.active - stats.onLeaveToday);
+  const expected = stats.expectedToday;
 
   return (
     <section aria-labelledby="company-h" className="space-y-4">

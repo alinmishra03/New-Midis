@@ -76,7 +76,9 @@ export async function updateEmployeeAction(_prev: ActionState, fd: FormData): Pr
     const id = zId.parse(fd.get("id"));
     const input = parseForm(employeeSchema, fd);
     const roleKey = (fd.get("roleKey") as string) || undefined;
-    await updateEmployee(viewer, id, input, roleKey);
+    // Only sent by the Super Admin form; the service enforces who may change it.
+    const code = fd.get("employeeCode");
+    await updateEmployee(viewer, id, input, roleKey, typeof code === "string" ? code : undefined);
     return ok("Saved.");
   });
 }

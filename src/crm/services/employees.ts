@@ -5,7 +5,7 @@ import { db } from "@/crm/db";
 import { authTokens, departments, designations, employees, roles, salaryStructures, users, workSchedules } from "@/crm/db/schema";
 import { can, ForbiddenError, isInTeam, type Viewer } from "@/crm/auth/dal";
 import { deleteAllSessionsForUser } from "@/crm/auth/session";
-import { AppError } from "@/crm/lib/actions";
+import { AppError, ValidationError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
 import { isUuid } from "@/crm/lib/params";
 import { IMAGE_TYPES, storeUpload, type UploadInput } from "@/crm/lib/storage";
@@ -313,11 +313,30 @@ async function assertValidManager(employeeId: string | null, managerId: string |
   }
 }
 
-export async function updateEmployee(viewer: Viewer, employeeId: string, input: z.infer<typeof employeeSchema>, roleKey?: string) {
+/** Letters/digits in up to four dash-separated groups, e.g. MID-0007, CEO-01, MD-01. */
+export const employeeCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z0-9]{1,10}(-[A-Z0-9]{1,10}){0,3}$/, "Use letters, digits and dashes, e.g. CEO-01.")
+  .max(24, "At most 24 characters.");
+
+export async function updateEmployee(viewer: Viewer, employeeId: string, input: z.infer<typeof employeeSchema>, roleKey?: string, employeeCode?: string) {
   await assertCanManageEmployee(viewer, employeeId);
   const existing = await db.query.employees.findFirst({ where: eq(employees.id, employeeId) });
   if (!existing) throw new AppError("Employee not found.");
   await assertValidManager(employeeId, input.managerId);
+
+  // Employee code: Super Admin only. Unchanged or absent → left alone.
+  let newCode: string | null = null;
+  if (employeeCode !== undefined && employeeCode.trim().toUpperCase() !== existing.employeeCode) {
+    if (viewer.role.key !== "super_admin") throw new ForbiddenError("Only a Super Admin can change an employee code.");
+    const parsed = employeeCodeSchema.safeParse(employeeCode);
+    if (!parsed.success) throw new ValidationError({ employeeCode: [parsed.error.issues[0]!.message] });
+    const [clash] = await db.select({ id: employees.id }).from(employees).where(and(sql`upper(${employees.employeeCode}) = ${parsed.data}`, ne(employees.id, employeeId))).limit(1);
+    if (clash) throw new ValidationError({ employeeCode: ["Another employee already has this code."] });
+    newCode = parsed.data;
+  }
 
   // Editing a former employee never reactivates them; that's an explicit action.
   const values = existing.employmentStatus === "exited" ? { ...input, employmentStatus: undefined } : input;
@@ -338,8 +357,20 @@ export async function updateEmployee(viewer: Viewer, employeeId: string, input: 
   }
 
   await db.transaction(async (tx) => {
-    await tx.update(employees).set(values).where(eq(employees.id, employeeId));
+    await tx
+      .update(employees)
+      .set(newCode ? { ...values, employeeCode: newCode } : values)
+      .where(eq(employees.id, employeeId))
+      .catch((e) => {
+        // Two Super Admins choosing the same code at once: the unique index decides.
+        if (newCode && isUniqueViolation(e)) throw new ValidationError({ employeeCode: ["Another employee already has this code."] });
+        throw e;
+      });
     const changed: string[] = (Object.keys(input) as (keyof typeof input)[]).filter((k) => JSON.stringify(input[k]) !== JSON.stringify(existing[k as keyof typeof existing]));
+    if (newCode) {
+      changed.push("employeeCode");
+      await audit({ actorUserId: viewer.userId, action: "employee.code_change", entityType: "employee", entityId: employeeId, summary: `Changed the employee code of ${existing.firstName} ${existing.lastName} from ${existing.employeeCode} to ${newCode}`.trim(), metadata: { from: existing.employeeCode, to: newCode } }, tx);
+    }
     if (roleChange) {
       await tx.update(users).set({ roleId: roleChange.roleId }).where(eq(users.id, roleChange.userId));
       changed.push("role");

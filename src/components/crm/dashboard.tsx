@@ -216,6 +216,7 @@ const ROSTER_STATE: Record<string, { label: string; tone: "success" | "info" | "
   on_leave: { label: "On leave", tone: "warning" },
   wfh_not_in: { label: "WFH · not in yet", tone: "neutral" },
   not_in: { label: "Not checked in", tone: "neutral" },
+  not_required: { label: "Attendance not required", tone: "neutral" },
 };
 
 export function TeamRoster({ roster }: { roster: Team["roster"] }) {

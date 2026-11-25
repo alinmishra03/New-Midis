@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNull, lte, ne, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/crm/db";
 import {
   announcements,
@@ -28,7 +28,7 @@ import {
 import { getTeamEmployeeIds, type Viewer } from "@/crm/auth/dal";
 import { addDays, nextAnniversary, startOfMonth, endOfMonth, todayIn, isoWeekday, type ISODate } from "@/crm/lib/time";
 import { getCompany, getDefaultSchedule, getHolidaysBetween, publicHolidaySet } from "./company";
-import { monthSummary } from "./attendance";
+import { attendanceExemptIds, monthSummary } from "./attendance";
 import { currentLeaveYear, getBalances, onLeaveOn } from "./leave";
 
 const ACTIVE = inArray(employees.employmentStatus, ["probation", "active", "notice"]);
@@ -165,7 +165,7 @@ export async function peopleStats(scopeIds: string[] | "all") {
   const recScope = scopeIds === "all" ? undefined : inArray(attendanceRecords.employeeId, scopeIds.length ? scopeIds : ["00000000-0000-0000-0000-000000000000"]);
   const empIdsForLeave = scopeIds === "all" ? undefined : scopeIds;
 
-  const [[total], [active], [joiners], todayRecs, leaveToday, wfhToday] = await Promise.all([
+  const [[total], [active], [joiners], allTodayRecs, leaveToday, wfhToday, activeIds, exempt] = await Promise.all([
     db.select({ n: count() }).from(employees).where(inScope),
     db.select({ n: count() }).from(employees).where(and(ACTIVE, inScope)),
     db.select({ n: count() }).from(employees).where(and(ACTIVE, gte(employees.joiningDate, addDays(today, -30)), inScope)),
@@ -182,13 +182,22 @@ export async function peopleStats(scopeIds: string[] | "all") {
           scopeIds === "all" ? undefined : inArray(wfhRequests.employeeId, scopeIds.length ? scopeIds : ["00000000-0000-0000-0000-000000000000"]),
         ),
       ),
+    db.select({ id: employees.id }).from(employees).where(and(ACTIVE, inScope)),
+    attendanceExemptIds(),
   ]);
+  // Exempt employees (CEOs) don't count towards check-in figures.
+  const todayRecs = allTodayRecs.filter((r) => !exempt.has(r.employeeId));
+  const leaveIds = new Set(leaveToday.map((l) => l.employeeId));
+  const expectedToday = activeIds.filter((e) => !exempt.has(e.id) && !leaveIds.has(e.id)).length;
 
   return {
     today,
     total: total?.n ?? 0,
     active: active?.n ?? 0,
     newJoiners: joiners?.n ?? 0,
+    /** Active, not on leave and not attendance-exempt: who should check in today. */
+    expectedToday,
+    exemptIds: exempt,
     checkedIn: todayRecs.filter((r) => r.checkInAt).length,
     lateToday: todayRecs.filter((r) => r.lateMinutes > 0).length,
     onLeaveToday: new Set(leaveToday.map((l) => l.employeeId)).size,
@@ -219,13 +228,18 @@ export async function attendanceTrend(scopeIds: string[] | "all", n = 14) {
   const days = await workingDaysBack(today, n);
   if (!days.length) return [];
   const recScope = scopeIds === "all" ? undefined : inArray(attendanceRecords.employeeId, scopeIds.length ? scopeIds : ["00000000-0000-0000-0000-000000000000"]);
+  // Exempt employees (CEOs) are left out of both sides of the rate.
+  const exempt = [...(await attendanceExemptIds())];
   const rows = await db
     .select({ date: attendanceRecords.workDate, present: sql<number>`count(*) filter (where ${attendanceRecords.checkInAt} is not null)::int`, late: sql<number>`count(*) filter (where ${attendanceRecords.lateMinutes} > 0)::int` })
     .from(attendanceRecords)
-    .where(and(gte(attendanceRecords.workDate, days[0]!), lte(attendanceRecords.workDate, today), recScope))
+    .where(and(gte(attendanceRecords.workDate, days[0]!), lte(attendanceRecords.workDate, today), recScope, exempt.length ? notInArray(attendanceRecords.employeeId, exempt) : undefined))
     .groupBy(attendanceRecords.workDate);
   const empScope = scopeIds === "all" ? undefined : inArray(employees.id, scopeIds.length ? scopeIds : ["00000000-0000-0000-0000-000000000000"]);
-  const staff = await db.select({ joiningDate: employees.joiningDate, exitDate: employees.exitDate }).from(employees).where(empScope);
+  const staff = await db
+    .select({ joiningDate: employees.joiningDate, exitDate: employees.exitDate })
+    .from(employees)
+    .where(and(empScope, exempt.length ? notInArray(employees.id, exempt) : undefined));
   return days.map((d) => {
     const r = rows.find((x) => x.date === d);
     const headcount = staff.filter((s) => s.joiningDate <= d && (!s.exitDate || s.exitDate >= d)).length;
@@ -332,7 +346,9 @@ export async function teamOverview(viewer: Viewer) {
   const byId = new Map(stats.todayRecords.map((r) => [r.employeeId, r]));
   const roster = members.map((m) => {
     const rec = byId.get(m.id);
-    const state = stats.leaveTodayIds.has(m.id)
+    const state = stats.exemptIds.has(m.id)
+      ? "not_required"
+      : stats.leaveTodayIds.has(m.id)
       ? "on_leave"
       : rec?.checkOutAt
         ? "checked_out"

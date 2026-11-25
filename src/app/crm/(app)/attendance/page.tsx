@@ -85,11 +85,11 @@ async function MyAttendance({ month }: { month: string }) {
     const leave = leaves.find((l) => l.startDate <= d && l.endDate >= d);
     const remote = wfh.some((w) => w.startDate <= d && w.endDate >= d);
     const working = schedule.workingDays.includes(isoWeekday(d)) && !(hol && hol.type === "public");
-    if (r?.checkInAt) return { label: r.status === "incomplete" ? (d === today ? "Working" : "No check-out") : r.status === "half_day" ? "Half day" : r.status === "absent" ? "Short day" : "Present", tone: r.status === "present" ? "success" : r.status === "half_day" || r.status === "incomplete" ? "warning" : "danger", r, remote: r.workMode === "remote" };
+    if (r?.checkInAt) return { label: r.status === "incomplete" ? (d === today ? "Working" : summary.exempt ? "Checked in" : "No check-out") : r.status === "half_day" ? "Half day" : r.status === "absent" ? "Short day" : "Present", tone: r.status === "present" ? "success" : r.status === "half_day" || r.status === "incomplete" ? "warning" : "danger", r, remote: r.workMode === "remote" };
     if (leave) return { label: leave.halfDay === "none" ? "Leave" : "Half leave", tone: "info" };
     if (hol) return { label: hol.name, tone: "accent" };
     if (!working) return { label: "Off", tone: "muted" };
-    if (d < today) return { label: "Absent", tone: "danger" };
+    if (d < today && !summary.exempt) return { label: "Absent", tone: "danger" };
     return { label: remote ? "WFH" : "", tone: "muted" };
   };
   const toneCls: Record<string, string> = {
@@ -115,7 +115,7 @@ async function MyAttendance({ month }: { month: string }) {
       <Card>
         <CardHeader
           title={formatMonth(from)}
-          description={`${shiftLabel(schedule)} · late after ${schedule.lateGraceMinutes} min`}
+          description={summary.exempt ? "Attendance isn't recorded for your role — no check-in or check-out needed." : `${shiftLabel(schedule)} · late after ${schedule.lateGraceMinutes} min`}
           action={
             <div className="flex gap-1">
               <ButtonLink href={`/crm/attendance?month=${prev}`} size="icon" variant="ghost" aria-label="Previous month">

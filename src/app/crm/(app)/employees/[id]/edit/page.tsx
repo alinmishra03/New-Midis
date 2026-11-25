@@ -31,6 +31,7 @@ export default async function EditEmployeePage({ params }: PageProps<"/crm/emplo
           <EmployeeForm
             options={options}
             canAssignElevated={can(viewer, "roles.manage")}
+            canEditCode={viewer.role.key === "super_admin"}
             today={todayIn(company.timezone)}
             values={{
               id: basic.id,
@@ -48,6 +49,7 @@ export default async function EditEmployeePage({ params }: PageProps<"/crm/emplo
               skills: basic.skills,
               bio: basic.bio,
               roleKey: employment.account?.roleKey,
+              employeeCode: basic.employeeCode,
             }}
           />
         </CardBody>

@@ -18,6 +18,7 @@ import {
 import { can, ForbiddenError, getTeamEmployeeIds, type Viewer } from "@/crm/auth/dal";
 import { uuidOrUndefined } from "@/crm/lib/params";
 import { addDays, formatDate, formatMinutes, isoWeekday, type ISODate } from "@/crm/lib/time";
+import { attendanceExemptIds } from "./attendance";
 import { getDefaultSchedule, publicHolidaySet } from "./company";
 
 /**
@@ -114,7 +115,9 @@ export async function buildReport(viewer: Viewer, key: ReportKey, f: ReportFilte
 
     case "attendance":
     case "late": {
-      const ids = await scopeIds(viewer, f);
+      // Attendance-exempt employees (CEOs) aren't part of attendance reporting.
+      const exempt = await attendanceExemptIds();
+      const ids = (await scopeIds(viewer, f)).filter((id) => !exempt.has(id));
       const list = await people(ids);
       const recs = ids.length
         ? await db.select().from(attendanceRecords).where(and(inArray(attendanceRecords.employeeId, ids), gte(attendanceRecords.workDate, f.from), lte(attendanceRecords.workDate, f.to))).orderBy(asc(attendanceRecords.workDate))

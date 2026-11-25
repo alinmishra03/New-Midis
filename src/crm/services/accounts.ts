@@ -2,7 +2,7 @@ import "server-only";
 import { and, eq, isNotNull, like, sql } from "drizzle-orm";
 import { db, type Tx } from "@/crm/db";
 export { getCompany } from "./company";
-import { companySettings, employees, leaveBalances, leaveTypes, roles, users } from "@/crm/db/schema";
+import { auditLogs, companySettings, employees, leaveBalances, leaveTypes, roles, users } from "@/crm/db/schema";
 import { issueToken } from "@/crm/auth/tokens";
 import { audit } from "@/crm/lib/audit";
 import { todayIn, type ISODate } from "@/crm/lib/time";
@@ -14,12 +14,20 @@ export function leaveYearFor(date: ISODate, startMonth: number): number {
   return m >= startMonth ? y : y - 1;
 }
 
+/**
+ * Next code after the highest one ever used: current codes, plus any a Super
+ * Admin changed away from (audit log), so a freed code like MID-0010 is never
+ * handed to someone new.
+ */
 async function nextEmployeeCode(tx: Tx, prefix: string): Promise<string> {
-  const rows = await tx
-    .select({ code: employees.employeeCode })
-    .from(employees)
-    .where(like(employees.employeeCode, `${prefix}-%`));
-  const max = rows.reduce((m, r) => Math.max(m, Number(r.code.split("-").pop()) || 0), 0);
+  const [current, retired] = await Promise.all([
+    tx.select({ code: employees.employeeCode }).from(employees).where(like(employees.employeeCode, `${prefix}-%`)),
+    tx
+      .select({ code: sql<string>`${auditLogs.metadata}->>'from'` })
+      .from(auditLogs)
+      .where(and(eq(auditLogs.action, "employee.code_change"), sql`${auditLogs.metadata}->>'from' like ${`${prefix}-%`}`)),
+  ]);
+  const max = [...current, ...retired].reduce((m, r) => Math.max(m, Number(r.code.split("-").pop()) || 0), 0);
   return `${prefix}-${String(max + 1).padStart(4, "0")}`;
 }
 
