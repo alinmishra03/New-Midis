@@ -1,50 +1,42 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CsvUploadForm, PersonMapForm, PreviewImportButtons, ProjectNameMapForm, RemoveAliasButton, RemoveUploadButton, RowDecisionForm } from "@/components/crm/integrations";
+import { CsvUploadForm, PreviewImportButtons, RemoveAliasButton, RemoveUploadButton } from "@/components/crm/integrations";
+import { OtherReviewItems, SheetTable } from "@/components/crm/sheet-table";
 import { SettingsNav } from "@/components/crm/SettingsNav";
-import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, StatCard, Table, TBody, THead } from "@/components/crm/ui";
+import { Badge, Card, CardBody, CardHeader, PageHeader, StatCard, Table, TBody, THead } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
 import { decisionOptions, TAB_ORDER, TAB_SPECS } from "@/crm/integrations/dev-sheet/admin";
 import { CSV_MAX_BYTES } from "@/crm/integrations/dev-sheet/csv";
-import { nameKey, TABS } from "@/crm/integrations/dev-sheet/parse";
-import { REVIEW_REASONS, syncOverview } from "@/crm/integrations/dev-sheet/sync";
+import { syncOverview } from "@/crm/integrations/dev-sheet/sync";
+import { spreadsheetView } from "@/crm/integrations/dev-sheet/view";
 import { formatDateTime } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
 
 export const metadata: Metadata = { title: "Integrations" };
 
-const TAB_LABEL: Record<string, string> = { all_website: TABS.allWebsite, client_reviewed: TABS.clientReviewed, daily_work_update: TABS.daily, people: "People" };
-const NEEDS_PROJECT = ["multiple_projects", "unmatched_project", "project_needs_review"];
-const NEEDS_PERSON = ["multiple_developers", "no_developer", "unknown_person", "person_not_in_development"];
 const DELIM: Record<string, string> = { ",": "comma", ";": "semicolon", "\t": "tab" };
 
 /**
- * Super Admin only: the Development team sheet's three tabs, uploaded as CSV,
- * previewed, then imported into Tasks & Projects. One-way; nothing in the CRM
- * is deleted.
+ * Super Admin only: the Development team sheet's three tabs, uploaded as CSV and
+ * shown as spreadsheets (original cells, unchanged) with each row's import
+ * status beside it; flagged rows are resolved inline, then previewed and
+ * imported into Tasks & Projects. One-way; nothing in the CRM is deleted.
  */
 export default async function IntegrationsPage() {
   const viewer = await requireViewer();
   if (viewer.role.key !== "super_admin") notFound();
-  const [overview, options, company] = await Promise.all([syncOverview(), decisionOptions(), getCompany()]);
+  const [overview, options, company, view] = await Promise.all([syncOverview(), decisionOptions(), getCompany(), spreadsheetView()]);
   const tz = company.timezone;
   const uploads = new Map(overview.uploads.map((u) => [u.tab, u]));
   const allUploaded = TAB_ORDER.every((t) => uploads.has(t));
   const latest = overview.runs[0] ?? null;
-  // A preview can be imported only while it is the latest run and the files are unchanged (the server checks this too).
-  const previewCurrent =
-    latest?.mode === "check" && latest.status === "succeeded" && allUploaded && JSON.stringify((latest.files ?? []).map((f) => f.sha256)) === JSON.stringify(TAB_ORDER.map((t) => uploads.get(t)!.sha256));
+  // A preview can be imported only while it is the latest run, the files are unchanged and no decision or mapping
+  // was saved after it (the server checks all of this too).
+  const filesMatch = allUploaded && JSON.stringify((latest?.files ?? []).map((f) => f.sha256)) === JSON.stringify(TAB_ORDER.map((t) => uploads.get(t)!.sha256));
+  const previewCurrent = latest?.mode === "check" && latest.status === "succeeded" && filesMatch && !view.changedSincePreview;
   const pc = previewCurrent ? latest!.counts ?? {} : null;
-  const open = overview.open;
-  const byReason = (...reasons: string[]) => open.filter((r) => reasons.includes(r.reviewReason ?? "")).length;
-  const people = open.filter((r) => r.kind === "person");
-  const unmatched = new Map<string, { name: string; rows: number[] }>();
-  for (const r of open.filter((x) => x.reviewReason === "unmatched_project")) {
-    const name = r.source["Project Name"] ?? "";
-    const k = nameKey(name);
-    unmatched.set(k, { name: unmatched.get(k)?.name ?? name, rows: [...(unmatched.get(k)?.rows ?? []), r.rowNumber] });
-  }
-  const items = open.filter((r) => r.kind !== "person" && r.reviewReason !== "unmatched_project");
+  const flagged = view.sheets.reduce((n, sh) => n + sh.rows.filter((r) => r.status === "review" || r.people?.length).length, 0) + view.others.length;
+  const byStatus = (st: string) => view.sheets.reduce((n, sh) => n + sh.rows.filter((r) => r.status === st).length, 0);
 
   return (
     <>
@@ -53,141 +45,92 @@ export default async function IntegrationsPage() {
 
       <div className="space-y-5">
         <Card>
-          <CardHeader title="CSV Import · Development team sheet" description="Upload the three tabs as CSV files, preview, then import into Tasks & Projects. One-way: the sheet isn't changed, and nothing in the CRM is ever deleted." />
-          <CardBody className="space-y-5">
+          <CardHeader title="CSV Import · Development team sheet" description="One-way into Tasks & Projects. The sheet and the uploaded files are never changed, and nothing in the CRM is ever deleted." />
+          <CardBody className="space-y-4">
+            <ol className="flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-c-muted">
+              {["Upload the three CSV files", "Check the spreadsheets below", "Resolve flagged rows", "Preview", "Import"].map((step, i) => (
+                <li key={step}><span className="font-semibold text-c-fg tabular">{i + 1}.</span> {step}</li>
+              ))}
+            </ol>
             <p className="text-[0.8125rem] text-c-muted">
-              In Google Sheets open each tab and choose <strong>File → Download → Comma-separated values (.csv)</strong> (Excel: Save As → CSV UTF-8). Upload the same files again at any time: rows already imported are recognised and never duplicated. Up to {CSV_MAX_BYTES / 1024} KB per file.
+              In Google Sheets open each tab and choose <strong>File → Download → Comma-separated values (.csv)</strong> (Excel: Save As → CSV UTF-8). Uploading the same files again is safe: rows already imported are recognised and never duplicated. Up to {CSV_MAX_BYTES / 1024} KB per file.
             </p>
-            <div className="grid gap-4 lg:grid-cols-3">
-              {TAB_ORDER.map((t) => {
-                const u = uploads.get(t);
-                const spec = TAB_SPECS[t];
-                return (
-                  <div key={t} className="space-y-3 rounded-lg border border-c-border p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold">{spec.name}</p>
-                      {u ? <Badge tone="success" dot>Uploaded</Badge> : <Badge tone="warning" dot>Missing</Badge>}
-                    </div>
-                    {u ? (
-                      <dl className="space-y-1 text-[0.8125rem]">
-                        <div><dt className="inline text-c-muted">File: </dt><dd className="inline break-all">{u.fileName}</dd></div>
-                        <div><dt className="inline text-c-muted">Rows: </dt><dd className="inline tabular">{u.dataRows}</dd> <span className="text-c-subtle">· {(u.sizeBytes / 1024).toFixed(1)} KB · {u.encoding} · {DELIM[u.delimiter] ?? u.delimiter}-separated</span></div>
-                        <div><dt className="inline text-c-muted">Uploaded: </dt><dd className="inline">{formatDateTime(u.uploadedAt, tz)}{u.uploadedBy ? ` by ${u.uploadedBy}` : ""}</dd></div>
-                        <div>
-                          <dt className="text-c-muted">Columns detected:</dt>
-                          <dd className="mt-1 flex flex-wrap gap-1">
-                            {u.columns.map((c) => {
-                              const known = spec.columns.some((x) => x.toLowerCase() === c.replace(/\s+/g, " ").toLowerCase());
-                              return <Badge key={c} tone={known ? "neutral" : "warning"}>{c}{known ? "" : " (ignored)"}</Badge>;
-                            })}
-                          </dd>
-                        </div>
-                      </dl>
-                    ) : (
-                      <p className="text-[0.8125rem] text-c-muted">Required columns: {spec.columns.join(", ")}.</p>
-                    )}
-                    <CsvUploadForm tab={t} label={spec.name} hasFile={!!u} />
-                    {u && <RemoveUploadButton tab={t} />}
-                  </div>
-                );
-              })}
+            <div className="flex flex-wrap items-center gap-2 text-[0.8125rem]">
+              {TAB_ORDER.map((t) => (
+                <a key={t} href={`#sheet-${t}`} className="inline-flex items-center gap-1.5 rounded-full border border-c-border px-2.5 py-1 hover:bg-c-hover">
+                  {TAB_SPECS[t].name} {uploads.has(t) ? <Badge tone="success">{uploads.get(t)!.dataRows} rows</Badge> : <Badge tone="warning">Missing</Badge>}
+                </a>
+              ))}
+              {flagged > 0 && <Badge tone="warning" dot>{flagged} row{flagged === 1 ? "" : "s"} need attention</Badge>}
             </div>
             <PreviewImportButtons canPreview={allUploaded} previewRunId={previewCurrent ? latest!.id : null} />
             {!allUploaded && <p className="text-[0.8125rem] text-c-muted">Upload all three files to preview.</p>}
-            {allUploaded && !previewCurrent && <p className="text-[0.8125rem] text-c-muted">Preview before importing. A new upload, a review decision or another run means previewing again.</p>}
+            {allUploaded && !previewCurrent && (
+              <p className="text-[0.8125rem] text-c-muted">
+                {view.changedSincePreview ? "Decisions or mappings were saved since the last preview. " : ""}Preview before importing. A new upload, a decision or another run means previewing again. Rows marked “Needs review” are never imported until resolved.
+              </p>
+            )}
+            {pc && (
+              <div className="space-y-3 border-t border-c-border pt-4">
+                <p className="text-sm font-semibold">Preview from {formatDateTime(latest!.finishedAt ?? latest!.startedAt, tz)} — nothing has been imported yet</p>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+                  <StatCard label="Projects to create" value={pc.projectsCreated ?? 0} tone="success" />
+                  <StatCard label="Existing projects matched" value={(pc.projectsMatched ?? 0) + (pc.projectsLinked ?? 0)} hint={pc.projectsUpdated ? `${pc.projectsUpdated} with changes` : "no changes"} />
+                  <StatCard label="Tasks to create" value={pc.tasksCreated ?? 0} tone="success" />
+                  <StatCard label="Existing tasks matched" value={pc.tasksMatched ?? 0} hint={pc.tasksUpdated ? `${pc.tasksUpdated} with changes` : "no changes"} />
+                  <StatCard label="Daily updates to add" value={pc.updatesAdded ?? 0} />
+                  <StatCard label="Rows needing review (not imported)" value={byStatus("review") + view.others.length} tone={byStatus("review") + view.others.length ? "warning" : "success"} hint={`${pc.duplicateRows ?? 0} duplicate rows skipped`} />
+                </div>
+              </div>
+            )}
           </CardBody>
         </Card>
 
-        {pc && (
-          <Card>
-            <CardHeader title="Preview" description={`From ${formatDateTime(latest!.finishedAt ?? latest!.startedAt, tz)}. Nothing has been imported yet.`} />
-            <CardBody className="space-y-4">
-              <p className="text-sm font-semibold">Ready to import</p>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-                <StatCard label="Projects to create" value={pc.projectsCreated ?? 0} tone="success" />
-                <StatCard label="Existing projects matched" value={(pc.projectsMatched ?? 0) + (pc.projectsLinked ?? 0)} hint={pc.projectsUpdated ? `${pc.projectsUpdated} with changes` : "no changes"} />
-                <StatCard label="Tasks to create" value={pc.tasksCreated ?? 0} tone="success" />
-                <StatCard label="Existing tasks matched" value={pc.tasksMatched ?? 0} hint={pc.tasksUpdated ? `${pc.tasksUpdated} with changes` : "no changes"} />
-                <StatCard label="Daily updates to add" value={pc.updatesAdded ?? 0} />
-                <StatCard label="Duplicate rows skipped" value={pc.duplicateRows ?? 0} />
-              </div>
-              <p className="text-sm font-semibold">Needs attention (not imported until resolved)</p>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-                <StatCard label="Unmatched employees" value={people.length} tone={people.length ? "warning" : undefined} />
-                <StatCard label="Unmatched project names" value={unmatched.size} hint={`${byReason("unmatched_project")} rows`} tone={unmatched.size ? "warning" : undefined} />
-                <StatCard label="Ambiguous projects" value={byReason("ambiguous_duplicate", "edited_project_row", "existing_crm_project", "project_needs_review", "multiple_projects")} tone="warning" />
-                <StatCard label="Invalid or ambiguous dates" value={byReason("ambiguous_date", "missing_start_date")} tone="warning" />
-                <StatCard label="Missing required fields" value={byReason("missing_required", "missing_status", "no_developer")} tone="warning" />
-                <StatCard label="Total needing review" value={open.length} tone={open.length ? "warning" : "success"} />
-              </div>
-            </CardBody>
-          </Card>
-        )}
-
-        {people.length > 0 && (
-          <Card>
-            <CardHeader title="People to identify" description="Names in the sheet that don't match exactly one Development employee. Nothing is guessed from similar names." />
-            <CardBody className="space-y-4">
-              {people.map((p) => (
-                <div key={p.id} className="space-y-2 border-b border-c-border pb-4 last:border-0 last:pb-0">
-                  <p className="text-sm"><strong>{p.source.name}</strong> — <span className="text-c-muted">{p.reviewDetail}</span></p>
-                  <PersonMapForm id={p.id} employees={options.employees} />
+        {view.sheets.map((sh) => {
+          const u = uploads.get(sh.tab);
+          const spec = TAB_SPECS[sh.tab];
+          const extra = sh.columns.filter((c) => c.heading.trim() && !spec.columns.some((x) => x.toLowerCase() === c.heading.replace(/\s+/g, " ").trim().toLowerCase()));
+          return (
+            <Card key={sh.tab} id={`sheet-${sh.tab}`} className="scroll-mt-20">
+              <CardHeader
+                title={sh.name}
+                description={
+                  u
+                    ? `${u.fileName} · ${sh.rows.length} rows below the heading row (row ${sh.headerRow}) · uploaded ${formatDateTime(u.uploadedAt, tz)}${u.uploadedBy ? ` by ${u.uploadedBy}` : ""}`
+                    : `Not uploaded. Required columns: ${spec.columns.join(", ")}.`
+                }
+                action={u ? <Badge tone="success" dot>Uploaded</Badge> : <Badge tone="warning" dot>Missing</Badge>}
+              />
+              <CardBody className="space-y-4">
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="min-w-72 flex-1"><CsvUploadForm tab={sh.tab} label={spec.name} hasFile={!!u} /></div>
+                  {u && <RemoveUploadButton tab={sh.tab} />}
                 </div>
-              ))}
-            </CardBody>
-          </Card>
-        )}
-
-        {unmatched.size > 0 && (
-          <Card>
-            <CardHeader title="Project names to map" description={`Names used in “${TABS.daily}” that don't match exactly one project. Mapping a name applies to every row that uses it, now and in later imports.`} />
-            <CardBody className="space-y-4">
-              {[...unmatched.values()].map((u) => (
-                <div key={u.name} className="space-y-2 border-b border-c-border pb-4 last:border-0 last:pb-0">
-                  <p className="text-sm"><strong>{u.name}</strong> <span className="text-c-muted">— {u.rows.length} row{u.rows.length === 1 ? "" : "s"} ({u.rows.slice(0, 8).join(", ")}{u.rows.length > 8 ? "…" : ""})</span></p>
-                  <ProjectNameMapForm name={u.name} projects={options.projects} />
-                </div>
-              ))}
-            </CardBody>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader title="Review queue" description="Rows that won't be imported on their own. Decisions apply from the next preview and import." />
-          {items.length ? (
-            <CardBody className="space-y-4">
-              {items.map((r) => {
-                const isProject = r.kind === "project";
-                const choices = r.reviewReason === "removed_from_sheet" ? ["acknowledge"] : r.reviewReason === "conflict" ? ["use_sheet", "keep_crm"] : isProject ? ["create", "link", "ignore"] : ["separate", "attach", "ignore"];
-                const v = r.source;
-                return (
-                  <div key={r.id} className="space-y-2 border-b border-c-border pb-4 last:border-0 last:pb-0">
-                    <div className="flex flex-wrap items-center gap-2 text-[0.8125rem]">
-                      <Badge tone="warning">{REVIEW_REASONS[r.reviewReason ?? ""] ?? r.reviewReason}</Badge>
-                      <span className="text-c-muted">{TAB_LABEL[r.sourceTab] ?? r.sourceTab} · row {r.rowNumber}</span>
-                    </div>
-                    <p className="text-sm">
-                      {r.sourceTab === "daily_work_update" ? (
-                        <>
-                          <strong>{v["Date"] || "no date"}</strong> · {v["Project Name"] || "—"} · {[v["Frontend Developer"], v["Backend Developer"]].filter(Boolean).join(" / ") || "no developer"} · start {v["Start Date"] || "—"}
-                          <span className="mt-1 block whitespace-pre-line text-c-muted">{(v["Daily Task / Deliverable"] ?? "").slice(0, 400)}</span>
-                        </>
-                      ) : (
-                        <>
-                          <strong>{v["Project Name"] || "no name"}</strong> · {v["Project URL"] || "no URL"} · {[v["Frontend Developer"], v["Backend Developer"]].filter(Boolean).join(" / ") || "no developer"} · {v["Environment Status"] || "—"} / {v["Development Status"] || "—"}
-                        </>
-                      )}
+                {u && (
+                  <>
+                    <p className="text-xs text-c-subtle">
+                      {(u.sizeBytes / 1024).toFixed(1)} KB · {u.encoding} · {DELIM[u.delimiter] ?? u.delimiter}-separated · {sh.columns.length} columns
+                      {sh.hiddenEmptyColumns ? ` (+${sh.hiddenEmptyColumns} empty unnamed column${sh.hiddenEmptyColumns === 1 ? "" : "s"} not shown)` : ""}
+                      {extra.length ? ` · not imported: ${extra.map((c) => `“${c.heading}”`).join(", ")}` : ""}
+                      {" · "}
+                      {sh.checked ? `statuses from the ${sh.checked.mode === "import" ? "import" : "preview"} at ${formatDateTime(sh.checked.at, tz)}` : "statuses appear after Preview import"}
                     </p>
-                    {r.reviewDetail && <p className="text-[0.8125rem] text-c-muted">{r.reviewDetail}</p>}
-                    <RowDecisionForm id={r.id} choices={choices} needsProject={NEEDS_PROJECT.includes(r.reviewReason ?? "")} needsPerson={NEEDS_PERSON.includes(r.reviewReason ?? "")} needsDate={r.reviewReason === "ambiguous_date" || (r.reviewReason === "missing_required" && !v["Date"])} projects={options.projects} employees={options.employees} tasks={options.tasks} />
-                  </div>
-                );
-              })}
+                    <SheetTable columns={sh.columns} rows={sh.rows} options={options} fileName={u.fileName} />
+                  </>
+                )}
+              </CardBody>
+            </Card>
+          );
+        })}
+
+        {view.others.length > 0 && (
+          <Card>
+            <CardHeader title="Other items to review" description="Not on any row of the uploaded files — for example a row imported earlier that is no longer in the sheet. Nothing in the CRM was deleted." />
+            <CardBody>
+              <OtherReviewItems items={view.others} options={options} />
             </CardBody>
-          ) : (
-            <EmptyState title="Nothing to review" description="Upload the files and preview to see what needs attention." />
-          )}
-        </Card>
+          </Card>
+        )}
 
         {overview.aliases.length > 0 && (
           <Card>
