@@ -1,5 +1,6 @@
 import "server-only";
 import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
+import { cache } from "react";
 import { db, type Tx } from "@/crm/db";
 import { attendanceBreaks, attendanceRecords, companySettings, employees, leaveRequests, wfhRequests, workSchedules } from "@/crm/db/schema";
 import type { Viewer } from "@/crm/auth/dal";
@@ -27,6 +28,46 @@ import { getCompany, getDefaultSchedule, getScheduleForEmployee, publicHolidaySe
 
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
 export type AttendanceBreak = typeof attendanceBreaks.$inferSelect;
+
+/* ------------------------------------------------- attendance exemption */
+
+/**
+ * The CEOs don't check in or out. They're never asked to, can't (enforced in
+ * the check-in/out/break actions), and are left out of every attendance
+ * compliance figure: absences, late counts, "not checked in", check-in rates
+ * and the attendance report. Their profiles, logins and permissions are
+ * unaffected, and any past attendance records are kept as they are.
+ *
+ * Matched by employee code AND full name — both must match — so a reused code
+ * or a namesake is never exempted by accident. Each person lists their current
+ * code and their leadership code (set by a Super Admin on the Edit page), so
+ * the exemption holds before and after the code is changed.
+ */
+export const ATTENDANCE_EXEMPT: readonly { codes: readonly string[]; name: string }[] = [
+  { codes: ["CEO-01", "MID-0010"], name: "Gaurav Sharma" }, // CEO & Director
+  { codes: ["MD-01", "MID-0008"], name: "Sagar Bakshi" }, // Managing Director
+];
+
+const normName = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+
+export function isAttendanceExempt(e: { employeeCode: string; firstName: string; lastName: string }): boolean {
+  const code = e.employeeCode.trim().toUpperCase();
+  const name = normName(`${e.firstName} ${e.lastName}`);
+  return ATTENDANCE_EXEMPT.some((x) => x.codes.includes(code) && normName(x.name) === name);
+}
+
+/** Ids of the employees exempt from attendance (per request). */
+export const attendanceExemptIds = cache(async (): Promise<Set<string>> => {
+  const rows = await db
+    .select({ id: employees.id, employeeCode: employees.employeeCode, firstName: employees.firstName, lastName: employees.lastName })
+    .from(employees)
+    .where(inArray(employees.employeeCode, ATTENDANCE_EXEMPT.flatMap((x) => x.codes)));
+  return new Set(rows.filter(isAttendanceExempt).map((r) => r.id));
+});
+
+export async function isEmployeeAttendanceExempt(employeeId: string) {
+  return (await attendanceExemptIds()).has(employeeId);
+}
 
 /** Derived fields for a record, from its times, breaks and the schedule. */
 export function computeMetrics(
@@ -110,11 +151,13 @@ export async function getTodayState(employeeId: string) {
   const [ctx, { record, breaks }] = await Promise.all([dayContext(employeeId, today), getRecord(employeeId, today)]);
   const openBreak = breaks.find((b) => !b.endAt) ?? null;
   const live = record?.checkInAt ? computeMetrics(record, breaks, ctx.schedule, company.timezone) : null;
-  return { today, timezone: company.timezone, ctx, record, breaks, openBreak, live };
+  return { today, timezone: company.timezone, ctx, record, breaks, openBreak, live, exempt: await isEmployeeAttendanceExempt(employeeId) };
 }
 
+/** The viewer's employee record, for the check-in/out/break actions. Exempt employees are refused. */
 async function requireEmployee(viewer: Viewer) {
   if (!viewer.employee) throw new AppError("Your account isn't linked to an employee record. Ask HR.");
+  if (await isEmployeeAttendanceExempt(viewer.employee.id)) throw new AppError("You don't need to check in or out — attendance isn't recorded for your role.");
   return viewer.employee;
 }
 
@@ -279,12 +322,15 @@ export async function monthSummary(employeeId: string, from: ISODate, to: ISODat
     const r = byDate.get(d);
     if (!r && d < today) absentDays++;
   }
+  // Exempt (CEOs): never absent or late; any records they have are still listed.
+  const exempt = await isEmployeeAttendanceExempt(employeeId);
   return {
+    exempt,
     workingDays,
     present: recs.filter((r) => r.status === "present").length,
     halfDays: recs.filter((r) => r.status === "half_day").length,
-    late: recs.filter((r) => r.lateMinutes > 0).length,
-    absent: absentDays + recs.filter((r) => r.status === "absent").length,
+    late: exempt ? 0 : recs.filter((r) => r.lateMinutes > 0).length,
+    absent: exempt ? 0 : absentDays + recs.filter((r) => r.status === "absent").length,
     leaveDays,
     workedMinutes: recs.reduce((s, r) => s + r.workedMinutes, 0),
   };
@@ -304,7 +350,12 @@ export async function attendanceForDay(employeeIds: string[] | "all", date: ISOD
     .select({ id: employees.id, firstName: employees.firstName, lastName: employees.lastName, photoFileId: employees.photoFileId, employeeCode: employees.employeeCode, workScheduleId: employees.workScheduleId })
     .from(employees)
     .where(and(...empConds))
-    .orderBy(asc(employees.firstName));
+    .orderBy(asc(employees.firstName))
+    // Exempt employees (CEOs) aren't tracked, so they're not listed as "not checked in".
+    .then(async (rows) => {
+      const exempt = await attendanceExemptIds();
+      return rows.filter((p) => !exempt.has(p.id));
+    });
   const ids = people.map((p) => p.id);
   if (!ids.length) return [];
   const [recs, leaves, wfh, schedules, fallback] = await Promise.all([

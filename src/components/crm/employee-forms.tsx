@@ -34,6 +34,7 @@ export type EmployeeFormValues = {
   skills?: string[];
   bio?: string | null;
   roleKey?: string;
+  employeeCode?: string;
 };
 
 const TYPES = [
@@ -66,11 +67,14 @@ export function EmployeeForm({
   options,
   values = {},
   canAssignElevated,
+  canEditCode = false,
   today,
 }: {
   options: EmployeeFormOptions;
   values?: EmployeeFormValues;
   canAssignElevated: boolean;
+  /** Super Admin only: show the employee code field when editing. */
+  canEditCode?: boolean;
   today: string;
 }) {
   const editing = !!values.id;
@@ -83,6 +87,9 @@ export function EmployeeForm({
         <TextField label="Last name" name="lastName" defaultValue={values.lastName} autoComplete="off" />
         {!editing && <TextField label="Official email" name="email" type="email" placeholder="name@midis.in" required autoComplete="off" />}
         <TextField label="Contact number" name="phone" type="tel" defaultValue={values.phone ?? ""} />
+        {editing && canEditCode && (
+          <TextField label="Employee code" name="employeeCode" defaultValue={values.employeeCode ?? ""} required autoComplete="off" hint="Super Admin only. Letters, digits and dashes, e.g. CEO-01. Must be unique." />
+        )}
       </Section>
 
       <Section title="Role & reporting">
