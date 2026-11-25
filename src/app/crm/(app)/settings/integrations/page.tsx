@@ -7,6 +7,7 @@ import { can, requireViewer } from "@/crm/auth/dal";
 import { decisionOptions, TAB_ORDER, TAB_SPECS } from "@/crm/integrations/dev-sheet/admin";
 import { CSV_MAX_BYTES } from "@/crm/integrations/dev-sheet/csv";
 import { nameKey, TABS } from "@/crm/integrations/dev-sheet/parse";
+import { importSchemaStatus, IMPORT_NOT_READY } from "@/crm/integrations/dev-sheet/readiness";
 import { REVIEW_REASONS, syncOverview } from "@/crm/integrations/dev-sheet/sync";
 import { formatDateTime } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
@@ -26,6 +27,23 @@ const DELIM: Record<string, string> = { ",": "comma", ";": "semicolon", "\t": "t
 export default async function IntegrationsPage() {
   const viewer = await requireViewer();
   if (viewer.role.key !== "super_admin") notFound();
+  const nav = <SettingsNav active="integrations" perms={{ settings: can(viewer, "settings.manage"), users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view"), email: true }} />;
+  // Code can be live before its database update: say so instead of failing on a missing table.
+  const schema = await importSchemaStatus();
+  if (!schema.ready) {
+    return (
+      <>
+        <PageHeader title="Settings" description="Company-wide configuration. Every change is recorded in the audit log." />
+        {nav}
+        <Card>
+          <CardHeader title="CSV Import · Development team sheet" description={IMPORT_NOT_READY} />
+          <CardBody>
+            <p className="text-[0.8125rem] text-c-muted">Waiting for: {schema.missing.join(", ")}.</p>
+          </CardBody>
+        </Card>
+      </>
+    );
+  }
   const [overview, options, company] = await Promise.all([syncOverview(), decisionOptions(), getCompany()]);
   const tz = company.timezone;
   const uploads = new Map(overview.uploads.map((u) => [u.tab, u]));
@@ -49,7 +67,7 @@ export default async function IntegrationsPage() {
   return (
     <>
       <PageHeader title="Settings" description="Company-wide configuration. Every change is recorded in the audit log." />
-      <SettingsNav active="integrations" perms={{ settings: can(viewer, "settings.manage"), users: can(viewer, "users.invite"), roles: can(viewer, "roles.manage"), audit: can(viewer, "audit.view"), email: true }} />
+      {nav}
 
       <div className="space-y-5">
         <Card>

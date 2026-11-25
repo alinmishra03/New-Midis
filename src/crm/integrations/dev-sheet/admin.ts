@@ -8,6 +8,7 @@ import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
 import { checkCsvFile, CsvError, parseCsv } from "./csv";
 import { DAILY_COLUMNS, nameKey, PROJECT_COLUMNS, readTable, SheetFormatError, TABS, type TabKey } from "./parse";
+import { assertImportReady } from "./readiness";
 import { runSheetSync } from "./sync";
 
 /*
@@ -89,6 +90,7 @@ const headerIndex = (rows: string[][], required: readonly string[]) =>
  */
 export async function stageUpload(viewer: Viewer, tab: string, file: { name: string; type: string; size: number; bytes: () => Promise<ArrayBuffer> }) {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   if (!isTabKey(tab)) throw new AppError("Unknown tab.");
   const spec = TAB_SPECS[tab];
   try {
@@ -119,6 +121,7 @@ export async function stageUpload(viewer: Viewer, tab: string, file: { name: str
 
 export async function removeUpload(viewer: Viewer, tab: string) {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   if (!isTabKey(tab)) throw new AppError("Unknown tab.");
   await db.delete(sheetSyncUploads).where(eq(sheetSyncUploads.tab, tab));
 }
@@ -135,6 +138,7 @@ async function stagedData() {
 /** Preview: everything the import would do, plus the review queue. Projects and tasks are not touched. */
 export async function previewImport(viewer: Viewer) {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   const { data, files } = await stagedData();
   return runSheetSync({ mode: "check", trigger: "manual", actorUserId: viewer.userId, data, files });
 }
@@ -146,6 +150,7 @@ export async function previewImport(viewer: Viewer) {
  */
 export async function runImport(viewer: Viewer, previewRunId: string) {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   const preview = await db.query.sheetSyncRuns.findFirst({ where: eq(sheetSyncRuns.id, previewRunId) });
   if (!preview || preview.mode !== "check" || preview.status !== "succeeded" || !preview.finishedAt) throw new AppError("Run a preview first.");
   const latest = await db.query.sheetSyncRuns.findFirst({ orderBy: desc(sheetSyncRuns.startedAt) });
@@ -164,6 +169,7 @@ export async function runImport(viewer: Viewer, previewRunId: string) {
 /** Map a spreadsheet person name to a Development employee (or ignore the name). */
 export async function mapPerson(viewer: Viewer, recordId: string, employeeId: string | "ignore") {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   const rec = await getRecord(recordId);
   if (rec.kind !== "person") throw new AppError("That item isn't a person.");
   const name = rec.source.name ?? rec.fingerprint;
@@ -182,6 +188,7 @@ export async function mapPerson(viewer: Viewer, recordId: string, employeeId: st
 /** Map a project name used in Daily Work Update to a Development project (all rows using that name), or ignore those rows. */
 export async function mapProjectName(viewer: Viewer, projectName: string, projectId: string | "ignore") {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   const key = nameKey(projectName);
   if (!key) throw new AppError("Missing project name.");
   const rows = (await db.select().from(sheetSyncRecords).where(and(eq(sheetSyncRecords.sourceTab, "daily_work_update"), eq(sheetSyncRecords.state, "review")))).filter((r) => nameKey(r.source["Project Name"] ?? "") === key);
@@ -206,6 +213,7 @@ export type RowDecision =
 /** A decision on one review item (a project row or a daily row). */
 export async function decideRow(viewer: Viewer, recordId: string, d: RowDecision) {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   const rec = await getRecord(recordId);
   if (rec.kind === "person") throw new AppError("Use the people mapping for names.");
   const isProject = rec.kind === "project";
@@ -243,6 +251,7 @@ export async function decideRow(viewer: Viewer, recordId: string, d: RowDecision
 
 export async function removeAlias(viewer: Viewer, aliasId: string) {
   assertSuperAdmin(viewer);
+  await assertImportReady();
   const a = await db.query.sheetSyncAliases.findFirst({ where: eq(sheetSyncAliases.id, aliasId) });
   if (!a) return;
   await db.delete(sheetSyncAliases).where(eq(sheetSyncAliases.id, aliasId));
