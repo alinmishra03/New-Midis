@@ -1,0 +1,1 @@
+ALTER TABLE "sheet_sync_uploads" ADD COLUMN "blob_key" text;

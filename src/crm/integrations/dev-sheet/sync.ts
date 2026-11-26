@@ -749,7 +749,7 @@ export async function syncOverview() {
       .leftJoin(employees, eq(employees.id, sheetSyncAliases.employeeId))
       .leftJoin(projects, eq(projects.id, sheetSyncAliases.projectId)),
     db
-      .select({ tab: sheetSyncUploads.tab, fileName: sheetSyncUploads.fileName, sizeBytes: sheetSyncUploads.sizeBytes, sha256: sheetSyncUploads.sha256, encoding: sheetSyncUploads.encoding, delimiter: sheetSyncUploads.delimiter, columns: sheetSyncUploads.columns, dataRows: sheetSyncUploads.dataRows, uploadedById: sheetSyncUploads.uploadedById, uploadedAt: sheetSyncUploads.uploadedAt, uploadedBy: users.email })
+      .select({ tab: sheetSyncUploads.tab, fileName: sheetSyncUploads.fileName, sizeBytes: sheetSyncUploads.sizeBytes, sha256: sheetSyncUploads.sha256, encoding: sheetSyncUploads.encoding, delimiter: sheetSyncUploads.delimiter, columns: sheetSyncUploads.columns, dataRows: sheetSyncUploads.dataRows, blobKey: sheetSyncUploads.blobKey, uploadedById: sheetSyncUploads.uploadedById, uploadedAt: sheetSyncUploads.uploadedAt, uploadedBy: users.email })
       .from(sheetSyncUploads)
       .leftJoin(users, eq(users.id, sheetSyncUploads.uploadedById)),
   ]);

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { CsvUploadForm, PreviewImportButtons, RemoveUploadButton } from "@/components/crm/integrations";
 import { SheetTable } from "@/components/crm/sheet-table";
 import { SettingsNav } from "@/components/crm/SettingsNav";
-import { Badge, Card, CardBody, CardHeader, PageHeader, StatCard, Table, TBody, THead } from "@/components/crm/ui";
+import { Download, FileText } from "lucide-react";
+import { Badge, buttonClass, Card, CardBody, CardHeader, PageHeader, StatCard, Table, TBody, THead } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
 import { TAB_ORDER, TAB_SPECS } from "@/crm/integrations/dev-sheet/admin";
 import { CSV_MAX_BYTES } from "@/crm/integrations/dev-sheet/csv";
@@ -149,6 +150,25 @@ export default async function IntegrationsPage() {
                 </div>
                 {u && (
                   <>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-c-border bg-c-surface-2 px-3 py-2 text-[0.8125rem]">
+                      <FileText className="size-4 shrink-0 text-c-muted" aria-hidden />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium" title={u.fileName}>{u.fileName}</span>
+                        <span className="block text-xs text-c-muted">
+                          Uploaded {formatDateTime(u.uploadedAt, tz)}
+                          {u.blobKey ? " · original file kept in storage" : " · uploaded before original files were kept"}
+                        </span>
+                      </span>
+                      {u.blobKey ? (
+                        <a href={`/crm/api/sheet-uploads/${sh.tab}`} download className={buttonClass("secondary", "sm")}>
+                          <Download /> Download Original CSV
+                        </a>
+                      ) : (
+                        <a href={`/crm/api/sheet-uploads/${sh.tab}?version=reconstructed`} download className={buttonClass("ghost", "sm")} title="Rebuilt from the stored cells: same rows, columns and values, but not a byte-for-byte copy of the uploaded file.">
+                          <Download /> Download reconstructed CSV
+                        </a>
+                      )}
+                    </div>
                     <p className="text-xs text-c-subtle">
                       {(u.sizeBytes / 1024).toFixed(1)} KB · {u.encoding} · {DELIM[u.delimiter] ?? u.delimiter}-separated · {sh.columns.length} columns · {sh.rows.length + 1} lines, headings on row {sh.headerRow}
                     </p>

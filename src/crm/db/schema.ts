@@ -1150,6 +1150,12 @@ export const sheetSyncUploads = pgTable("sheet_sync_uploads", {
   dataRows: integer("data_rows").notNull(),
   /** The parsed cells, as the server read them (never taken from the browser). */
   rows: jsonb("rows").$type<string[][]>().notNull(),
+  /**
+   * Where the original uploaded bytes are kept, unchanged (private storage:
+   * crm/sheet-imports/<tab>/<timestamp>-<sha256>.csv). Null for files uploaded
+   * before originals were kept. Replacing an upload leaves the old object in place.
+   */
+  blobKey: text("blob_key"),
   uploadedById: uuid("uploaded_by_id").references(() => users.id, { onDelete: "set null" }),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
 });

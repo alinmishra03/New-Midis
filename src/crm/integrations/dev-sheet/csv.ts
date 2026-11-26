@@ -60,6 +60,19 @@ function detectDelimiter(text: string): ParsedCsv["delimiter"] {
   return ",";
 }
 
+/**
+ * Writes parsed cells back out as CSV text: same rows in the same order, same
+ * cells (blank ones included, rows not padded), the original separator, CRLF
+ * between rows and none after the last (as Google Sheets exports). A cell is
+ * quoted only when it has to be. parseCsv(writeCsv(r)) gives back r exactly.
+ * The bytes can still differ from the original file's (encoding, byte-order
+ * mark, quoting, line ends, trailing blank lines).
+ */
+export function writeCsv(rows: string[][], delimiter: ParsedCsv["delimiter"]): string {
+  const cell = (c: string) => (c.includes('"') || c.includes(delimiter) || c.includes("\n") || c.includes("\r") ? `"${c.replace(/"/g, '""')}"` : c);
+  return rows.map((r) => r.map(cell).join(delimiter)).join("\r\n");
+}
+
 export function parseCsv(bytes: Uint8Array): ParsedCsv {
   const { text, encoding } = decode(bytes);
   const delimiter = detectDelimiter(text);
