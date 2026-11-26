@@ -145,7 +145,7 @@ export function ProjectCatalog({ rows, params }: { rows: CatalogProject[]; param
         {shown.length === 0 ? (
           <EmptyState icon={SECTION_ICON[section]} title={filtering ? "No projects match these filters" : "Nothing here yet"} description={filtering ? "Try a different name or clear the filters." : SECTION_EMPTY[section]} />
         ) : (
-          <Table className="[&_table]:min-w-[52rem]">
+          <Table className="[&_table]:min-w-[48rem] [&_td]:px-3! [&_th]:px-3!">
             <THead>
               <tr>
                 <th className="w-10 text-right">#</th>
@@ -161,7 +161,7 @@ export function ProjectCatalog({ rows, params }: { rows: CatalogProject[]; param
                   <>
                     {sortHeader("Environment", "env")}
                     {section === "ongoing" && sortHeader("Project Status", "status")}
-                    {(section === "live" || section === "ongoing") && (section === "live" ? sortHeader("Development Status", "status") : <th className="hidden lg:table-cell">Development Status</th>)}
+                    {(section === "live" || section === "ongoing") && (section === "live" ? sortHeader("Development Status", "status") : <th className="hidden 2xl:table-cell">Development Status</th>)}
                     <th className="hidden md:table-cell">Team Members</th>
                     <th className="hidden md:table-cell">Tasks</th>
                   </>
@@ -257,7 +257,7 @@ function Row({ p, n, section }: { p: CatalogProject; n: number; section: Section
         </span>
       </td>
       <td className="hidden font-mono text-xs whitespace-nowrap text-c-muted 2xl:table-cell">{p.code}</td>
-      <td className="max-w-[16rem]">
+      <td className="max-w-[15rem]">
         {primary ? (
           <div className="space-y-1">
             <UrlLink link={primary} />
@@ -282,7 +282,7 @@ function Row({ p, n, section }: { p: CatalogProject; n: number; section: Section
               <StatusBadge status={p.status} />
             </td>
           )}
-          {(section === "live" || section === "ongoing") && <td className={cn(section === "ongoing" && "hidden lg:table-cell")}>{stage(p.devStatus)}</td>}
+          {(section === "live" || section === "ongoing") && <td className={cn(section === "ongoing" && "hidden 2xl:table-cell")}>{stage(p.devStatus)}</td>}
           <td className="hidden md:table-cell">
             <Members members={p.members} />
           </td>
@@ -292,17 +292,9 @@ function Row({ p, n, section }: { p: CatalogProject; n: number; section: Section
         </>
       )}
       <td className="text-right whitespace-nowrap">
-        <span className="inline-flex items-center gap-1">
-          {primary && (
-            <a href={primary.url} target="_blank" rel="noopener noreferrer" className={buttonClass("ghost", "icon", "size-8")} title={`Open ${primary.host} in a new tab`}>
-              <ExternalLink aria-hidden />
-              <span className="sr-only">Open {p.name} website in a new tab</span>
-            </a>
-          )}
-          <Link href={detail} className={buttonClass("secondary", "sm")}>
-            View<span className="sr-only"> {p.name}</span>
-          </Link>
-        </span>
+        <Link href={detail} className={buttonClass("secondary", "sm")}>
+          View<span className="sr-only"> {p.name}</span>
+        </Link>
       </td>
     </tr>
   );
@@ -324,9 +316,11 @@ function UrlLink({ link, small }: { link: SiteLink; small?: boolean }) {
         target="_blank"
         rel="noopener noreferrer"
         title={link.url}
-        className={cn("min-w-0 truncate hover:underline", small ? "text-xs text-c-muted hover:text-c-fg" : "text-[0.8125rem] text-c-accent-text")}
+        className={cn("inline-flex min-w-0 items-center gap-1 hover:underline", small ? "text-xs text-c-muted hover:text-c-fg" : "text-[0.8125rem] text-c-accent-text")}
       >
-        {label}
+        <span className="truncate">{label}</span>
+        <ExternalLink aria-hidden className="size-3 shrink-0 opacity-60" />
+        <span className="sr-only"> (opens in a new tab)</span>
       </a>
       <KindBadge kind={link.kind} />
     </span>
@@ -374,11 +368,11 @@ function Members({ members }: { members: CatalogProject["members"] }) {
 }
 
 function Tasks({ done, total }: { done: number; total: number }) {
-  if (!total) return <span className="text-xs text-c-subtle">No tasks</span>;
+  if (!total) return <span className="text-xs whitespace-nowrap text-c-subtle">None</span>;
   const pct = Math.round((done / total) * 100);
   return (
-    <span className="flex min-w-[5.5rem] flex-col gap-1">
-      <span className="tabular text-xs text-c-muted">
+    <span className="flex min-w-[4.5rem] flex-col gap-1">
+      <span className="tabular text-xs whitespace-nowrap text-c-muted">
         {done}/{total} done
       </span>
       <span className="h-1 overflow-hidden rounded-full bg-c-hover" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Tasks done">
