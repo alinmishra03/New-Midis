@@ -19,6 +19,8 @@ export type CheckInState = {
   scheduleStart: string;
   checkInAt: string | null;
   checkOutAt: string | null;
+  /** Check-out was set by the 19:00 automatic check-out. */
+  checkOutAuto: boolean;
   workMode: "office" | "remote" | null;
   lateMinutes: number;
   breakMinutes: number;
@@ -54,7 +56,9 @@ export function CheckInCard({ state }: { state: CheckInState }) {
       : state.workedMinutes;
 
   const status = state.checkOutAt
-    ? { label: "Checked out", tone: "neutral" as const }
+    ? state.checkOutAuto
+      ? { label: "Auto Checked Out", tone: "info" as const }
+      : { label: "Checked out", tone: "neutral" as const }
     : state.openBreakStartedAt
       ? { label: "On a break", tone: "warning" as const }
       : state.checkInAt
@@ -86,7 +90,10 @@ export function CheckInCard({ state }: { state: CheckInState }) {
         </div>
         <div>
           <dt className="text-c-subtle">Check-out</dt>
-          <dd className="tabular font-medium">{state.checkOutAt ? time(state.checkOutAt, state.timezone) : "—"}</dd>
+          <dd className="tabular font-medium">
+            {state.checkOutAt ? time(state.checkOutAt, state.timezone) : "—"}
+            {state.checkOutAuto && <span className="ml-1 text-xs font-normal text-c-subtle">(auto)</span>}
+          </dd>
         </div>
         <div>
           <dt className="text-c-subtle">Breaks</dt>

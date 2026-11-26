@@ -87,7 +87,8 @@ async function applyTimes(tx: Tx, employeeId: string, date: ISODate, checkIn: Da
   const newOut = checkOut ?? existing?.checkOutAt ?? null;
   let id = existing?.id;
   if (existing) {
-    await tx.update(attendanceRecords).set({ checkInAt: newIn, checkOutAt: newOut, correctedAt: new Date() }).where(eq(attendanceRecords.id, existing.id));
+    // A new check-out time replaces an automatic one, so it no longer counts as "Auto Checked Out".
+    await tx.update(attendanceRecords).set({ checkInAt: newIn, checkOutAt: newOut, correctedAt: new Date(), ...(checkOut ? { checkOutSource: null } : {}) }).where(eq(attendanceRecords.id, existing.id));
   } else {
     const [row] = await tx.insert(attendanceRecords).values({ employeeId, workDate: date, checkInAt: newIn, checkOutAt: newOut, correctedAt: new Date() }).returning({ id: attendanceRecords.id });
     id = row!.id;
