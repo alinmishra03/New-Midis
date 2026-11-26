@@ -73,6 +73,7 @@ export default async function DashboardPage() {
     scheduleStart: formatClock(today.ctx.schedule.startTime),
     checkInAt: today.record?.checkInAt?.toISOString() ?? null,
     checkOutAt: today.record?.checkOutAt?.toISOString() ?? null,
+    checkOutAuto: today.record?.checkOutSource === "auto",
     workMode: today.record?.workMode ?? null,
     lateMinutes: today.record?.lateMinutes ?? 0,
     breakMinutes: today.record?.breakMinutes ?? 0,

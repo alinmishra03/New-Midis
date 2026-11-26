@@ -168,7 +168,8 @@ export async function buildReport(viewer: Viewer, key: ReportKey, f: ReportFilte
           else if (!byDate.has(d)) absent++;
         }
         const worked = mine.reduce((s, r) => s + r.workedMinutes, 0);
-        return [p.code, name(p), p.department ?? "—", working, mine.filter((r) => r.status === "present").length, mine.filter((r) => r.status === "half_day").length, mine.filter((r) => r.lateMinutes > 0).length, leave, absent, formatMinutes(worked)];
+        // Last column: check-outs set by the 19:00 automatic check-out, not by the employee.
+        return [p.code, name(p), p.department ?? "—", working, mine.filter((r) => r.status === "present").length, mine.filter((r) => r.status === "half_day").length, mine.filter((r) => r.lateMinutes > 0).length, leave, absent, formatMinutes(worked), mine.filter((r) => r.checkOutSource === "auto").length];
       });
       const totalWorking = rows.reduce((s, r) => s + Number(r[3]), 0);
       const totalPresent = rows.reduce((s, r) => s + Number(r[4]) + Number(r[5]) * 0.5, 0);
@@ -176,7 +177,7 @@ export async function buildReport(viewer: Viewer, key: ReportKey, f: ReportFilte
         key,
         title: def.label,
         subtitle: period(f),
-        columns: ["Employee code", "Name", "Department", "Working days", "Present", "Half days", "Late", "Leave", "No record", "Hours worked"],
+        columns: ["Employee code", "Name", "Department", "Working days", "Present", "Half days", "Late", "Leave", "No record", "Hours worked", "Auto check-outs"],
         rows,
         chart: rows.map((r) => ({ label: String(r[1]), value: Number(r[3]) ? Math.round(((Number(r[4]) + Number(r[5]) * 0.5) / Number(r[3])) * 100) : 0 })),
         chartLabel: "Attendance rate % (present ÷ working days)",
@@ -185,6 +186,7 @@ export async function buildReport(viewer: Viewer, key: ReportKey, f: ReportFilte
           { label: "Attendance rate", value: totalWorking ? `${Math.round((totalPresent / totalWorking) * 100)}%` : "—" },
           { label: "Late check-ins", value: rows.reduce((s, r) => s + Number(r[6]), 0) },
           { label: "Leave days", value: rows.reduce((s, r) => s + Number(r[7]), 0) },
+          { label: "Auto check-outs", value: rows.reduce((s, r) => s + Number(r[10]), 0) },
         ],
       };
     }

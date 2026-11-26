@@ -3,7 +3,7 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { Check, ChevronLeft, ChevronRight, Clock, Download, X } from "lucide-react";
 import { CorrectionDialog, HrEditDialog } from "@/components/crm/attendance-forms";
 import { ConfirmAction, inputClass } from "@/components/crm/forms";
-import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, Tabs, buttonClass } from "@/components/crm/ui";
+import { AutoCheckoutBadge, Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, Tabs, buttonClass } from "@/components/crm/ui";
 import { can, requireViewer, scopeFor } from "@/crm/auth/dal";
 import { isIsoDate, yearMonthOr } from "@/crm/lib/params";
 import { db } from "@/crm/db";
@@ -151,6 +151,7 @@ async function MyAttendance({ month }: { month: string }) {
                   {"r" in c && c.r && (
                     <span className="tabular mt-0.5 hidden truncate text-[0.625rem] text-c-muted sm:block">
                       {formatTime(c.r.checkInAt, tz)}–{c.r.checkOutAt ? formatTime(c.r.checkOutAt, tz) : "…"}
+                      {c.r.checkOutSource === "auto" && " · auto"}
                       {c.remote && " · remote"}
                     </span>
                   )}
@@ -189,6 +190,7 @@ async function MyAttendance({ month }: { month: string }) {
                     </td>
                     <td className="tabular">
                       {formatTime(r.checkOutAt, tz)}
+                      {r.checkOutSource === "auto" && <AutoCheckoutBadge />}
                       {r.earlyLeaveMinutes > 0 && <span className="ml-1 text-xs text-c-warning">−{r.earlyLeaveMinutes}m</span>}
                     </td>
                     <td className="tabular hidden sm:table-cell">{formatMinutes(r.breakMinutes)}</td>
@@ -315,7 +317,10 @@ async function TeamDay({ date }: { date: string }) {
                       )}
                     </td>
                     <td className="tabular">{formatTime(rec?.checkInAt, tz)}</td>
-                    <td className="tabular">{formatTime(rec?.checkOutAt, tz)}</td>
+                    <td className="tabular">
+                      {formatTime(rec?.checkOutAt, tz)}
+                      {rec?.checkOutSource === "auto" && <AutoCheckoutBadge />}
+                    </td>
                     <td className="tabular hidden md:table-cell">{rec ? formatMinutes(rec.workedMinutes) : "—"}</td>
                     {hrEdit && (
                       <td>

@@ -5,6 +5,7 @@ import { Download, FileText, Mail, MapPin, Pencil, Phone, UserX } from "lucide-r
 import { ConfirmAction } from "@/components/crm/forms";
 import { AccessLinkButton, ChangeEmailButton, PersonalForm, PhotoUpload } from "@/components/crm/employee-forms";
 import {
+  AutoCheckoutBadge,
   Avatar,
   Badge,
   ButtonLink,
@@ -277,7 +278,10 @@ async function AttendanceTab({ employeeId, timezone }: { employeeId: string; tim
                   {formatTime(r.checkInAt, timezone)}
                   {r.lateMinutes > 0 && <span className="ml-1.5 text-xs text-c-warning">+{r.lateMinutes}m</span>}
                 </td>
-                <td className="tabular">{formatTime(r.checkOutAt, timezone)}</td>
+                <td className="tabular">
+                  {formatTime(r.checkOutAt, timezone)}
+                  {r.checkOutSource === "auto" && <AutoCheckoutBadge />}
+                </td>
                 <td className="hidden capitalize sm:table-cell">{r.workMode}</td>
                 <td className="tabular">{formatMinutes(r.workedMinutes)}</td>
                 <td>

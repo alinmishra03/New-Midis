@@ -1,0 +1,2 @@
+ALTER TABLE "attendance_records" ADD COLUMN "check_out_source" text;--> statement-breakpoint
+ALTER TABLE "attendance_records" ADD CONSTRAINT "attendance_check_out_source" CHECK ("attendance_records"."check_out_source" is null or ("attendance_records"."check_out_source" = 'auto' and "attendance_records"."check_out_at" is not null));

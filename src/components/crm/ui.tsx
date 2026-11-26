@@ -96,6 +96,15 @@ export function Badge({ tone = "neutral", children, className, dot }: { tone?: T
   );
 }
 
+/** Marks a check-out set by the 19:00 automatic check-out, not by the employee. */
+export function AutoCheckoutBadge({ className }: { className?: string }) {
+  return (
+    <Badge tone="info" className={cn("ml-1.5 align-middle", className)}>
+      Auto Checked Out
+    </Badge>
+  );
+}
+
 /** Consistent tones for the status values used across modules. */
 export function statusTone(status: string): Tone {
   switch (status) {

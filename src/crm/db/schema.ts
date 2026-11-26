@@ -508,12 +508,18 @@ export const attendanceRecords = pgTable(
     note: text("note"),
     /** Set when HR or an approved correction last changed the times. */
     correctedAt: ts("corrected_at"),
+    /**
+     * Who set the check-out: "auto" = the 19:00 automatic check-out (see
+     * services/auto-checkout.ts); null = the employee, HR or a correction.
+     */
+    checkOutSource: text("check_out_source").$type<"auto">(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     uniqueIndex("attendance_employee_date_uq").on(t.employeeId, t.workDate),
     index("attendance_date_idx").on(t.workDate),
+    check("attendance_check_out_source", sql`${t.checkOutSource} is null or (${t.checkOutSource} = 'auto' and ${t.checkOutAt} is not null)`),
     check(
       "attendance_checkout_after_checkin",
       sql`${t.checkOutAt} is null or (${t.checkInAt} is not null and ${t.checkOutAt} >= ${t.checkInAt})`,

@@ -22,6 +22,13 @@
       "when": 1795596083132,
       "tag": "0002_csv_import",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795668005698,
+      "tag": "0003_auto_checkout",
+      "breakpoints": true
     }
   ]
 }
