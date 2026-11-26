@@ -165,6 +165,24 @@ async function readPrefix(storageKey: string, n: number): Promise<Uint8Array | n
   return out.subarray(0, filled);
 }
 
+/**
+ * Writes bytes at a server-chosen key, privately (Blob in production, local
+ * disk in development). Never overwrites: an existing object at the key is an
+ * error, so a key always identifies exactly one write. No `files` row is
+ * created; the caller records the key and controls access to it.
+ */
+export async function putPrivateObject(key: string, bytes: Uint8Array, contentType: string) {
+  if (blobEnabled()) {
+    const { put } = await import("@vercel/blob");
+    await put(key, Buffer.from(bytes), { access: "private", contentType, addRandomSuffix: false, allowOverwrite: false, token: blobToken() });
+    return;
+  }
+  const full = path.join(LOCAL_DIR, key);
+  if (!full.startsWith(LOCAL_DIR + path.sep)) throw new Error("Invalid storage key.");
+  await mkdir(path.dirname(full), { recursive: true });
+  await writeFile(full, bytes, { flag: "wx" });
+}
+
 /** Reads a stored file's bytes as a stream. Only call after an access check. */
 export async function readStored(storageKey: string): Promise<ReadableStream<Uint8Array> | null> {
   if (blobEnabled()) {

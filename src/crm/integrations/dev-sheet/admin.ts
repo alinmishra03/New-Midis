@@ -6,6 +6,7 @@ import { db } from "@/crm/db";
 import { departments, employees, projects, sheetSyncAliases, sheetSyncRecords, sheetSyncRuns, sheetSyncUploads, tasks, type SyncRunFile } from "@/crm/db/schema";
 import { AppError } from "@/crm/lib/actions";
 import { audit } from "@/crm/lib/audit";
+import { deleteStored, putPrivateObject } from "@/crm/lib/storage";
 import { checkCsvFile, CsvError, parseCsv } from "./csv";
 import { DAILY_COLUMNS, nameKey, PROJECT_COLUMNS, readTable, SheetFormatError, TABS, type TabKey } from "./parse";
 import { runSheetSync } from "./sync";
@@ -79,7 +80,17 @@ export const TAB_SPECS: Record<TabKey, { name: string; columns: readonly string[
 export const TAB_ORDER: TabKey[] = ["all_website", "client_reviewed", "daily_work_update"];
 export const isTabKey = (t: string): t is TabKey => t in TAB_SPECS;
 
-export const headerIndex = (rows: string[][], required: readonly string[]) =>
+/**
+ * Where an upload's original bytes are kept: one new object per upload, never
+ * overwritten or deleted when the tab's file is replaced or removed.
+ * e.g. crm/sheet-imports/client_reviewed/20261126T061530123Z-<sha256>.csv
+ */
+export const originalKey = (tab: TabKey, at: Date, sha256: string) => `crm/sheet-imports/${tab}/${at.toISOString().replace(/[-:.]/g, "")}-${sha256}.csv`;
+
+/** An error's class and message only (never request data or credentials). */
+const errorName = (e: unknown) => (e instanceof Error ? `${e.name}: ${e.message}` : "unknown error").slice(0, 300);
+
+export const headerIndex =(rows: string[][], required: readonly string[]) =>
   rows.slice(0, 10).findIndex((r) => required.every((c) => r.map((h) => h.replace(/\s+/g, " ").trim().toLowerCase()).includes(c.toLowerCase())));
 
 /**
@@ -107,9 +118,31 @@ export async function stageUpload(viewer: Viewer, tab: string, file: { name: str
     const columns = (parsed.rows[h] ?? []).map((c) => c.trim()).filter(Boolean);
     const extra = columns.filter((c) => !spec.columns.some((x) => x.toLowerCase() === c.replace(/\s+/g, " ").toLowerCase()));
     const sha256 = createHash("sha256").update(bytes).digest("hex");
-    const values = { tab, fileName: file.name.slice(0, 200), sizeBytes: file.size, sha256, encoding: parsed.encoding, delimiter: parsed.delimiter, columns, dataRows: table.length, rows: parsed.rows, uploadedById: viewer.userId, uploadedAt: new Date() };
-    await db.insert(sheetSyncUploads).values(values).onConflictDoUpdate({ target: sheetSyncUploads.tab, set: values });
-    await audit({ actorUserId: viewer.userId, action: "sheets.upload", entityType: "integration", entityId: "dev_sheet", summary: `Uploaded “${values.fileName}” for ${spec.name} (${table.length} rows)`, metadata: { tab, sha256, rows: table.length } });
+    const uploadedAt = new Date();
+    const blobKey = originalKey(tab, uploadedAt, sha256);
+    const values = { tab, fileName: file.name.slice(0, 200), sizeBytes: file.size, sha256, encoding: parsed.encoding, delimiter: parsed.delimiter, columns, dataRows: table.length, rows: parsed.rows, blobKey, uploadedById: viewer.userId, uploadedAt };
+
+    // 1. Keep the original bytes. If this fails nothing is recorded and the upload is reported as failed.
+    try {
+      await putPrivateObject(blobKey, bytes, "text/csv");
+    } catch (e) {
+      console.error(`[sheet-import] saving the original CSV failed (tab=${tab}, key=${blobKey}): ${errorName(e)}`);
+      throw new AppError("The file couldn't be saved to storage, so it wasn't accepted. Nothing changed. Try again.");
+    }
+
+    // 2. Make it the current file for the tab. If this fails, remove only the object written just above (a new,
+    //    never-overwritten key) — unless the row did get saved and points at it.
+    try {
+      await db.insert(sheetSyncUploads).values(values).onConflictDoUpdate({ target: sheetSyncUploads.tab, set: values });
+    } catch (e) {
+      console.error(`[sheet-import] recording the upload failed (tab=${tab}, key=${blobKey}): ${errorName(e)}`);
+      const saved = await db.query.sheetSyncUploads.findFirst({ where: eq(sheetSyncUploads.tab, tab), columns: { blobKey: true } }).catch(() => undefined);
+      if (saved?.blobKey !== blobKey) {
+        await deleteStored(blobKey).catch((err) => console.error(`[sheet-import] couldn't remove the unrecorded original (key=${blobKey}): ${errorName(err)}`));
+      }
+      throw new AppError("The file couldn't be recorded, so it wasn't accepted. Nothing changed. Try again.");
+    }
+    await audit({ actorUserId: viewer.userId, action: "sheets.upload", entityType: "integration", entityId: "dev_sheet", summary: `Uploaded “${values.fileName}” for ${spec.name} (${table.length} rows)`, metadata: { tab, sha256, rows: table.length, fileName: values.fileName, blobKey } });
     return { fileName: values.fileName, dataRows: table.length, columns, extra, encoding: parsed.encoding, delimiter: parsed.delimiter };
   } catch (e) {
     if (e instanceof CsvError) throw new AppError(e.message);
