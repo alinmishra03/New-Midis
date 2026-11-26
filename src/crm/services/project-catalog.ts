@@ -40,7 +40,11 @@ export async function listProjectCatalog(viewer: Viewer): Promise<CatalogProject
       .where(ne(sheetSyncRecords.sourceTab, "daily_work_update")),
     db.select({ tab: sheetSyncUploads.tab, rows: sheetSyncUploads.rows }).from(sheetSyncUploads).where(inArray(sheetSyncUploads.tab, PROJECT_TABS)),
   ]);
-  const shopify = shopifyFromSheet(sheetTabs(records, uploads), resolver(records));
+  // The Client Reviewed tab's "Shopify Websites" list is the confirmed one; All Website only if that tab has none.
+  const tabs = sheetTabs(records, uploads);
+  const hasHeading = (t: SheetTab) => t.rows.some((r) => r.name.trim().toLowerCase() === "shopify websites" && !r.url.trim());
+  const source = ["client_reviewed", "all_website"].map((k) => tabs.find((t) => t.tab === k)).find((t): t is SheetTab => !!t && hasHeading(t));
+  const shopify = shopifyFromSheet(source ? [source] : [], resolver(records));
   return projects.map((p) => ({
     ...classify({ id: p.id, name: p.name, status: p.status, description: p.description }, shopify),
     id: p.id,

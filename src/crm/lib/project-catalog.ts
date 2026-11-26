@@ -6,19 +6,22 @@
  * - Project URL, environment and development status: the lines the
  *   Development-sheet import writes into the project description
  *   ("Project URL: …", "Environment: …", "Development status: …").
- * - Shopify: the sheet's own "Shopify Websites" section (rows listed under that
- *   heading row), or a *.myshopify.com URL. Never guessed from a name.
+ * - Shopify: the "Shopify Websites" section of the Client Reviewed tab (the
+ *   stores listed under that heading row), or a *.myshopify.com URL. Never
+ *   guessed from a name. The All Website tab's section is used only when the
+ *   Client Reviewed tab has none.
  *
  * Rules, in order:
- * 1. Archived status → Archived (Shopify stores keep a Shopify badge).
- * 2. Shopify → Shopify. The "Shopify Websites" heading itself is shown there as
- *    a category, not a store.
+ * 1. Shopify → Shopify, whether the store is open or closed (closed ones are
+ *    marked "Not live"). The "Shopify Websites" heading itself is shown there
+ *    as a category, not a store.
+ * 2. Archived status → Archived.
  * 3. Planning / Active / On hold → Ongoing.
  * 4. Completed + Production + a custom-domain URL → Live (a Vercel link, if any,
  *    is shown beside it).
  * 5. Completed + a Vercel URL → Completed (Vercel).
- * 6. Anything else that's completed (no URL, or a custom domain that isn't on
- *    Production) → Completed, flagged for review. Its status isn't changed.
+ * 6. Completed with a custom domain that isn't on Production → Completed.
+ * 7. Completed with no usable URL → Completed, flagged for review.
  */
 
 export type SectionKey = "live" | "completed" | "ongoing" | "shopify" | "archived";
@@ -140,16 +143,15 @@ export function classify(p: CatalogInput, shopify: { stores: Set<string>; catego
   const statusNotSet = /status not set in the sheet/i.test(p.description ?? "");
   const base = { links, environment, devStatus, isShopify, isCategory };
 
+  if (isShopify) return { ...base, section: "shopify", review: null };
   if (p.status === "archived") return { ...base, section: "archived", review: null };
-  if (isShopify) return { ...base, section: "shopify", review: isCategory ? "Category heading from the sheet, not an individual store." : null };
   if (p.status !== "completed") return { ...base, section: "ongoing", review: statusNotSet ? "No development status in the sheet; shown as Planning." : null };
 
   const env = norm(environment ?? "");
   const custom = links.some((l) => l.kind === "custom");
   const vercel = links.some((l) => l.kind === "vercel");
   if (env === "production" && custom) return { ...base, section: "live", review: null };
-  if (vercel) return { ...base, section: "completed", review: null };
-  if (custom) return { ...base, section: "completed", review: `Completed with a custom domain, but the environment is ${environment ?? "not set"} rather than Production.` };
+  if (vercel || custom) return { ...base, section: "completed", review: null };
   return { ...base, section: "completed", review: links.length ? "Completed, but its URL is neither a custom domain nor a Vercel link." : "Completed, but no project URL is recorded." };
 }
 
@@ -177,5 +179,8 @@ export function stageTone(value: string): Tone {
       return "neutral";
   }
 }
+
+/** A store or site the sheet marks as closed. */
+export const isClosed = (devStatus: string | null) => /^(close site|store closed|closed)$/.test(norm(devStatus ?? ""));
 
 export const PAGE_SIZE = 15;

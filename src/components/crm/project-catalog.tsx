@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Archive, CircleAlert, ExternalLink, Fo
 import { cn } from "@/lib/utils";
 import { inputClass } from "@/components/crm/forms";
 import { Avatar, Badge, Card, EmptyState, Pagination, StatusBadge, Table, TBody, THead, buttonClass, humanize, withParams } from "@/components/crm/ui";
-import { PAGE_SIZE, SECTIONS, stageTone, type SectionKey, type SiteLink } from "@/crm/lib/project-catalog";
+import { isClosed, PAGE_SIZE, SECTIONS, stageTone, type SectionKey, type SiteLink } from "@/crm/lib/project-catalog";
 import type { CatalogProject } from "@/crm/services/project-catalog";
 
 const BASE = "/crm/tasks";
@@ -24,7 +24,7 @@ const SECTION_EMPTY: Record<SectionKey, string> = {
   live: "No completed Production websites on a custom domain.",
   completed: "No completed projects with a Vercel link.",
   ongoing: "No projects in Planning, Active or On hold.",
-  shopify: "No projects from the sheet's Shopify section.",
+  shopify: "No stores from the Client Reviewed sheet's Shopify list.",
   archived: "No archived projects.",
 };
 
@@ -161,7 +161,8 @@ export function ProjectCatalog({ rows, params }: { rows: CatalogProject[]; param
                   <>
                     {sortHeader("Environment", "env")}
                     {section === "ongoing" && sortHeader("Project Status", "status")}
-                    {(section === "live" || section === "ongoing") && (section === "live" ? sortHeader("Development Status", "status") : <th className="hidden 2xl:table-cell">Development Status</th>)}
+                    {(section === "live" || section === "shopify") && sortHeader("Development Status", "status")}
+                    {section === "ongoing" && <th className="hidden 2xl:table-cell">Development Status</th>}
                     <th className="hidden md:table-cell">Team Members</th>
                     <th className="hidden md:table-cell">Tasks</th>
                   </>
@@ -245,6 +246,7 @@ function Row({ p, n, section }: { p: CatalogProject; n: number; section: Section
         <span className="mt-0.5 flex flex-wrap items-center gap-1">
           <span className="font-mono text-[0.6875rem] text-c-subtle 2xl:hidden">{p.code}</span>
           {p.isCategory && <Badge tone="neutral">Category</Badge>}
+          {section === "shopify" && !p.isCategory && isClosed(p.devStatus) && <Badge tone="neutral">Not live</Badge>}
           {p.isShopify && section !== "shopify" && <Badge tone="warning">Shopify</Badge>}
           {p.review && !p.isCategory && (
             <span title={p.review}>
@@ -282,7 +284,7 @@ function Row({ p, n, section }: { p: CatalogProject; n: number; section: Section
               <StatusBadge status={p.status} />
             </td>
           )}
-          {(section === "live" || section === "ongoing") && <td className={cn(section === "ongoing" && "hidden 2xl:table-cell")}>{stage(p.devStatus)}</td>}
+          {(section === "live" || section === "ongoing" || section === "shopify") && <td className={cn(section === "ongoing" && "hidden 2xl:table-cell")}>{stage(p.devStatus)}</td>}
           <td className="hidden md:table-cell">
             <Members members={p.members} />
           </td>
