@@ -8,9 +8,9 @@ import { can, requireViewer, scopeFor } from "@/crm/auth/dal";
 import { isIsoDate, yearMonthOr } from "@/crm/lib/params";
 import { db } from "@/crm/db";
 import { employees, leaveRequests, wfhRequests } from "@/crm/db/schema";
-import { addDays, daysBetweenInclusive, endOfMonth, formatDate, formatMinutes, formatMonth, formatTime, isoWeekday, shiftLabel, startOfMonth, todayIn } from "@/crm/lib/time";
+import { addDays, daysBetweenInclusive, endOfMonth, formatDate, formatDateTime, formatMinutes, formatMonth, formatTime, isoWeekday, shiftLabel, startOfMonth, todayIn } from "@/crm/lib/time";
 import { attendanceForDay, monthSummary, recordsBetween } from "@/crm/services/attendance";
-import { listCorrections } from "@/crm/services/attendance-corrections";
+import { correctionConflict, listCorrections, mayReviewOwnCorrection } from "@/crm/services/attendance-corrections";
 import { getCompany, getHolidaysBetween, getScheduleForEmployee } from "@/crm/services/company";
 import { reviewCorrectionAction } from "./actions";
 import { cn } from "@/lib/utils";
@@ -215,9 +215,15 @@ async function MyAttendance({ month }: { month: string }) {
                     <StatusBadge status={c.status} />
                   </div>
                   <p className="text-xs text-c-muted">
-                    In {formatTime(c.requestedCheckInAt, tz)} · Out {formatTime(c.requestedCheckOutAt, tz)}
+                    In {c.requestedCheckInAt ? formatTime(c.requestedCheckInAt, tz) : "unchanged"} · Out {c.requestedCheckOutAt ? formatTime(c.requestedCheckOutAt, tz) : "unchanged"}
                   </p>
                   <p className="text-xs text-c-muted">{c.reason}</p>
+                  {c.reviewedAt && (
+                    <p className="text-xs text-c-subtle">
+                      {c.status === "approved" ? "Approved" : c.status === "rejected" ? "Rejected" : "Decided"}
+                      {c.reviewerEmail ? ` by ${c.reviewerEmail}` : ""} · {formatDateTime(c.reviewedAt, tz)}
+                    </p>
+                  )}
                   {c.reviewComment && <p className="text-xs text-c-subtle">Reviewer: {c.reviewComment}</p>}
                 </li>
               ))}
@@ -313,7 +319,7 @@ async function TeamDay({ date }: { date: string }) {
                     <td className="tabular hidden md:table-cell">{rec ? formatMinutes(rec.workedMinutes) : "—"}</td>
                     {hrEdit && (
                       <td>
-                        {r.id !== viewer.employee?.id && (
+                        {(r.id !== viewer.employee?.id || mayReviewOwnCorrection(viewer)) && (
                           <HrEditDialog employeeId={r.id} name={r.name} date={date} checkIn={rec?.checkInAt ? formatTime(rec.checkInAt, tz) : ""} checkOut={rec?.checkOutAt ? formatTime(rec.checkOutAt, tz) : ""} />
                         )}
                       </td>
@@ -338,14 +344,21 @@ async function Corrections() {
   const company = await getCompany();
   const tz = company.timezone;
   const rows = await listCorrections(viewer, "review");
-  if (!rows.length) return <Card><EmptyState icon={<Check />} title="No correction requests" description="Requests from your team appear here." /></Card>;
+  const everyone = can(viewer, "attendance.manage");
+  if (!rows.length) return <Card><EmptyState icon={<Check />} title="No correction requests" description={everyone ? "Requests from all employees appear here." : "Requests from your team appear here."} /></Card>;
+  const t = (d: Date | string | null | undefined) => formatTime(d ? new Date(d) : null, tz);
+  // A requested time left blank keeps the record's existing time.
+  const req = (d: Date | null) => (d ? t(d) : "unchanged");
+  const pending = rows.filter((c) => c.status === "pending").length;
   return (
     <Card>
+      <CardHeader title={everyone ? "All correction requests" : "Team correction requests"} description={`${pending} pending · pending requests are listed first`} />
       <Table>
         <THead>
           <tr>
             <th>Employee</th>
             <th>Date</th>
+            <th>Record</th>
             <th>Requested</th>
             <th className="hidden lg:table-cell">Reason</th>
             <th>Status</th>
@@ -353,37 +366,83 @@ async function Corrections() {
           </tr>
         </THead>
         <TBody>
-          {rows.map((c) => (
-            <tr key={c.id}>
-              <td>
-                <PersonCell name={`${c.firstName} ${c.lastName}`} photoFileId={c.photoFileId} href={`/crm/employees/${c.employeeId}?tab=attendance`} />
-              </td>
-              <td className="tabular whitespace-nowrap">{formatDate(c.workDate)}</td>
-              <td className="tabular text-[0.8125rem] whitespace-nowrap">
-                In {formatTime(c.requestedCheckInAt, tz)}
-                <br />
-                Out {formatTime(c.requestedCheckOutAt, tz)}
-                {c.previousValues && (
-                  <span className="block text-xs text-c-subtle">
-                    was {formatTime(c.previousValues.checkInAt ? new Date(c.previousValues.checkInAt) : null, tz)}–{formatTime(c.previousValues.checkOutAt ? new Date(c.previousValues.checkOutAt) : null, tz)}
-                  </span>
-                )}
-              </td>
-              <td className="hidden max-w-xs text-[0.8125rem] text-c-muted lg:table-cell">{c.reason}</td>
-              <td>
-                <StatusBadge status={c.status} />
-                {c.reviewerEmail && <span className="block text-xs text-c-subtle">{c.reviewerEmail}</span>}
-              </td>
-              <td className="text-right">
-                {c.status === "pending" && c.employeeId !== viewer.employee?.id && (
-                  <div className="flex justify-end gap-1.5">
-                    <ConfirmAction action={reviewCorrectionAction} fields={{ id: c.id, decision: "approve" }} label="Approve" icon={<Check />} title="Approve this correction?" description="The record is updated to the requested times; the previous times are kept." confirmLabel="Approve" withComment />
-                    <ConfirmAction action={reviewCorrectionAction} fields={{ id: c.id, decision: "reject" }} label="Reject" icon={<X />} variant="ghost" confirmVariant="danger" title="Reject this correction?" confirmLabel="Reject" withComment commentLabel="Reason" />
-                  </div>
-                )}
-              </td>
-            </tr>
-          ))}
+          {rows.map((c) => {
+            const own = c.employeeId === viewer.employee?.id;
+            const name = `${c.firstName} ${c.lastName}`;
+            // Before a decision: the record as it is now. After approval: the times it had before.
+            const before = c.status === "pending" ? { in: c.currentCheckInAt, out: c.currentCheckOutAt } : c.previousValues ? { in: c.previousValues.checkInAt, out: c.previousValues.checkOutAt } : null;
+            // Same check the server makes on approval: e.g. a new check-out earlier than the recorded check-in.
+            const conflict = c.status === "pending" ? correctionConflict({ checkInAt: c.currentCheckInAt, checkOutAt: c.currentCheckOutAt }, c.requestedCheckInAt, c.requestedCheckOutAt) : null;
+            const details = (
+              <span className="block space-y-1 text-left">
+                <span className="block">
+                  {name} · {formatDate(c.workDate)}
+                  {own ? " (your own request)" : ""}
+                </span>
+                <span className="block">
+                  Current record: {before && (before.in || before.out) ? `in ${t(before.in)}, out ${t(before.out)}` : "no attendance recorded"}
+                </span>
+                <span className="block">
+                  Requested: in {req(c.requestedCheckInAt)}, out {req(c.requestedCheckOutAt)}
+                </span>
+                <span className="block">Reason: {c.reason}</span>
+              </span>
+            );
+            return (
+              <tr key={c.id}>
+                <td>
+                  <PersonCell name={name} photoFileId={c.photoFileId} href={`/crm/employees/${c.employeeId}?tab=attendance`} />
+                  <span className="mt-1 block max-w-[16rem] text-xs text-c-muted lg:hidden">{c.reason}</span>
+                </td>
+                <td className="tabular whitespace-nowrap">
+                  {formatDate(c.workDate)}
+                  <span className="block text-xs text-c-subtle">Sent {formatDateTime(c.createdAt, tz)}</span>
+                </td>
+                <td className="tabular text-[0.8125rem] whitespace-nowrap text-c-muted">
+                  {before && (before.in || before.out) ? (
+                    <>
+                      In {t(before.in)}
+                      <br />
+                      Out {t(before.out)}
+                      {c.status !== "pending" && <span className="block text-xs text-c-subtle">before the change</span>}
+                    </>
+                  ) : c.status === "pending" || c.status === "approved" ? (
+                    <span className="text-xs text-c-subtle">No record</span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td className="tabular text-[0.8125rem] whitespace-nowrap">
+                  In {req(c.requestedCheckInAt)}
+                  <br />
+                  Out {req(c.requestedCheckOutAt)}
+                  {conflict && <span className="mt-1 block max-w-[14rem] text-xs whitespace-normal text-c-danger">Can&apos;t be applied: {conflict}</span>}
+                </td>
+                <td className="hidden max-w-xs text-[0.8125rem] text-c-muted lg:table-cell">{c.reason}</td>
+                <td>
+                  <StatusBadge status={c.status} />
+                  {c.reviewedAt && (
+                    <span className="block text-xs text-c-subtle">
+                      {c.reviewerEmail ? `${c.reviewerEmail} · ` : ""}
+                      {formatDateTime(c.reviewedAt, tz)}
+                    </span>
+                  )}
+                  {c.reviewComment && <span className="block max-w-[14rem] text-xs text-c-subtle">“{c.reviewComment}”</span>}
+                </td>
+                <td className="text-right">
+                  {c.status === "pending" &&
+                    (!own || mayReviewOwnCorrection(viewer) ? (
+                      <div className="flex justify-end gap-1.5">
+                        {!conflict && <ConfirmAction action={reviewCorrectionAction} fields={{ id: c.id, decision: "approve" }} label="Approve" icon={<Check />} title="Approve this correction?" description={<>{details}<span className="mt-2 block">The record is updated to the requested times; the previous times are kept.</span></>} confirmLabel="Approve" withComment />}
+                        <ConfirmAction action={reviewCorrectionAction} fields={{ id: c.id, decision: "reject" }} label="Reject" icon={<X />} variant="ghost" confirmVariant="danger" title="Reject this correction?" description={details} confirmLabel="Reject" withComment commentLabel="Reason" />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-c-subtle">Your request: another reviewer decides</span>
+                    ))}
+                </td>
+              </tr>
+            );
+          })}
         </TBody>
       </Table>
     </Card>

@@ -43,6 +43,9 @@ export async function requestCorrection(viewer: Viewer, input: { date: ISODate; 
     where: and(eq(attendanceCorrections.employeeId, emp.id), eq(attendanceCorrections.workDate, input.date), eq(attendanceCorrections.status, "pending")),
   });
   if (pending) throw new AppError("You already have a pending correction for that day.");
+  const record = await db.query.attendanceRecords.findFirst({ where: and(eq(attendanceRecords.employeeId, emp.id), eq(attendanceRecords.workDate, input.date)) });
+  const problem = correctionConflict(record, checkIn, checkOut);
+  if (problem) throw new AppError(record?.checkInAt ? `${problem} If you left after midnight, enter your check-in time as well.` : problem);
 
   await db.insert(attendanceCorrections).values({
     employeeId: emp.id,
@@ -61,14 +64,27 @@ export async function requestCorrection(viewer: Viewer, input: { date: ISODate; 
   await audit({ actorUserId: viewer.userId, action: "attendance.correction_request", entityType: "attendance", entityId: emp.id, summary: `Requested an attendance correction for ${formatDate(input.date)}` });
 }
 
+/**
+ * Why requested times can't be applied to the day's record as it is now, or
+ * null if they can. A blank requested time keeps the record's time. Shared by
+ * the submit check, the approval (applyTimes) and the reviewer's screen.
+ */
+export function correctionConflict(current: { checkInAt: Date | null; checkOutAt: Date | null } | null | undefined, checkIn: Date | null, checkOut: Date | null): string | null {
+  const newIn = checkIn ?? current?.checkInAt ?? null;
+  const newOut = checkOut ?? current?.checkOutAt ?? null;
+  if (!newIn) return "There's no check-in recorded for that day, so a check-in time is needed too.";
+  if (newOut && newOut < newIn) return "The check-out is earlier than the day's check-in.";
+  return null;
+}
+
 /** Writes corrected times to the record (creating it if the day had none), keeping the previous values. */
-async function applyTimes(tx: Tx, employeeId: string, date: ISODate, checkIn: Date | null, checkOut: Date | null) {
+async function applyTimes(tx: Tx, employeeId: string, date: ISODate, checkIn: Date | null, checkOut: Date | null, hint?: string) {
   const existing = await tx.query.attendanceRecords.findFirst({ where: and(eq(attendanceRecords.employeeId, employeeId), eq(attendanceRecords.workDate, date)) });
   const previous = existing ? { checkInAt: existing.checkInAt?.toISOString() ?? null, checkOutAt: existing.checkOutAt?.toISOString() ?? null } : null;
-  const newIn = checkIn ?? existing?.checkInAt ?? null;
+  const problem = correctionConflict(existing, checkIn, checkOut);
+  if (problem) throw new AppError(hint ? `${problem} ${hint}` : problem);
+  const newIn = (checkIn ?? existing?.checkInAt)!;
   const newOut = checkOut ?? existing?.checkOutAt ?? null;
-  if (!newIn) throw new AppError("A check-in time is needed for a day with no record.");
-  if (newOut && newOut < newIn) throw new AppError("Check-out must be after check-in.");
   let id = existing?.id;
   if (existing) {
     await tx.update(attendanceRecords).set({ checkInAt: newIn, checkOutAt: newOut, correctedAt: new Date() }).where(eq(attendanceRecords.id, existing.id));
@@ -80,8 +96,17 @@ async function applyTimes(tx: Tx, employeeId: string, date: ISODate, checkIn: Da
   return previous;
 }
 
+/**
+ * Policy: only a Super Admin may decide (or HR-edit) their own attendance;
+ * everyone else needs another reviewer. Used by the server checks below and
+ * by the Corrections tab, so the buttons shown match what the server allows.
+ */
+export function mayReviewOwnCorrection(viewer: Viewer): boolean {
+  return viewer.role.key === "super_admin";
+}
+
 async function assertCanReview(viewer: Viewer, employeeId: string) {
-  if (viewer.employee?.id === employeeId && viewer.role.key !== "super_admin") throw new ForbiddenError("You can't approve your own correction.");
+  if (viewer.employee?.id === employeeId && !mayReviewOwnCorrection(viewer)) throw new ForbiddenError("You can't approve your own correction.");
   if (can(viewer, "attendance.manage")) return;
   if (can(viewer, "attendance.approve_team") && (await isInTeam(viewer, employeeId))) return;
   throw new ForbiddenError();
@@ -95,7 +120,7 @@ export async function reviewCorrection(viewer: Viewer, id: string, approve: bool
 
   await db.transaction(async (tx) => {
     let previousValues = null;
-    if (approve) previousValues = await applyTimes(tx, c.employeeId, c.workDate, c.requestedCheckInAt, c.requestedCheckOutAt);
+    if (approve) previousValues = await applyTimes(tx, c.employeeId, c.workDate, c.requestedCheckInAt, c.requestedCheckOutAt, "This request can't be applied as it is; reject it and ask for a new one.");
     const [updated] = await tx
       .update(attendanceCorrections)
       .set({ status: approve ? "approved" : "rejected", reviewerId: viewer.userId, reviewComment: comment, reviewedAt: new Date(), previousValues })
@@ -125,7 +150,7 @@ export async function reviewCorrection(viewer: Viewer, id: string, approve: bool
 /** HR sets a day's times directly (attendance.manage). Recorded as an approved correction. */
 export async function hrSetAttendance(viewer: Viewer, input: { employeeId: string; date: ISODate; checkIn: string | null; checkOut: string | null; reason: string }) {
   if (!can(viewer, "attendance.manage")) throw new ForbiddenError();
-  if (viewer.employee?.id === input.employeeId && viewer.role.key !== "super_admin") throw new ForbiddenError("Ask another HR colleague to change your own attendance.");
+  if (viewer.employee?.id === input.employeeId && !mayReviewOwnCorrection(viewer)) throw new ForbiddenError("Ask another HR colleague to change your own attendance.");
   const company = await getCompany();
   if (input.date > todayIn(company.timezone)) throw new AppError("You can't set attendance for a future date.");
   await assertEmployedOn(input.employeeId, input.date);
@@ -166,12 +191,17 @@ export async function listCorrections(viewer: Viewer, mode: "mine" | "review") {
       reviewComment: attendanceCorrections.reviewComment,
       reviewedAt: attendanceCorrections.reviewedAt,
       reviewerEmail: users.email,
+      /** The day's attendance record as it is now (what a pending request would change). */
+      currentCheckInAt: attendanceRecords.checkInAt,
+      currentCheckOutAt: attendanceRecords.checkOutAt,
       previousValues: attendanceCorrections.previousValues,
       createdAt: attendanceCorrections.createdAt,
     })
     .from(attendanceCorrections)
     .innerJoin(employees, eq(employees.id, attendanceCorrections.employeeId))
-    .leftJoin(users, eq(users.id, attendanceCorrections.reviewerId));
+    .leftJoin(users, eq(users.id, attendanceCorrections.reviewerId))
+    // One record per employee per day (unique index), so this never duplicates a request.
+    .leftJoin(attendanceRecords, and(eq(attendanceRecords.employeeId, attendanceCorrections.employeeId), eq(attendanceRecords.workDate, attendanceCorrections.workDate)));
 
   if (mode === "mine") {
     if (!viewer.employee) return [];
