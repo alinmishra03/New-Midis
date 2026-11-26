@@ -150,7 +150,7 @@ export function ProjectCatalog({ rows, params }: { rows: CatalogProject[]; param
               <tr>
                 <th className="w-10 text-right">#</th>
                 {sortHeader(section === "shopify" ? "Store / Project Name" : section === "live" || section === "completed" ? "Website / Project Name" : "Project Name", "name")}
-                <th className="hidden xl:table-cell">Project Code</th>
+                <th className="hidden 2xl:table-cell">Project Code</th>
                 <th>{section === "live" ? "Live Website URL" : section === "completed" ? "Vercel URL" : section === "shopify" ? "Store URL" : "Project URL"}</th>
                 {section === "archived" ? (
                   <>
@@ -238,12 +238,12 @@ function Row({ p, n, section }: { p: CatalogProject; n: number; section: Section
   return (
     <tr className={cn(archived && "text-c-muted")}>
       <td className="tabular w-10 text-right text-xs text-c-subtle">{n}</td>
-      <td className="max-w-[16rem]">
+      <td className="max-w-[15rem]">
         <Link href={detail} className={cn("block truncate font-medium hover:text-c-accent-text hover:underline", archived ? "text-c-muted" : "text-c-fg")}>
           {p.name}
         </Link>
         <span className="mt-0.5 flex flex-wrap items-center gap-1">
-          <span className="text-xs text-c-subtle xl:hidden">{p.code}</span>
+          <span className="font-mono text-[0.6875rem] text-c-subtle 2xl:hidden">{p.code}</span>
           {p.isCategory && <Badge tone="neutral">Category</Badge>}
           {p.isShopify && section !== "shopify" && <Badge tone="warning">Shopify</Badge>}
           {p.review && !p.isCategory && (
@@ -256,8 +256,8 @@ function Row({ p, n, section }: { p: CatalogProject; n: number; section: Section
           )}
         </span>
       </td>
-      <td className="hidden font-mono text-xs whitespace-nowrap text-c-muted xl:table-cell">{p.code}</td>
-      <td className="max-w-[18rem]">
+      <td className="hidden font-mono text-xs whitespace-nowrap text-c-muted 2xl:table-cell">{p.code}</td>
+      <td className="max-w-[16rem]">
         {primary ? (
           <div className="space-y-1">
             <UrlLink link={primary} />
@@ -369,7 +369,6 @@ function Members({ members }: { members: CatalogProject["members"] }) {
       </span>
       {members.length > 3 && <span className="tabular ml-1.5 text-xs text-c-muted">+{members.length - 3}</span>}
       <span className="sr-only">{names}</span>
-      {members.length === 1 && <span className="ml-2 max-w-[8rem] truncate text-xs text-c-muted">{members[0]!.name}</span>}
     </span>
   );
 }
