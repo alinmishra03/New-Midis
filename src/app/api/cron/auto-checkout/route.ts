@@ -21,10 +21,22 @@ function authorized(request: Request): boolean {
   return timingSafeEqual(digest(given), digest(`Bearer ${secret}`));
 }
 
+/**
+ * Preview deployments only (test database): `?at=<ISO instant>` runs the job as
+ * if it were that time, so the 19:00 flow can be tested during the day.
+ * Ignored everywhere else — Production always uses the real clock.
+ */
+function testClock(request: Request): Date | undefined {
+  if (process.env.VERCEL_ENV !== "preview") return undefined;
+  const at = new URL(request.url).searchParams.get("at");
+  const d = at ? new Date(at) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : undefined;
+}
+
 export async function GET(request: Request) {
   if (!authorized(request)) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   try {
-    const r = await runAutoCheckout();
+    const r = await runAutoCheckout(testClock(request));
     const ok = r.failed.length === 0;
     return Response.json(
       { ok, ran: r.ran, date: r.date, timeZone: r.timeZone, checkedOut: r.checkedOut, skipped: r.skipped.length, failed: r.failed.length, ...(r.ran ? {} : { note: "Before 19:00: nothing to do." }) },
