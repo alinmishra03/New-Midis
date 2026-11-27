@@ -51,7 +51,16 @@ export type SheetView = {
   /** Rows that hold at least one value (for "N rows" displays). */
   filledRows: number;
   summary: FileSummary | null;
+  /**
+   * Set when this one file's preview couldn't be built (e.g. its stored cells
+   * are unreadable). Only this card is affected: the other files still show,
+   * and this upload's record, original file and download are untouched.
+   */
+  error: string | null;
 };
+
+/** Stored cells must be a table of text; anything else can't be shown faithfully. */
+const isTextTable = (rows: unknown): rows is string[][] => Array.isArray(rows) && rows.every((r) => Array.isArray(r) && r.every((c) => typeof c === "string"));
 
 const letter = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : letter(Math.floor(i / 26) - 1) + String.fromCharCode(65 + (i % 26)));
 /** The first sentence of an engine explanation (its factual part, e.g. “No Development employee is called “X”.”). */
@@ -65,10 +74,13 @@ export async function spreadsheetView() {
   ]);
   const detail = new Map(records.map((r) => [`${r.sourceTab}|${r.fingerprint}`, r]));
 
-  const sheets: SheetView[] = TAB_ORDER.map((tab) => {
+  const uploadInfo = (u: (typeof uploads)[number]) => ({ fileName: u.fileName, sizeBytes: u.sizeBytes, encoding: u.encoding, delimiter: u.delimiter, uploadedAt: u.uploadedAt, sha256: u.sha256 });
+
+  const sheetFor = (tab: TabKey): SheetView => {
     const spec = TAB_SPECS[tab];
     const u = uploads.find((x) => x.tab === tab);
-    if (!u) return { tab, name: spec.name, upload: null, headerRow: 0, columns: [], rows: [], filledRows: 0, summary: null };
+    if (!u) return { tab, name: spec.name, upload: null, headerRow: 0, columns: [], rows: [], filledRows: 0, summary: null, error: null };
+    if (!isTextTable(u.rows)) throw new TypeError("stored rows are not a table of text cells");
     const h = Math.max(0, headerIndex(u.rows, spec.columns));
     const width = Math.max(0, ...u.rows.map((r) => r.length));
     const header = u.rows[h] ?? [];
@@ -98,13 +110,26 @@ export async function spreadsheetView() {
     return {
       tab,
       name: spec.name,
-      upload: { fileName: u.fileName, sizeBytes: u.sizeBytes, encoding: u.encoding, delimiter: u.delimiter, uploadedAt: u.uploadedAt, sha256: u.sha256 },
+      upload: uploadInfo(u),
       headerRow: h + 1,
       columns: Array.from({ length: width }, (_, i) => ({ letter: letter(i), heading: header[i] ?? "" })),
       rows,
       filledRows: rows.filter((r) => r.cells.some((c) => c.trim())).length,
       summary,
+      error: null,
     };
+  };
+
+  // Each file is built on its own: if one can't be shown, only its card says so and the others load as usual.
+  const sheets: SheetView[] = TAB_ORDER.map((tab) => {
+    try {
+      return sheetFor(tab);
+    } catch (e) {
+      // Log the reason only, never the file's contents.
+      console.error(`[sheet-import] couldn't build the preview for tab=${tab}: ${e instanceof Error ? `${e.name}: ${e.message}` : "unknown error"}`);
+      const u = uploads.find((x) => x.tab === tab);
+      return { tab, name: TAB_SPECS[tab].name, upload: u ? uploadInfo(u) : null, headerRow: 0, columns: [], rows: [], filledRows: 0, summary: null, error: "This file's stored data couldn't be read, so it can't be previewed here." };
+    }
   });
   return { sheets, latest: latest ?? null };
 }

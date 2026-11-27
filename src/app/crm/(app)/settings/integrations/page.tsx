@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CsvUploadForm, PreviewImportButtons, RemoveUploadButton } from "@/components/crm/integrations";
+import { SheetPreviewBoundary, SheetPreviewError } from "@/components/crm/sheet-preview-boundary";
 import { SheetTable } from "@/components/crm/sheet-table";
 import { SettingsNav } from "@/components/crm/SettingsNav";
 import { Download, FileText } from "lucide-react";
@@ -16,6 +17,16 @@ import { getCompany } from "@/crm/services/company";
 export const metadata: Metadata = { title: "Integrations" };
 
 const DELIM: Record<string, string> = { ",": "comma", ";": "semicolon", "\t": "tab" };
+
+/** Heading for one of the two parts of a file's card: the file as uploaded, and what the CRM did with it. */
+function SectionHeading({ id, title, description }: { id: string; title: string; description: string }) {
+  return (
+    <div className="space-y-0.5">
+      <h3 id={id} className="text-sm font-semibold text-c-fg">{title}</h3>
+      <p className="text-xs text-c-muted">{description}</p>
+    </div>
+  );
+}
 
 /** Read-only: what the latest preview/import did with one file's rows. The file itself is never changed. */
 function FileOutcome({ s, tz }: { s: FileSummary; tz: string }) {
@@ -138,7 +149,7 @@ export default async function IntegrationsPage() {
             <Card key={sh.tab} id={`sheet-${sh.tab}`} className="scroll-mt-20">
               <CardHeader
                 title={sh.name}
-                description={u ? `${u.fileName} · ${sh.filledRows} rows · uploaded ${formatDateTime(u.uploadedAt, tz)}${u.uploadedBy ? ` by ${u.uploadedBy}` : ""}` : `Not uploaded. Required columns: ${spec.columns.join(", ")}.`}
+                description={u ? `${u.fileName} · ${sh.error ? "preview unavailable" : `${sh.filledRows} rows`} · uploaded ${formatDateTime(u.uploadedAt, tz)}${u.uploadedBy ? ` by ${u.uploadedBy}` : ""}` : `Not uploaded. Required columns: ${spec.columns.join(", ")}.`}
                 action={u ? <Badge tone="success" dot>Uploaded</Badge> : <Badge tone="warning" dot>Missing</Badge>}
               />
               <CardBody className="space-y-4">
@@ -150,30 +161,48 @@ export default async function IntegrationsPage() {
                 </div>
                 {u && (
                   <>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-c-border bg-c-surface-2 px-3 py-2 text-[0.8125rem]">
-                      <FileText className="size-4 shrink-0 text-c-muted" aria-hidden />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium" title={u.fileName}>{u.fileName}</span>
-                        <span className="block text-xs text-c-muted">
-                          Uploaded {formatDateTime(u.uploadedAt, tz)}
-                          {u.blobKey ? " · original file kept in storage" : " · uploaded before original files were kept"}
+                    <section aria-labelledby={`uploaded-${sh.tab}`} className="space-y-3">
+                      <SectionHeading id={`uploaded-${sh.tab}`} title="Uploaded File (As Uploaded)" description="Every row and column exactly as in the file, with its own headings. The CRM never changes the uploaded file." />
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-c-border bg-c-surface-2 px-3 py-2 text-[0.8125rem]">
+                        <FileText className="size-4 shrink-0 text-c-muted" aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium" title={u.fileName}>{u.fileName}</span>
+                          <span className="block text-xs text-c-muted">
+                            Uploaded {formatDateTime(u.uploadedAt, tz)}
+                            {u.blobKey ? " · original file kept in storage" : " · uploaded before original files were kept"}
+                          </span>
                         </span>
-                      </span>
-                      {u.blobKey ? (
-                        <a href={`/crm/api/sheet-uploads/${sh.tab}`} download className={buttonClass("secondary", "sm")}>
-                          <Download /> Download Original CSV
-                        </a>
+                        {u.blobKey ? (
+                          <a href={`/crm/api/sheet-uploads/${sh.tab}`} download className={buttonClass("secondary", "sm")}>
+                            <Download /> Download Original CSV
+                          </a>
+                        ) : (
+                          <a href={`/crm/api/sheet-uploads/${sh.tab}?version=reconstructed`} download className={buttonClass("ghost", "sm")} title="Rebuilt from the stored cells: same rows, columns and values, but not a byte-for-byte copy of the uploaded file.">
+                            <Download /> Download reconstructed CSV
+                          </a>
+                        )}
+                      </div>
+                      {sh.error ? (
+                        <SheetPreviewError fileName={u.fileName} detail={sh.error} />
                       ) : (
-                        <a href={`/crm/api/sheet-uploads/${sh.tab}?version=reconstructed`} download className={buttonClass("ghost", "sm")} title="Rebuilt from the stored cells: same rows, columns and values, but not a byte-for-byte copy of the uploaded file.">
-                          <Download /> Download reconstructed CSV
-                        </a>
+                        <>
+                          <p className="text-xs text-c-subtle">
+                            {(u.sizeBytes / 1024).toFixed(1)} KB · {u.encoding} · {DELIM[u.delimiter] ?? u.delimiter}-separated · {sh.columns.length} columns · {sh.rows.length + 1} lines, headings on row {sh.headerRow}
+                          </p>
+                          <SheetPreviewBoundary fileName={u.fileName}>
+                            <SheetTable columns={sh.columns} rows={sh.rows} headerRow={sh.headerRow} fileName={u.fileName} />
+                          </SheetPreviewBoundary>
+                        </>
                       )}
-                    </div>
-                    <p className="text-xs text-c-subtle">
-                      {(u.sizeBytes / 1024).toFixed(1)} KB · {u.encoding} · {DELIM[u.delimiter] ?? u.delimiter}-separated · {sh.columns.length} columns · {sh.rows.length + 1} lines, headings on row {sh.headerRow}
-                    </p>
-                    <SheetTable columns={sh.columns} rows={sh.rows} headerRow={sh.headerRow} fileName={u.fileName} />
-                    {sh.summary && <FileOutcome s={sh.summary} tz={tz} />}
+                    </section>
+                    <section aria-labelledby={`result-${sh.tab}`} className="space-y-3 border-t border-c-border pt-4">
+                      <SectionHeading id={`result-${sh.tab}`} title="CRM Import Result" description="What the latest preview or import did with this file's rows in Tasks & Projects. Kept apart from the file above." />
+                      {sh.summary ? (
+                        <FileOutcome s={sh.summary} tz={tz} />
+                      ) : (
+                        <p className="text-[0.8125rem] text-c-muted">No preview or import has used this exact file yet. Run Preview import above to see what it would create.</p>
+                      )}
+                    </section>
                   </>
                 )}
               </CardBody>
