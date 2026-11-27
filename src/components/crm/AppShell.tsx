@@ -7,6 +7,7 @@ import {
   CalendarOff,
   ChartColumn,
   ChevronDown,
+  CircleCheck,
   Clock,
   FileText,
   House,
@@ -161,6 +162,10 @@ function useDismiss(open: boolean, close: () => void) {
 
 const panel = "crm-enter absolute right-0 top-full z-50 mt-2 rounded-xl border border-c-border bg-c-surface shadow-c-lg";
 
+/** Header icon button; `open` keeps it highlighted while its menu is showing. */
+const iconButton = (open: boolean) =>
+  cn("relative flex size-9 items-center justify-center rounded-lg text-c-muted transition-colors duration-150 hover:bg-c-hover hover:text-c-fg", open && "bg-c-hover text-c-fg");
+
 type Notice = Awaited<ReturnType<typeof loadNotifications>>["items"][number];
 
 function NotificationBell({ initialUnread }: { initialUnread: number }) {
@@ -193,13 +198,13 @@ function NotificationBell({ initialUnread }: { initialUnread: number }) {
           setOpen((o) => !o);
           if (!open) refresh();
         }}
-        className="relative flex size-9 items-center justify-center rounded-lg text-c-muted hover:bg-c-hover hover:text-c-fg"
+        className={iconButton(open)}
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
         aria-expanded={open}
       >
         <Bell className="size-[1.1rem]" />
         {unread > 0 && (
-          <span className="tabular absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-c-accent px-1 text-[0.625rem] leading-4 font-semibold text-c-on-accent">
+          <span className="tabular absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-c-accent px-1 text-[0.625rem] leading-4 font-semibold text-c-on-accent ring-2 ring-c-surface">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -207,7 +212,10 @@ function NotificationBell({ initialUnread }: { initialUnread: number }) {
       {open && (
         <div className={cn(panel, "w-[min(22rem,calc(100vw-1.5rem))] -right-12 sm:right-0")}>
           <div className="flex items-center justify-between border-b border-c-border px-4 py-3">
-            <p className="text-sm font-semibold">Notifications</p>
+            <p className="flex items-center gap-2 text-sm font-semibold">
+              Notifications
+              {unread > 0 && <span className="tabular rounded-full bg-c-accent-soft px-1.5 text-xs font-medium text-c-accent-text">{unread}</span>}
+            </p>
             {unread > 0 && (
               <button
                 type="button"
@@ -240,7 +248,10 @@ function NotificationBell({ initialUnread }: { initialUnread: number }) {
                 ))}
               </li>
             ) : items.length === 0 ? (
-              <li className="px-4 py-8 text-center text-[0.8125rem] text-c-subtle">You&apos;re all caught up.</li>
+              <li className="flex flex-col items-center gap-2 px-4 py-8 text-center text-[0.8125rem] text-c-subtle">
+                <CircleCheck aria-hidden className="size-5 text-c-success" />
+                You&apos;re all caught up.
+              </li>
             ) : (
               items.map((n) => (
                 <li key={n.id} className="border-b border-c-border last:border-0">
@@ -295,7 +306,7 @@ function ThemeSwitcher({ initial }: { initial: ShellUser["theme"] }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex size-9 items-center justify-center rounded-lg text-c-muted hover:bg-c-hover hover:text-c-fg"
+        className={iconButton(open)}
         aria-label="Theme"
         aria-expanded={open}
       >
@@ -335,7 +346,7 @@ function UserMenu({ user }: { user: ShellUser }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-lg p-1 pr-2 hover:bg-c-hover"
+        className={cn("flex items-center gap-2.5 rounded-lg p-1 pr-2 transition-colors duration-150 hover:bg-c-hover", open && "bg-c-hover")}
         aria-expanded={open}
         aria-label="Account menu"
       >
@@ -344,19 +355,23 @@ function UserMenu({ user }: { user: ShellUser }) {
           <span className="block max-w-[10rem] truncate text-[0.8125rem] leading-tight font-medium">{user.name}</span>
           <span className="block text-[0.6875rem] leading-tight text-c-subtle">{user.roleName}</span>
         </span>
-        <ChevronDown className="hidden size-4 text-c-subtle md:block" />
+        <ChevronDown className={cn("hidden size-4 text-c-subtle transition-transform duration-150 md:block", open && "rotate-180")} />
       </button>
       {open && (
-        <div className={cn(panel, "w-60 p-1")} role="menu">
-          <div className="border-b border-c-border px-3 py-2.5">
-            <p className="truncate text-sm font-medium">{user.name}</p>
-            <p className="truncate text-xs text-c-muted">{user.email}</p>
+        <div className={cn(panel, "w-64 p-1")} role="menu">
+          <div className="flex items-center gap-3 border-b border-c-border px-3 py-3">
+            <Avatar name={user.name} photoFileId={user.photoFileId} size={36} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{user.name}</p>
+              <p className="truncate text-xs text-c-muted">{user.email}</p>
+              <span className="mt-1 inline-flex rounded-full bg-c-accent-soft px-2 py-0.5 text-[0.6875rem] font-medium text-c-accent-text">{user.roleName}</span>
+            </div>
           </div>
-          <Link href="/crm/profile" onClick={() => setOpen(false)} className="mt-1 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-c-muted hover:bg-c-hover hover:text-c-fg" role="menuitem">
+          <Link href="/crm/profile" onClick={() => setOpen(false)} className="mt-1 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-c-muted transition-colors hover:bg-c-hover hover:text-c-fg" role="menuitem">
             <UserCog className="size-4" /> My profile & settings
           </Link>
-          <form action={logout}>
-            <button type="submit" className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-c-muted hover:bg-c-hover hover:text-c-fg" role="menuitem">
+          <form action={logout} className="mt-1 border-t border-c-border pt-1">
+            <button type="submit" className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-c-muted transition-colors hover:bg-c-danger-soft hover:text-c-danger" role="menuitem">
               <LogOut className="size-4" /> Sign out
             </button>
           </form>
@@ -453,10 +468,15 @@ export function AppShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-c-border bg-c-surface/90 px-3 backdrop-blur sm:gap-3 sm:px-6">
-          <button type="button" onClick={() => setDrawer(true)} className="flex size-9 items-center justify-center rounded-lg text-c-muted hover:bg-c-hover lg:hidden" aria-label="Open navigation">
+        {/* Horizontal padding matches <main>, so the header's edges line up with the page content. */}
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 border-b border-c-border bg-c-surface/90 px-4 backdrop-blur sm:gap-3 sm:px-6 lg:px-8">
+          <button type="button" onClick={() => setDrawer(true)} className={cn(iconButton(drawer), "-ml-1.5 lg:hidden")} aria-label="Open navigation" aria-expanded={drawer}>
             <Menu className="size-5" />
           </button>
+          {/* On phones and tablets the sidebar is hidden, so the header carries the MIDIS mark. */}
+          <Link href="/crm" aria-label="Dashboard" className="hidden shrink-0 rounded-lg min-[400px]:block lg:hidden">
+            <Brand compact />
+          </Link>
           <form action="/crm/search" role="search" className="relative min-w-0 flex-1 sm:max-w-md">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-c-subtle" />
             <input
@@ -464,12 +484,13 @@ export function AppShell({
               name="q"
               placeholder="Search people, projects, tasks…"
               aria-label="Search"
-              className="h-9 w-full rounded-lg border border-c-border bg-c-surface-2 pr-3 pl-9 text-sm text-c-fg placeholder:text-c-subtle focus:border-c-accent focus:bg-c-surface focus:ring-3 focus:ring-c-accent/20 focus:outline-none"
+              className="h-9 w-full rounded-lg border border-c-border bg-c-surface-2 pr-3 pl-9 text-sm text-c-fg transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-c-subtle hover:border-c-border-strong focus:border-c-accent focus:bg-c-surface focus:ring-3 focus:ring-c-accent/20 focus:outline-none"
             />
           </form>
           <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
             <NotificationBell initialUnread={unread} />
             <ThemeSwitcher initial={user.theme} />
+            <span aria-hidden className="mx-1.5 hidden h-6 w-px bg-c-border sm:block" />
             <UserMenu user={user} />
           </div>
         </header>

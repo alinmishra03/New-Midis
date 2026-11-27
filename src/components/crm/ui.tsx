@@ -177,13 +177,17 @@ export function PageHeader({
   breadcrumb?: { label: string; href: string }[];
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        {breadcrumb && breadcrumb.length > 0 && <Breadcrumb items={breadcrumb} className="mb-1.5" />}
-        <h1 className="text-xl font-semibold tracking-[-0.02em] text-c-fg sm:text-2xl">{title}</h1>
-        {description && <p className="mt-1 max-w-2xl text-sm text-c-muted">{description}</p>}
+    // The breadcrumb sits on its own line so the title and the action buttons share one row; long
+    // descriptions wrap under the title without pushing the buttons down.
+    <div className="mb-6">
+      {breadcrumb && breadcrumb.length > 0 && <Breadcrumb items={breadcrumb} className="mb-3" />}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-[-0.02em] text-c-fg sm:text-2xl">{title}</h1>
+          {description && <p className="mt-1 max-w-2xl text-sm leading-relaxed text-c-muted">{description}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end sm:pt-0.5">{actions}</div>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }

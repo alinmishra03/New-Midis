@@ -4,6 +4,7 @@ import { BarList, ColumnChart, SegmentedBar } from "@/components/crm/charts";
 import { CheckInCard, type CheckInState } from "@/components/crm/CheckInCard";
 import {
   ActionItems,
+  DashboardSection,
   ActivityList,
   AnnouncementList,
   CelebrationList,
@@ -11,6 +12,7 @@ import {
   LeaveBalances,
   ListCard,
   MeetingList,
+  MiniStat,
   MonthSummary,
   PendingApprovals,
   QuickLinks,
@@ -18,8 +20,9 @@ import {
   TeamRoster,
   TeamTasks,
   ViewAll,
+  WelcomeCard,
 } from "@/components/crm/dashboard";
-import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, StatCard, StatusBadge } from "@/components/crm/ui";
+import { ButtonLink, Card, CardBody, CardHeader, EmptyState, StatCard, StatusBadge } from "@/components/crm/ui";
 import { can, getTeamEmployeeIds, requireViewer } from "@/crm/auth/dal";
 import { formatClock, formatDate, formatDateShort, shiftLabel, zonedMinutes } from "@/crm/lib/time";
 import { getTodayState } from "@/crm/services/attendance";
@@ -86,21 +89,35 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[0.8125rem] text-c-muted">{formatDate(personal?.today ?? null)}</p>
-          <h1 className="mt-0.5 text-xl font-semibold tracking-[-0.02em] sm:text-2xl">
+      <WelcomeCard
+        date={formatDate(personal?.today ?? null)}
+        greeting={
+          <>
             {greeting}, {viewer.employee?.firstName ?? "there"}
-          </h1>
-          {personal?.profile && (
-            <p className="mt-1 text-sm text-c-muted">
+          </>
+        }
+        subtitle={
+          personal?.profile ? (
+            <>
               {[personal.profile.designation, personal.profile.department].filter(Boolean).join(" · ") || "No designation set"}
               {personal.profile.manager && ` · Reports to ${personal.profile.manager}`}
-            </p>
-          )}
-        </div>
-        <Badge tone="accent">{viewer.role.name}</Badge>
-      </div>
+            </>
+          ) : undefined
+        }
+        role={viewer.role.name}
+        // Links to pages every employee already has (their own leave, WFH, attendance, tasks and payslips).
+        actions={
+          viewer.employee
+            ? [
+                { label: "Apply for leave", href: "/crm/leave?apply=1", icon: <CalendarOff /> },
+                { label: "Work from home", href: "/crm/wfh", icon: <House /> },
+                { label: "Attendance", href: "/crm/attendance", icon: <Clock /> },
+                { label: "My tasks", href: "/crm/tasks", icon: <ListChecks /> },
+                { label: "Payslips", href: "/crm/payroll", icon: <Wallet /> },
+              ]
+            : undefined
+        }
+      />
 
       {/* ------------------------------------------------ my day (everyone) */}
       {personal && checkIn && (
@@ -210,10 +227,7 @@ async function CompanySection({ admin }: { admin: boolean }) {
   const expected = stats.expectedToday;
 
   return (
-    <section aria-labelledby="company-h" className="space-y-4">
-      <h2 id="company-h" className="text-base font-semibold">
-        {admin ? "Company overview" : "HR overview"}
-      </h2>
+    <DashboardSection id="company-h" title={admin ? "Company overview" : "HR overview"} description="Today across MIDIS. Open any card for the details.">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Total employees" value={stats.total} icon={<Users />} href="/crm/employees" />
         <StatCard label="Active employees" value={stats.active} icon={<UserCheck />} tone="success" href="/crm/employees?status=active" />
@@ -255,7 +269,7 @@ async function CompanySection({ admin }: { admin: boolean }) {
               {overview.payroll ? (
                 <div>
                   <p className="text-[0.8125rem] text-c-muted">{overview.payroll.label}</p>
-                  <p className="tabular mt-1 text-2xl font-semibold">{inr.format(overview.payroll.net)}</p>
+                  <p className="tabular mt-1 text-2xl leading-none font-semibold tracking-[-0.02em]">{inr.format(overview.payroll.net)}</p>
                   <p className="mt-1 flex items-center gap-2 text-xs text-c-muted">
                     <StatusBadge status={overview.payroll.status} /> {overview.payroll.employees} payslips
                   </p>
@@ -294,16 +308,9 @@ async function CompanySection({ admin }: { admin: boolean }) {
             <CardHeader title="User accounts" action={<ViewAll href="/crm/settings/users">Manage</ViewAll>} />
             <CardBody className="space-y-4">
               <div className="grid grid-cols-3 gap-2 text-center">
-                {[
-                  ["Active", overview.users.active],
-                  ["Invited", overview.users.invited],
-                  ["Disabled", overview.users.disabled],
-                ].map(([l, v]) => (
-                  <div key={l} className="rounded-lg bg-c-surface-2 py-2.5">
-                    <p className="tabular text-lg font-semibold">{v}</p>
-                    <p className="text-[0.6875rem] text-c-muted">{l}</p>
-                  </div>
-                ))}
+                <MiniStat label="Active" value={overview.users.active} tone="success" />
+                <MiniStat label="Invited" value={overview.users.invited} tone="warning" />
+                <MiniStat label="Disabled" value={overview.users.disabled} tone="neutral" />
               </div>
               <BarList items={overview.users.byRole.map((r) => ({ label: r.role, value: r.n }))} />
             </CardBody>
@@ -329,7 +336,7 @@ async function CompanySection({ admin }: { admin: boolean }) {
           />
         </Card>
       )}
-    </section>
+    </DashboardSection>
   );
 }
 
@@ -345,10 +352,7 @@ async function TeamSection() {
   const trend = await attendanceTrend(team.teamIds, 10);
 
   return (
-    <section aria-labelledby="team-h" className="space-y-4">
-      <h2 id="team-h" className="text-base font-semibold">
-        My team
-      </h2>
+    <DashboardSection id="team-h" title="My team" description="Availability, approvals and progress for the people who report to you.">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Team members" value={team.roster.length} icon={<Users />} />
         <StatCard label="Available today" value={`${inOffice + remote}`} hint={`${inOffice} in office · ${remote} remote`} icon={<UserCheck />} tone="success" />
@@ -388,7 +392,7 @@ async function TeamSection() {
           </CardBody>
         </Card>
       </div>
-    </section>
+    </DashboardSection>
   );
 }
 
@@ -397,16 +401,13 @@ async function TeamSection() {
 async function PayrollSection() {
   const overview = await adminOverview();
   return (
-    <section aria-labelledby="payroll-h" className="space-y-4">
-      <h2 id="payroll-h" className="text-base font-semibold">
-        Payroll
-      </h2>
+    <DashboardSection id="payroll-h" title="Payroll" description="The latest payroll run.">
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard label="Latest run" value={overview.payroll?.label ?? "None yet"} icon={<Wallet />} href="/crm/payroll" />
         <StatCard label="Net pay" value={overview.payroll ? inr.format(overview.payroll.net) : "—"} hint={overview.payroll ? `${overview.payroll.employees} payslips` : undefined} />
         <StatCard label="Status" value={overview.payroll ? <StatusBadge status={overview.payroll.status} /> : "—"} />
       </div>
-    </section>
+    </DashboardSection>
   );
 }
 

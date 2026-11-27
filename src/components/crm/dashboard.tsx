@@ -20,35 +20,110 @@ export function ViewAll({ href, children = "View all" }: { href: string; childre
 
 export function ListCard({ title, action, children, className }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <Card className={cn("flex flex-col", className)}>
+    <Card className={cn("flex flex-col overflow-hidden", className)}>
       <CardHeader title={title} action={action} />
       <div className="flex-1">{children}</div>
     </Card>
   );
 }
 
+/**
+ * Heading for a dashboard section (company, team, payroll). A short rule
+ * after the title separates the sections without another card around them.
+ */
+export function DashboardSection({ id, title, description, children }: { id: string; title: string; description?: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={id} className="space-y-4">
+      <div className="flex items-end gap-4 pt-2">
+        <div className="min-w-0">
+          <h2 id={id} className="text-base font-semibold tracking-[-0.01em] text-c-fg">
+            {title}
+          </h2>
+          {description && <p className="mt-0.5 text-[0.8125rem] text-c-muted">{description}</p>}
+        </div>
+        <span aria-hidden className="mb-2 h-px flex-1 bg-c-border" />
+      </div>
+      {children}
+    </section>
+  );
+}
+
+const MINI_TONE: Record<string, string> = {
+  success: "bg-c-success",
+  warning: "bg-c-warning",
+  danger: "bg-c-danger",
+  info: "bg-c-info",
+  accent: "bg-c-accent",
+  neutral: "bg-c-subtle",
+};
+
+/** A small count tile (value over label), with an optional colour cue that matches the status colours used elsewhere. */
+export function MiniStat({ label, value, tone }: { label: string; value: ReactNode; tone?: keyof typeof MINI_TONE }) {
+  return (
+    <div className="rounded-lg border border-c-border bg-c-surface-2 px-2 py-2.5 text-center">
+      <p className="tabular text-lg leading-tight font-semibold text-c-fg">{value}</p>
+      <p className="mt-0.5 flex items-center justify-center gap-1 text-[0.6875rem] text-c-muted">
+        {tone && <span aria-hidden className={cn("size-1.5 rounded-full", MINI_TONE[tone])} />}
+        {label}
+      </p>
+    </div>
+  );
+}
+
 export function MonthSummary({ month }: { month: Personal["month"] }) {
   const items = [
-    { label: "Present", value: month.present },
-    { label: "Half days", value: month.halfDays },
-    { label: "Late", value: month.late },
-    { label: "Leave", value: month.leaveDays },
-    { label: "Absent", value: month.absent },
-  ];
+    { label: "Present", value: month.present, tone: "success" },
+    { label: "Half days", value: month.halfDays, tone: "warning" },
+    { label: "Late", value: month.late, tone: "warning" },
+    { label: "Leave", value: month.leaveDays, tone: "info" },
+    { label: "Absent", value: month.absent, tone: "danger" },
+  ] as const;
   return (
     <div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-3 xl:grid-cols-5">
         {items.map((i) => (
-          <div key={i.label} className="rounded-lg bg-c-surface-2 px-2 py-2.5 text-center">
-            <p className="tabular text-lg font-semibold">{i.value}</p>
-            <p className="text-[0.6875rem] text-c-muted">{i.label}</p>
-          </div>
+          <MiniStat key={i.label} label={i.label} value={i.value} tone={i.tone} />
         ))}
       </div>
-      <p className="mt-3 text-xs text-c-subtle">
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-c-subtle">
+        <Clock aria-hidden className="size-3.5" />
         {formatMinutes(month.workedMinutes)} worked over {month.workingDays} working day{month.workingDays === 1 ? "" : "s"} so far this month.
       </p>
     </div>
+  );
+}
+
+/**
+ * The greeting at the top of the dashboard, with links to everyday tasks.
+ * The links only point to pages every employee can already open.
+ */
+export function WelcomeCard({ date, greeting, subtitle, role, actions }: { date: string; greeting: ReactNode; subtitle?: ReactNode; role: string; actions?: { label: string; href: string; icon: ReactNode }[] }) {
+  return (
+    <Card className="overflow-hidden">
+      <div aria-hidden className="h-1 bg-c-accent" />
+      <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[0.8125rem] text-c-muted">
+            <CalendarDays aria-hidden className="size-3.5" /> {date}
+          </p>
+          <h1 className="mt-1 text-xl font-semibold tracking-[-0.02em] text-c-fg sm:text-2xl">{greeting}</h1>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-c-muted">
+            {subtitle && <span>{subtitle}</span>}
+            <Badge tone="accent">{role}</Badge>
+          </div>
+        </div>
+        {actions && actions.length > 0 && (
+          <nav aria-label="Quick actions" className="flex flex-wrap gap-2 lg:justify-end">
+            {actions.map((a) => (
+              <ButtonLink key={a.href} href={a.href} size="sm" variant="secondary">
+                {a.icon}
+                {a.label}
+              </ButtonLink>
+            ))}
+          </nav>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -85,16 +160,23 @@ export function TaskList({ tasks, empty = "No open tasks assigned to you." }: { 
     <ul className="divide-y divide-c-border">
       {tasks.map((t) => (
         <li key={t.id}>
-          <Link href={`/crm/tasks/${t.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-c-surface-2">
+          <Link href={`/crm/tasks/${t.id}`} className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-c-surface-2">
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">{t.title}</span>
-              <span className="mt-1 flex items-center gap-2 text-xs text-c-muted">
+              <span className="block truncate text-sm font-medium group-hover:text-c-accent-text">{t.title}</span>
+              <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-c-muted">
                 <StatusBadge status={t.status} />
                 {t.priority === "urgent" || t.priority === "high" ? <Badge tone={t.priority === "urgent" ? "danger" : "warning"}>{humanize(t.priority)}</Badge> : null}
-                {t.dueDate && <span>Due {formatDateShort(t.dueDate)}</span>}
+                {t.dueDate && (
+                  <span className="flex items-center gap-1">
+                    <CalendarDays aria-hidden className="size-3" /> Due {formatDateShort(t.dueDate)}
+                  </span>
+                )}
               </span>
             </span>
-            <span className="tabular w-10 text-right text-xs text-c-muted">{t.progress}%</span>
+            <span className="flex w-20 shrink-0 flex-col items-end gap-1">
+              <span className="tabular text-xs text-c-muted">{t.progress}%</span>
+              <ProgressBar value={t.progress} label={`${t.title} progress`} className="h-1" />
+            </span>
           </Link>
         </li>
       ))}
@@ -192,10 +274,12 @@ export function AnnouncementList({ items }: { items: Awaited<ReturnType<typeof r
 export function ActivityList({ items }: { items: { id: number; summary: string; createdAt: Date; actorEmail?: string | null }[] }) {
   if (!items.length) return <EmptyState icon={<Inbox />} title="No activity yet" />;
   return (
-    <ul className="space-y-3 px-5 py-4">
-      {items.map((a) => (
-        <li key={a.id} className="flex gap-3 text-[0.8125rem]">
-          <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-c-border-strong" />
+    // A thin timeline line joins the entries, in their existing order (newest first).
+    <ul className="px-5 py-4">
+      {items.map((a, i) => (
+        <li key={a.id} className="relative flex gap-3 pb-4 text-[0.8125rem] last:pb-0">
+          {i < items.length - 1 && <span aria-hidden className="absolute top-3.5 bottom-0 left-[3px] w-px bg-c-border" />}
+          <span aria-hidden className="relative mt-1.5 size-[7px] shrink-0 rounded-full border border-c-border-strong bg-c-surface" />
           <span className="min-w-0">
             <span className="block text-c-fg">{a.summary}</span>
             <span className="text-xs text-c-subtle">
@@ -335,12 +419,17 @@ export function ActionItems({ items }: { items: { key: string; label: string; co
 
 export function QuickLinks({ links }: { links: { label: string; href: string; icon: ReactNode }[] }) {
   return (
-    <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-2 p-4 min-[420px]:grid-cols-2 sm:grid-cols-3">
       {links.map((l) => (
-        <ButtonLink key={l.href} href={l.href} variant="secondary" className="h-auto justify-start py-2.5 whitespace-normal">
-          {l.icon}
-          {l.label}
-        </ButtonLink>
+        <Link
+          key={l.href}
+          href={l.href}
+          className="group flex items-center gap-3 rounded-lg border border-c-border bg-c-surface px-3 py-2.5 text-sm font-medium text-c-fg transition-[border-color,background-color] duration-150 hover:border-c-accent/40 hover:bg-c-accent-soft/40"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-c-accent-soft text-c-accent-text [&_svg]:size-4">{l.icon}</span>
+          <span className="min-w-0 flex-1 leading-snug">{l.label}</span>
+          <ArrowRight aria-hidden className="size-4 shrink-0 text-c-subtle transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-c-accent-text motion-reduce:group-hover:translate-x-0" />
+        </Link>
       ))}
     </div>
   );
