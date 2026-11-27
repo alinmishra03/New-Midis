@@ -62,7 +62,7 @@ export default async function EmployeeProfilePage({ params, searchParams }: Page
 
   return (
     <>
-      <Breadcrumb items={[{ label: "Employees", href: "/crm/employees" }, { label: basic.fullName }]} className="mb-4" />
+      <Breadcrumb items={[{ label: "Employees", href: "/crm/employees" }, { label: basic.fullName }]} className="mb-3" />
 
       <Card className="mb-6 overflow-hidden">
         {/* A thin brand band gives the profile header a clear identity without decoration. */}
