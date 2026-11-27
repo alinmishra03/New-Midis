@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Download, FileText, Wallet, X } from "lucide-react";
+import { Check, Coins, Download, FileText, Users, Wallet, X } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
 import { AdjustmentDialog, NewRunDialog, StructureDialog } from "@/components/crm/payroll-forms";
 import { Badge, Card, CardBody, CardHeader, DescriptionList, EmptyState, PageHeader, PersonCell, StatusBadge, Table, TBody, THead, Tabs, buttonClass, humanize } from "@/components/crm/ui";
@@ -110,7 +110,7 @@ async function Mine() {
               ]}
             />
           ) : (
-            <p className="text-sm text-c-muted">No salary structure recorded yet.</p>
+            <p className="flex items-center gap-2 text-sm text-c-muted"><Wallet aria-hidden className="size-4 text-c-subtle" /> No salary structure recorded yet.</p>
           )}
         </CardBody>
       </Card>
@@ -124,6 +124,7 @@ async function Runs() {
   if (!runs.length) return <Card><EmptyState icon={<Wallet />} title="No payroll runs yet" description={can(viewer, "payroll.manage") ? "Create a run for a month, generate payslips, then have it approved." : undefined} /></Card>;
   return (
     <Card>
+      <CardHeader title="Payroll runs" description={`${runs.length} run${runs.length === 1 ? "" : "s"} · open a month to see its payslips`} />
       <Table>
         <THead>
           <tr>
@@ -165,6 +166,7 @@ async function Salaries({ employeeId, today }: { employeeId?: string; today: str
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
       <Card>
+        <CardHeader title="Employees" description="Choose someone to see their salary history" />
         <Table>
           <THead>
             <tr>
@@ -176,7 +178,7 @@ async function Salaries({ employeeId, today }: { employeeId?: string; today: str
           </THead>
           <TBody>
             {rows.map((r) => (
-              <tr key={r.id} className={r.id === employeeId ? "bg-c-accent-soft/40" : undefined}>
+              <tr key={r.id} aria-selected={r.id === employeeId} className={r.id === employeeId ? "bg-c-accent-soft/40 shadow-[inset_3px_0_0_var(--c-accent)]" : undefined}>
                 <td>
                   <Link href={`/crm/payroll?tab=salaries&employee=${r.id}`} className="block">
                     <PersonCell name={`${r.firstName} ${r.lastName}`} sub={[r.designation, r.code].filter(Boolean).join(" · ")} photoFileId={r.photoFileId} />
@@ -215,11 +217,11 @@ async function Salaries({ employeeId, today }: { employeeId?: string; today: str
                 })}
               </ul>
             ) : (
-              <EmptyState title="No structure yet" description={manage ? "Add the first one." : undefined} />
+              <EmptyState icon={<Wallet />} title="No structure yet" description={manage ? "Add the first one." : undefined} />
             )}
           </>
         ) : (
-          <EmptyState title="Choose an employee" description="Select someone to see or set their salary structure." />
+          <EmptyState icon={<Users />} title="Choose an employee" description="Select someone to see or set their salary structure." />
         )}
       </Card>
     </div>
@@ -279,7 +281,7 @@ async function Adjustments({ today }: { today: string }) {
           </TBody>
         </Table>
       ) : (
-        <EmptyState title="No adjustments" />
+        <EmptyState icon={<Coins />} title="No adjustments" description="One-off bonuses, allowances and deductions appear here." />
       )}
     </Card>
   );

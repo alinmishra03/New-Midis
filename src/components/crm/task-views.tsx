@@ -22,6 +22,9 @@ export function Due({ date, today, done }: { date: string | null; today: string;
   );
 }
 
+// Column colour cue only (the column title still names the status).
+const COLUMN_DOT: Record<string, string> = { todo: "bg-c-subtle", in_progress: "bg-c-warning", review: "bg-c-info", completed: "bg-c-success" };
+
 export function TaskBoard({ rows, today, editable }: { rows: TaskRow[]; today: string; editable: boolean }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -30,13 +33,16 @@ export function TaskBoard({ rows, today, editable }: { rows: TaskRow[]; today: s
         return (
           <section key={col.key} aria-label={col.label} className="flex flex-col rounded-xl border border-c-border bg-c-surface-2">
             <header className="flex items-center justify-between px-4 py-3">
-              <h2 className="text-[0.8125rem] font-semibold">{col.label}</h2>
-              <span className="tabular rounded-full bg-c-hover px-2 text-xs text-c-muted">{items.length}</span>
+              <h2 className="flex items-center gap-2 text-[0.8125rem] font-semibold">
+                <span aria-hidden className={cn("size-2 rounded-full", COLUMN_DOT[col.key] ?? "bg-c-subtle")} />
+                {col.label}
+              </h2>
+              <span className="tabular rounded-full bg-c-surface px-2 text-xs text-c-muted ring-1 ring-c-border ring-inset">{items.length}</span>
             </header>
             <ul className="flex-1 space-y-2 px-3 pb-3">
-              {items.length === 0 && <li className="rounded-lg border border-dashed border-c-border px-3 py-6 text-center text-xs text-c-subtle">Nothing here</li>}
+              {items.length === 0 && <li className="rounded-lg border border-dashed border-c-border-strong/60 px-3 py-6 text-center text-xs text-c-subtle">Nothing here</li>}
               {items.map((t) => (
-                <li key={t.id} className="rounded-lg border border-c-border bg-c-surface p-3 shadow-c">
+                <li key={t.id} className="rounded-lg border border-c-border bg-c-surface p-3 shadow-c transition-[border-color,box-shadow] duration-150 hover:border-c-border-strong hover:shadow-c-lg">
                   <Link href={`/crm/tasks/${t.id}`} className="block text-sm font-medium hover:text-c-accent-text">
                     {t.title}
                   </Link>
@@ -60,8 +66,8 @@ export function TaskBoard({ rows, today, editable }: { rows: TaskRow[]; today: s
   );
 }
 
-export function TaskTable({ rows, today }: { rows: TaskRow[]; today: string }) {
-  if (!rows.length) return <EmptyState icon={<ListChecks />} title="No tasks" />;
+export function TaskTable({ rows, today, filtered = false }: { rows: TaskRow[]; today: string; filtered?: boolean }) {
+  if (!rows.length) return <EmptyState icon={<ListChecks />} title={filtered ? "No tasks match these filters" : "No tasks"} description={filtered ? "Try a different search, or clear the filters." : undefined} />;
   return (
     <Table>
       <THead>
@@ -83,7 +89,18 @@ export function TaskTable({ rows, today }: { rows: TaskRow[]; today: string }) {
               </Link>
               {t.projectName && <span className="block truncate text-xs text-c-muted">{t.projectName}</span>}
             </td>
-            <td className="hidden md:table-cell">{t.assigneeFirst ? `${t.assigneeFirst} ${t.assigneeLast}` : <span className="text-c-subtle">Unassigned</span>}</td>
+            <td className="hidden md:table-cell">
+              {t.assigneeFirst ? (
+                <span className="flex items-center gap-2">
+                  <Avatar name={`${t.assigneeFirst} ${t.assigneeLast}`} photoFileId={t.assigneePhoto} size={24} />
+                  <span className="truncate">
+                    {t.assigneeFirst} {t.assigneeLast}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-c-subtle">Unassigned</span>
+              )}
+            </td>
             <td>
               <StatusBadge status={t.status} />
             </td>

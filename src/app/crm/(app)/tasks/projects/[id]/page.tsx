@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { X } from "lucide-react";
+import { History, ListChecks, X } from "lucide-react";
 import { SegmentedBar } from "@/components/crm/charts";
 import { ActivityList } from "@/components/crm/dashboard";
 import { ConfirmAction } from "@/components/crm/forms";
 import { AddMemberForm, ProjectDialog, TaskDialog } from "@/components/crm/task-forms";
 import { TaskBoard } from "@/components/crm/task-views";
-import { Badge, Card, CardBody, CardHeader, DescriptionList, EmptyState, PersonCell, StatusBadge } from "@/components/crm/ui";
+import { Badge, Breadcrumb, Card, CardBody, CardHeader, DescriptionList, EmptyState, PersonCell, StatusBadge } from "@/components/crm/ui";
 import { requireViewer } from "@/crm/auth/dal";
 import { formatDate, todayIn } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
@@ -37,15 +36,11 @@ export default async function ProjectPage({ params }: PageProps<"/crm/tasks/proj
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-3 text-[0.8125rem] text-c-subtle">
-        <Link href="/crm/tasks?view=projects" className="hover:text-c-fg">
-          Projects &amp; Websites
-        </Link>
-      </nav>
+      <Breadcrumb className="mb-3" items={[{ label: "Projects & Websites", href: "/crm/tasks?view=projects" }, { label: p.name }]} />
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold sm:text-2xl">{p.name}</h1>
+            <h1 className="text-xl font-semibold tracking-[-0.02em] sm:text-2xl">{p.name}</h1>
             <StatusBadge status={p.status} />
           </div>
           <p className="mt-1 text-sm text-c-muted">{p.code}</p>
@@ -113,12 +108,14 @@ export default async function ProjectPage({ params }: PageProps<"/crm/tasks/proj
         </Card>
       </div>
 
-      <h2 className="mb-3 text-base font-semibold">Tasks</h2>
-      {rows.length ? <TaskBoard rows={rows} today={todayIn(company.timezone)} editable={false} /> : <Card><EmptyState title="No tasks in this project yet" /></Card>}
+      <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
+        Tasks <span className="tabular rounded-full bg-c-hover px-2 text-xs font-medium text-c-muted">{rows.length}</span>
+      </h2>
+      {rows.length ? <TaskBoard rows={rows} today={todayIn(company.timezone)} editable={false} /> : <Card><EmptyState icon={<ListChecks />} title="No tasks in this project yet" description={canAddTask ? "Use “Add task” to create the first one." : undefined} /></Card>}
 
       <Card className="mt-6">
         <CardHeader title="Project activity" />
-        {activity.length ? <ActivityList items={activity} /> : <EmptyState title="No activity yet" />}
+        {activity.length ? <ActivityList items={activity} /> : <EmptyState icon={<History />} title="No activity yet" />}
       </Card>
     </>
   );

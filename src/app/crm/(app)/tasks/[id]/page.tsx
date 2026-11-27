@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, Paperclip, Trash2 } from "lucide-react";
+import { Download, History, MessageSquare, Paperclip, Trash2 } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
 import { ActivityList } from "@/components/crm/dashboard";
 import { AttachForm, CommentForm, TaskDialog, TaskProgressForm } from "@/components/crm/task-forms";
-import { Avatar, Badge, Card, CardBody, CardHeader, DescriptionList, EmptyState, ProgressBar, StatusBadge, humanize } from "@/components/crm/ui";
+import { Avatar, Badge, Breadcrumb, Card, CardBody, CardHeader, DescriptionList, EmptyState, ProgressBar, StatusBadge, humanize } from "@/components/crm/ui";
 import { requireViewer } from "@/crm/auth/dal";
 import { formatDate, formatRelative } from "@/crm/lib/time";
 import { getTaskForViewer, taskDialogOptions } from "@/crm/services/tasks";
@@ -26,22 +26,13 @@ export default async function TaskPage({ params }: PageProps<"/crm/tasks/[id]">)
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-3 text-[0.8125rem] text-c-subtle">
-        <Link href="/crm/tasks" className="hover:text-c-fg">
-          Tasks
-        </Link>
-        {project && (
-          <>
-            {" / "}
-            <Link href={`/crm/tasks/projects/${project.id}`} className="hover:text-c-fg">
-              {project.name}
-            </Link>
-          </>
-        )}
-      </nav>
+      <Breadcrumb
+        className="mb-3"
+        items={[{ label: "Tasks", href: "/crm/tasks" }, ...(project ? [{ label: project.name, href: `/crm/tasks/projects/${project.id}` }] : []), { label: task.title }]}
+      />
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold sm:text-2xl">{task.title}</h1>
+          <h1 className="text-xl font-semibold tracking-[-0.02em] break-words sm:text-2xl">{task.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge status={task.status} />
             <Badge tone={task.priority === "urgent" ? "danger" : task.priority === "high" ? "warning" : "neutral"}>{humanize(task.priority)} priority</Badge>
@@ -70,7 +61,11 @@ export default async function TaskPage({ params }: PageProps<"/crm/tasks/[id]">)
           <Card>
             <CardHeader title={`Comments (${comments.length})`} />
             <CardBody className="space-y-5">
-              {comments.length === 0 && <p className="text-sm text-c-subtle">No comments yet.</p>}
+              {comments.length === 0 && (
+                <p className="flex items-center gap-2 text-sm text-c-subtle">
+                  <MessageSquare aria-hidden className="size-4" /> No comments yet.
+                </p>
+              )}
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-3">
                   <Avatar name={c.firstName ? `${c.firstName} ${c.lastName}` : "Former employee"} photoFileId={c.photoFileId} size={30} />
@@ -89,7 +84,7 @@ export default async function TaskPage({ params }: PageProps<"/crm/tasks/[id]">)
             <CardHeader title={`Attachments (${attachments.length})`} />
             <CardBody className="space-y-3">
               {attachments.map((a) => (
-                <div key={a.fileId} className="flex items-center gap-3 text-sm">
+                <div key={a.fileId} className="flex items-center gap-3 rounded-lg border border-c-border px-3 py-2 text-sm">
                   <Paperclip className="size-4 text-c-subtle" />
                   <span className="min-w-0 flex-1 truncate">{a.fileName}</span>
                   <span className="text-xs text-c-subtle">{kb(a.sizeBytes)}</span>
@@ -127,7 +122,7 @@ export default async function TaskPage({ params }: PageProps<"/crm/tasks/[id]">)
           </Card>
           <Card>
             <CardHeader title="Activity" />
-            {activity.length ? <ActivityList items={activity} /> : <EmptyState title="No activity yet" />}
+            {activity.length ? <ActivityList items={activity} /> : <EmptyState icon={<History />} title="No activity yet" />}
           </Card>
         </div>
       </div>

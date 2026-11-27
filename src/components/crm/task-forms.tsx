@@ -13,7 +13,7 @@ import {
   updateProjectAction,
   updateTaskAction,
 } from "@/app/crm/(app)/tasks/actions";
-import { ActionForm, CheckboxField, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
+import { ActionForm, FormActions, CheckboxField, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -84,9 +84,9 @@ export function TaskDialog({
             <SelectField label="Priority" name="priority" options={PRIORITIES} defaultValue={values.priority ?? "medium"} />
             <TextField label="Due date" name="dueDate" type="date" defaultValue={values.dueDate ?? ""} />
           </div>
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>{editing ? "Save" : "Create task"}</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -205,9 +205,9 @@ export function ProjectDialog({ values = {}, people, departments }: { values?: P
               </div>
             </fieldset>
           )}
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>{editing ? "Save project" : "Create project"}</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
