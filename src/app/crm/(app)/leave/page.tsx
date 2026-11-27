@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { CalendarOff, Check, Paperclip, X } from "lucide-react";
+import { CalendarOff, Check, History, Paperclip, Users, X } from "lucide-react";
 import { ConfirmAction, inputClass } from "@/components/crm/forms";
 import { AdjustBalanceDialog, ApplyLeaveDialog } from "@/components/crm/leave-forms";
 import { MonthGrid } from "@/components/crm/MonthGrid";
-import { Card, CardHeader, EmptyState, PageHeader, PersonCell, ProgressBar, StatusBadge, Table, TBody, THead, Tabs, buttonClass, humanize } from "@/components/crm/ui";
+import { Badge, Card, CardHeader, EmptyState, FilterBar, PageHeader, PersonCell, ProgressBar, StatusBadge, Table, TBody, THead, Tabs, buttonClass, humanize } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
 import { yearMonthOr } from "@/crm/lib/params";
 import { endOfMonth, formatDateShort, todayIn } from "@/crm/lib/time";
@@ -77,8 +77,8 @@ async function MyLeave({ balances }: { balances: Awaited<ReturnType<typeof getBa
               <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-c-muted">
                 <span aria-hidden className="size-2 rounded-full" style={{ background: b.color }} /> {b.name}
               </p>
-              <p className="tabular mt-2 text-2xl font-semibold">{b.unlimited ? "—" : b.available}</p>
-              <p className="mt-0.5 text-xs text-c-subtle">{b.unlimited ? `No limit · ${b.used} used` : `of ${total} · ${b.used} used${b.pending ? ` · ${b.pending} pending` : ""}`}</p>
+              <p className="tabular mt-2 text-2xl leading-none font-semibold tracking-[-0.02em]">{b.unlimited ? "—" : b.available}</p>
+              <p className="mt-2 text-xs text-c-subtle">{b.unlimited ? `No limit · ${b.used} used` : `of ${total} · ${b.used} used${b.pending ? ` · ${b.pending} pending` : ""}`}</p>
               {!b.unlimited && <ProgressBar className="mt-3" value={total ? ((b.used + b.pending) / total) * 100 : 0} label={`${b.name} used`} />}
             </Card>
           );
@@ -144,7 +144,11 @@ async function Approvals() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="Waiting for a decision" description={`${pending.length} request${pending.length === 1 ? "" : "s"}`} />
+        <CardHeader
+          title="Waiting for a decision"
+          description={`${pending.length} request${pending.length === 1 ? "" : "s"}`}
+          action={pending.length ? <Badge tone="warning" dot>{pending.length} pending</Badge> : undefined}
+        />
         {pending.length ? (
           <Table>
             <THead>
@@ -191,7 +195,7 @@ async function Approvals() {
             </TBody>
           </Table>
         ) : (
-          <EmptyState icon={<Check />} title="Nothing waiting" />
+          <EmptyState icon={<Check />} title="Nothing waiting" description="New leave requests from your team appear here." />
         )}
       </Card>
       <Card>
@@ -226,7 +230,7 @@ async function Approvals() {
             </TBody>
           </Table>
         ) : (
-          <EmptyState title="No decisions yet" />
+          <EmptyState icon={<History />} title="No decisions yet" />
         )}
       </Card>
     </div>
@@ -273,9 +277,9 @@ async function BalancesTab({ employeeId }: { employeeId?: string }) {
         description="Current leave year. Adjustments are audit-logged and the employee is notified."
         action={selected ? <AdjustBalanceDialog employeeId={selected} employeeName={name} types={types.filter((t) => t.annualQuota !== null).map((t) => ({ id: t.id, name: t.name }))} /> : undefined}
       />
-      <form className="flex gap-2 border-b border-c-border p-4">
+      <FilterBar>
         <input type="hidden" name="tab" value="balances" />
-        <select name="employee" defaultValue={selected} className={`${inputClass} max-w-sm`} aria-label="Employee">
+        <select name="employee" defaultValue={selected} className={`${inputClass} sm:max-w-sm`} aria-label="Employee">
           {options.managers.map((m) => (
             <option key={m.value} value={m.value}>
               {m.label}
@@ -285,7 +289,7 @@ async function BalancesTab({ employeeId }: { employeeId?: string }) {
         <button className={buttonClass("secondary")} type="submit">
           Show
         </button>
-      </form>
+      </FilterBar>
       {balances.length ? (
         <Table>
           <THead>
@@ -314,7 +318,7 @@ async function BalancesTab({ employeeId }: { employeeId?: string }) {
           </TBody>
         </Table>
       ) : (
-        <EmptyState title="No employees" />
+        <EmptyState icon={<Users />} title="No employees" />
       )}
     </Card>
   );

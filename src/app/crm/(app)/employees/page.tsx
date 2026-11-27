@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Download, Filter, UserPlus, Users } from "lucide-react";
-import { inputClass } from "@/components/crm/forms";
+import { inputClass, SearchInput } from "@/components/crm/forms";
 import { ImportEmployees } from "@/components/crm/employee-forms";
-import { ButtonLink, Card, EmptyState, PageHeader, Pagination, PersonCell, StatusBadge, Table, TBody, THead, buttonClass, withParams } from "@/components/crm/ui";
+import { ButtonLink, Card, EmptyState, FilterBar, PageHeader, Pagination, PersonCell, ResultCount, StatusBadge, Table, TBody, THead, buttonClass, withParams } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
 import { formatDate } from "@/crm/lib/time";
 import { employeeFormOptions, listEmployees, PAGE_SIZE } from "@/crm/services/employees";
@@ -45,8 +45,8 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/crm/em
       />
 
       <Card>
-        <form className="flex flex-col gap-2 border-b border-c-border p-4 sm:flex-row sm:flex-wrap sm:items-center" role="search">
-          <input name="q" defaultValue={filters.q} placeholder="Search by name, email, code or designation" aria-label="Search employees" className={`${inputClass} sm:max-w-xs`} />
+        <FilterBar role="search">
+          <SearchInput name="q" defaultValue={filters.q} placeholder="Search by name, email, code or designation" aria-label="Search employees" />
           <select name="department" defaultValue={filters.department ?? ""} aria-label="Department" className={`${inputClass} sm:w-48`}>
             <option value="">All departments</option>
             {options.departments.map((d) => (
@@ -83,10 +83,10 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/crm/em
               Clear
             </ButtonLink>
           )}
-          <span className="tabular text-[0.8125rem] text-c-muted sm:ml-auto">
+          <ResultCount>
             {total} {total === 1 ? "person" : "people"}
-          </span>
-        </form>
+          </ResultCount>
+        </FilterBar>
 
         {rows.length ? (
           <>
@@ -130,7 +130,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/crm/em
           <EmptyState
             icon={<Users />}
             title={filters.q || filters.department ? "No one matches those filters" : "No employees yet"}
-            description={manage ? "Add employees one at a time, or import a CSV." : undefined}
+            description={filters.q || filters.department ? "Try a different search, or clear the filters." : manage ? "Add employees one at a time, or import a CSV." : undefined}
             action={manage ? <ButtonLink href="/crm/employees/new" variant="primary">Add employee</ButtonLink> : undefined}
           />
         )}

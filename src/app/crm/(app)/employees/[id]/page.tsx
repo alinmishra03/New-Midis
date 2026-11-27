@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileText, Mail, MapPin, Pencil, Phone, UserX } from "lucide-react";
+import { CalendarOff, Clock, Download, FileText, FolderKanban, ListChecks, Mail, MapPin, Pencil, Phone, Target, TrendingUp, UserX, Wallet } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
 import { AccessLinkButton, ChangeEmailButton, PersonalForm, PhotoUpload } from "@/components/crm/employee-forms";
 import {
   AutoCheckoutBadge,
   Avatar,
   Badge,
+  Breadcrumb,
   ButtonLink,
   Card,
   CardBody,
@@ -61,42 +62,39 @@ export default async function EmployeeProfilePage({ params, searchParams }: Page
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-4 text-[0.8125rem] text-c-subtle">
-        <Link href="/crm/employees" className="hover:text-c-fg">
-          Employees
-        </Link>{" "}
-        / <span className="text-c-muted">{basic.fullName}</span>
-      </nav>
+      <Breadcrumb items={[{ label: "Employees", href: "/crm/employees" }, { label: basic.fullName }]} className="mb-4" />
 
-      <Card className="mb-6">
-        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center">
-          <Avatar name={basic.fullName} photoFileId={basic.photoFileId} size={72} />
+      <Card className="mb-6 overflow-hidden">
+        {/* A thin brand band gives the profile header a clear identity without decoration. */}
+        <div aria-hidden className="h-1 bg-c-accent" />
+        <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
+          <Avatar name={basic.fullName} photoFileId={basic.photoFileId} size={72} className="ring-4 ring-c-surface-2" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold">{basic.fullName}</h1>
+              <h1 className="text-xl font-semibold tracking-[-0.02em]">{basic.fullName}</h1>
               <StatusBadge status={basic.employmentStatus} />
               {employment?.account?.status === "invited" && <Badge tone="warning">Invite not yet accepted</Badge>}
             </div>
             <p className="mt-0.5 text-sm text-c-muted">
               {[basic.designation?.title, basic.department?.name].filter(Boolean).join(" · ") || "No designation"} · {basic.employeeCode}
             </p>
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-c-muted">
-              <a href={`mailto:${basic.officialEmail}`} className="flex items-center gap-1.5 hover:text-c-fg">
-                <Mail className="size-3.5" /> {basic.officialEmail}
+            <div className="mt-3 flex flex-wrap gap-2 text-[0.8125rem] text-c-muted">
+              <a href={`mailto:${basic.officialEmail}`} className="flex min-w-0 items-center gap-1.5 rounded-full border border-c-border px-2.5 py-1 transition-colors hover:border-c-border-strong hover:text-c-fg">
+                <Mail className="size-3.5 shrink-0" /> <span className="truncate">{basic.officialEmail}</span>
               </a>
               {basic.phone && (
-                <a href={`tel:${basic.phone}`} className="flex items-center gap-1.5 hover:text-c-fg">
+                <a href={`tel:${basic.phone}`} className="flex items-center gap-1.5 rounded-full border border-c-border px-2.5 py-1 transition-colors hover:border-c-border-strong hover:text-c-fg">
                   <Phone className="size-3.5" /> {basic.phone}
                 </a>
               )}
               {basic.workLocation && (
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 rounded-full border border-c-border px-2.5 py-1">
                   <MapPin className="size-3.5" /> {basic.workLocation}
                 </span>
               )}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 sm:max-w-[45%] sm:justify-end">
             {(access.isSelf || access.manage) && <PhotoUpload employeeId={basic.id} />}
             {access.manage && (
               <ButtonLink href={`/crm/employees/${basic.id}/edit`} size="sm">
@@ -245,7 +243,7 @@ export default async function EmployeeProfilePage({ params, searchParams }: Page
               </TBody>
             </Table>
           ) : (
-            <EmptyState title="No salary structure recorded" />
+            <EmptyState icon={<Wallet />} title="No salary structure recorded" />
           )}
         </Card>
       )}
@@ -292,7 +290,7 @@ async function AttendanceTab({ employeeId, timezone }: { employeeId: string; tim
           </TBody>
         </Table>
       ) : (
-        <EmptyState title="No attendance recorded yet" />
+        <EmptyState icon={<Clock />} title="No attendance recorded yet" />
       )}
     </Card>
   );
@@ -346,7 +344,7 @@ async function LeaveTab({ employeeId }: { employeeId: string }) {
             </TBody>
           </Table>
         ) : (
-          <EmptyState title="No leave requests" />
+          <EmptyState icon={<CalendarOff />} title="No leave requests" />
         )}
       </Card>
     </div>
@@ -377,7 +375,7 @@ async function WorkTab({ employeeId }: { employeeId: string }) {
             ))}
           </ul>
         ) : (
-          <EmptyState title="Not on any projects" />
+          <EmptyState icon={<FolderKanban />} title="Not on any projects" />
         )}
       </Card>
       <Card className="lg:col-span-2">
@@ -398,7 +396,7 @@ async function WorkTab({ employeeId }: { employeeId: string }) {
             ))}
           </ul>
         ) : (
-          <EmptyState title="No tasks assigned" />
+          <EmptyState icon={<ListChecks />} title="No tasks assigned" />
         )}
       </Card>
     </div>
@@ -426,7 +424,7 @@ async function PerformanceTab({ employeeId }: { employeeId: string }) {
             ))}
           </ul>
         ) : (
-          <EmptyState title="No reviews yet" />
+          <EmptyState icon={<TrendingUp />} title="No reviews yet" />
         )}
       </Card>
       <Card>
@@ -444,7 +442,7 @@ async function PerformanceTab({ employeeId }: { employeeId: string }) {
             ))}
           </ul>
         ) : (
-          <EmptyState title="No goals set" />
+          <EmptyState icon={<Target />} title="No goals set" />
         )}
       </Card>
     </div>

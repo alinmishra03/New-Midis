@@ -179,24 +179,59 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {breadcrumb && breadcrumb.length > 0 && (
-          <nav aria-label="Breadcrumb" className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[0.8125rem] text-c-subtle">
-            {breadcrumb.map((b, i) => (
-              <span key={b.href} className="flex items-center gap-1.5">
-                {i > 0 && <span aria-hidden>/</span>}
-                <Link href={b.href} className="hover:text-c-fg">
-                  {b.label}
-                </Link>
-              </span>
-            ))}
-          </nav>
-        )}
+        {breadcrumb && breadcrumb.length > 0 && <Breadcrumb items={breadcrumb} className="mb-1.5" />}
         <h1 className="text-xl font-semibold tracking-[-0.02em] text-c-fg sm:text-2xl">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-c-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
+}
+
+/**
+ * Breadcrumb trail. Linked items lead back up; an item without `href` is the
+ * current page and is shown as plain text.
+ */
+export function Breadcrumb({ items, className }: { items: { label: string; href?: string }[]; className?: string }) {
+  return (
+    <nav aria-label="Breadcrumb" className={cn("flex flex-wrap items-center gap-1 text-[0.8125rem] text-c-subtle", className)}>
+      {items.map((b, i) => (
+        <span key={`${b.label}-${i}`} className="flex min-w-0 items-center gap-1">
+          {i > 0 && <ChevronRight aria-hidden className="size-3.5 shrink-0 text-c-border-strong" />}
+          {b.href ? (
+            <Link href={b.href} className="rounded transition-colors hover:text-c-fg">
+              {b.label}
+            </Link>
+          ) : (
+            <span aria-current="page" className="truncate text-c-muted">
+              {b.label}
+            </span>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+/**
+ * The search/filter row at the top of a list card: one consistent toolbar
+ * for every list. It is an ordinary GET form, so filters stay in the URL
+ * exactly as before; only the presentation is shared.
+ */
+export function FilterBar({ className, children, ...props }: ComponentProps<"form">) {
+  return (
+    <form
+      className={cn("flex flex-col gap-2 border-b border-c-border bg-c-surface-2/60 px-5 py-3 sm:flex-row sm:flex-wrap sm:items-center", className)}
+      {...props}
+    >
+      {children}
+    </form>
+  );
+}
+
+/** The "N results" note at the end of a FilterBar. */
+export function ResultCount({ children }: { children: ReactNode }) {
+  return <span className="tabular text-[0.8125rem] text-c-muted sm:ml-auto">{children}</span>;
 }
 
 export function EmptyState({

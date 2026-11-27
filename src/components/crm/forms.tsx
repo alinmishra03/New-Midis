@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert, CircleCheck, Eye, EyeOff, LoaderCircle, X } from "lucide-react";
+import { CircleAlert, CircleCheck, Eye, EyeOff, LoaderCircle, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -207,7 +207,7 @@ export function SubmitButton({
 // `c-input` lets the theme give selects one consistent chevron (globals.css). The vertical padding makes a
 // single-line input exactly the height of a default button (2.25rem), so fields and buttons line up in a row.
 export const inputClass =
-  "c-input block w-full rounded-lg border border-c-border bg-c-surface px-3 py-[0.4375rem] text-sm text-c-fg shadow-c placeholder:text-c-subtle transition-[border-color,box-shadow,background-color] duration-150 hover:border-c-border-strong focus:border-c-accent focus:outline-none focus-visible:outline-none focus:ring-3 focus:ring-c-accent/20 disabled:cursor-not-allowed disabled:bg-c-surface-2 disabled:opacity-60 aria-invalid:border-c-danger aria-invalid:focus:ring-c-danger/20";
+  "c-input block w-full rounded-lg border border-c-border bg-c-surface px-3 py-[0.4375rem] text-sm text-c-fg shadow-c placeholder:text-c-subtle transition-[border-color,box-shadow,background-color] duration-150 hover:border-c-border-strong focus:border-c-accent focus:outline-none focus-visible:outline-none focus:ring-3 focus:ring-c-accent/20 disabled:cursor-not-allowed disabled:bg-c-surface-2 disabled:opacity-60 aria-invalid:border-c-danger aria-invalid:focus:ring-c-danger/20 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-c-hover file:px-2.5 file:py-1 file:text-[0.8125rem] file:font-medium file:text-c-fg hover:file:bg-c-border";
 
 export function Field({
   label,
@@ -328,6 +328,30 @@ export function PasswordField({ label, name, hint, required, className, ...input
         </div>
       )}
     </Field>
+  );
+}
+
+/**
+ * The button row at the end of a form. On phones the buttons stack full
+ * width (primary on top); from `sm` up they sit right-aligned. `divider`
+ * adds the rule used at the foot of full-page forms.
+ */
+export function FormActions({ children, divider = false, className }: { children: ReactNode; divider?: boolean; className?: string }) {
+  return (
+    <div className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end [&>*]:w-full sm:[&>*]:w-auto", divider && "border-t border-c-border pt-5", className)}>
+      {children}
+    </div>
+  );
+}
+
+/** A search box with a leading icon, for FilterBar rows. A plain input: its name/value behave as before. */
+export function SearchInput({ className, ...input }: Omit<ComponentProps<"input">, "type">) {
+  return (
+    <label className={cn("relative block min-w-0 sm:w-72", className)}>
+      <span className="sr-only">{input["aria-label"] ?? input.placeholder ?? "Search"}</span>
+      <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-c-subtle" />
+      <input type="search" className={cn(inputClass, "pl-9")} {...input} />
+    </label>
   );
 }
 

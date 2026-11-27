@@ -11,7 +11,7 @@ import {
   updatePersonalAction,
   uploadPhotoAction,
 } from "@/app/crm/(app)/employees/actions";
-import { ActionForm, CheckboxField, CopyField, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
+import { ActionForm, FormActions, CheckboxField, CopyField, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -51,13 +51,15 @@ const STATUSES = [
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <fieldset className="grid gap-x-5 gap-y-4 border-t border-c-border pt-5 first:border-0 first:pt-0 sm:grid-cols-2">
+    // first-of-type (not first): when editing, a hidden <input> comes before the first section, which used to
+    // give the first section a stray top divider. On wide forms the heading sits beside its fields.
+    <fieldset className="grid gap-x-8 gap-y-4 border-t border-c-border pt-6 first-of-type:border-0 first-of-type:pt-0 @2xl:grid-cols-[13rem_1fr]">
       <legend className="sr-only">{title}</legend>
-      <div className="sm:col-span-2">
-        <p className="text-sm font-semibold">{title}</p>
-        {description && <p className="text-[0.8125rem] text-c-muted">{description}</p>}
+      <div>
+        <p className="text-sm font-semibold text-c-fg">{title}</p>
+        {description && <p className="mt-0.5 text-[0.8125rem] text-c-muted">{description}</p>}
       </div>
-      {children}
+      <div className="grid min-w-0 gap-x-5 gap-y-4 sm:grid-cols-2">{children}</div>
     </fieldset>
   );
 }
@@ -80,7 +82,7 @@ export function EmployeeForm({
   const editing = !!values.id;
   const roles = canAssignElevated ? options.roles : options.roles.filter((r) => ["employee", "manager"].includes(r.value) || r.value === values.roleKey);
   return (
-    <ActionForm action={editing ? updateEmployeeAction : createEmployeeAction} className="space-y-6">
+    <ActionForm action={editing ? updateEmployeeAction : createEmployeeAction} className="@container space-y-6">
       {editing && <input type="hidden" name="id" value={values.id} />}
       <Section title="Identity" description={editing ? undefined : "The official email becomes their sign-in. They'll set their own password from an activation link."}>
         <TextField label="First name" name="firstName" defaultValue={values.firstName} required autoComplete="off" />
@@ -116,9 +118,9 @@ export function EmployeeForm({
         <TextAreaField label="Short bio" name="bio" defaultValue={values.bio ?? ""} rows={3} className="sm:col-span-2" />
       </Section>
 
-      <div className="flex justify-end gap-2 border-t border-c-border pt-5">
+      <FormActions divider>
         <SubmitButton pendingLabel="Saving…">{editing ? "Save changes" : "Create employee"}</SubmitButton>
-      </div>
+      </FormActions>
     </ActionForm>
   );
 }
@@ -145,7 +147,7 @@ export type PersonalValues = {
 export function PersonalForm({ employeeId, values }: { employeeId: string; values: PersonalValues }) {
   const v = (x: string | null | undefined) => x ?? "";
   return (
-    <ActionForm action={updatePersonalAction} className="space-y-6">
+    <ActionForm action={updatePersonalAction} className="@container space-y-6">
       <input type="hidden" name="id" value={employeeId} />
       <Section title="Contact">
         <TextField label="Contact number" name="phone" type="tel" defaultValue={v(values.phone)} />
@@ -172,9 +174,9 @@ export function PersonalForm({ employeeId, values }: { employeeId: string; value
         <TextField label="Skills" name="skills" defaultValue={values.skills?.join(", ") ?? ""} hint="Comma-separated" className="sm:col-span-2" />
         <TextAreaField label="Short bio" name="bio" defaultValue={v(values.bio)} rows={3} className="sm:col-span-2" />
       </Section>
-      <div className="flex justify-end border-t border-c-border pt-5">
+      <FormActions divider>
         <SubmitButton pendingLabel="Saving…">Save personal details</SubmitButton>
-      </div>
+      </FormActions>
     </ActionForm>
   );
 }
@@ -195,11 +197,11 @@ export function PhotoUpload({ employeeId }: { employeeId: string }) {
         <ActionForm action={uploadPhotoAction} onSuccess={close} className="space-y-4">
           <input type="hidden" name="id" value={employeeId} />
           <input type="file" name="photo" data-upload="image" accept="image/png,image/jpeg,image/webp" required className={inputClass} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton pendingLabel="Uploading…">
               <Upload /> Upload
             </SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -248,9 +250,9 @@ export function AccessLinkButton({ userId, invited, autoOpen = false }: { userId
       ) : (
         <ActionForm action={issueAccessLinkAction} onSuccess={(s) => { setLink(s.data?.link ?? null); setMailed(s.data?.emailed === "1" ? "sent" : s.data?.emailNote ? s.data.emailNote : null); }} showMessage={false}>
           <input type="hidden" name="userId" value={userId} />
-          <div className="flex justify-end gap-2">
+          <FormActions>
             <SubmitButton pendingLabel="Creating…">Create link</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -284,9 +286,9 @@ export function ChangeEmailButton({ employeeId, currentEmail, invited }: { emplo
         ) : (
           <p className="text-[0.8125rem] text-c-muted">They&apos;ll sign in with the new address from now on. If they also need a new password, use &ldquo;Reset password&rdquo;.</p>
         )}
-        <div className="flex justify-end gap-2">
+        <FormActions>
           <SubmitButton pendingLabel="Saving…">Change email</SubmitButton>
-        </div>
+        </FormActions>
       </ActionForm>
     </Dialog>
   );
@@ -323,14 +325,14 @@ export function ImportEmployees() {
         </a>
         <ActionForm action={importEmployeesAction} onSuccess={(s) => setCsv(s.data?.csv ?? null)} className="space-y-4">
           <input type="file" name="file" accept=".csv,text/csv" required className={inputClass} />
-          <div className="flex justify-end gap-2">
+          <FormActions>
             {csv && (
               <button type="button" onClick={download} className={buttonClass("secondary")}>
                 <Download /> Results & activation links
               </button>
             )}
             <SubmitButton pendingLabel="Importing…">Import</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       </div>
     </Dialog>
