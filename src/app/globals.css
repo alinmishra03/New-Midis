@@ -1807,6 +1807,75 @@ html[data-motion="reduced"] [class*="sv-"] { animation: none !important; }
   .crm-enter { animation: none; }
 }
 
+/* --------------------------------------------------------------------------
+   Portal UI foundation (shared by every page through ui.tsx / forms.tsx).
+   Visual only: no layout a page depends on is changed here.
+   -------------------------------------------------------------------------- */
+
+/* Calm, thin scrollbars inside the portal (sidebar, tables, panels). */
+.crm {
+  scrollbar-color: var(--c-border-strong) transparent;
+}
+.crm ::-webkit-scrollbar { width: 10px; height: 10px; }
+.crm ::-webkit-scrollbar-track { background: transparent; }
+.crm ::-webkit-scrollbar-thumb {
+  background-color: var(--c-border-strong);
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  background-clip: content-box;
+}
+.crm ::-webkit-scrollbar-thumb:hover { background-color: var(--c-subtle); }
+
+/* Selects styled as portal inputs get one consistent chevron instead of each
+   browser's native arrow. The native control (and keyboard use) is unchanged. */
+.crm select.c-input:not([multiple]):not([size]) {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2385888d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  background-size: 1rem;
+  padding-right: 2.25rem;
+}
+
+/* Modals: a short fade/rise on open, and a fading backdrop. */
+.crm dialog.c-dialog[open] {
+  animation: crm-dialog-in 180ms var(--ease-out-expo) both;
+}
+.crm dialog.c-dialog[open]::backdrop {
+  animation: crm-fade-in 180ms ease-out both;
+}
+@keyframes crm-dialog-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes crm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Loading placeholders: a soft shimmer over the existing pulse colours. */
+.crm .c-skeleton {
+  background: linear-gradient(90deg, var(--c-hover) 0%, var(--c-border) 50%, var(--c-hover) 100%);
+  background-size: 200% 100%;
+  animation: crm-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes crm-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+/* Sidebar width change (collapse / expand). */
+.crm .c-sidebar {
+  transition: width 200ms var(--ease-out-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crm dialog.c-dialog[open],
+  .crm dialog.c-dialog[open]::backdrop,
+  .crm .c-skeleton { animation: none; }
+  .crm .c-sidebar { transition: none; }
+}
+
 /* Portal chart colours — the dataviz reference categorical palette, slots
    1–4, validated light and dark (scripts: dataviz validate_palette). Light
    slots 3–4 sit under 3:1 on white, so every chart using them shows values

@@ -8,6 +8,7 @@ import { formatDateTime } from "@/crm/lib/time";
 import { ANNOUNCEMENT_CATEGORIES, listAnnouncements } from "@/crm/services/announcements";
 import { getCompany } from "@/crm/services/company";
 import { employeeFormOptions } from "@/crm/services/employees";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Announcements" };
 
@@ -32,8 +33,8 @@ export default async function AnnouncementsPage({ searchParams }: PageProps<"/cr
       {rows.length ? (
         <div className="space-y-3">
           {rows.map((a) => (
-            <Card key={a.id} className={a.isImportant ? "border-c-danger/40" : undefined}>
-              <Link href={`/crm/announcements/${a.id}`} className="block p-5 hover:bg-c-surface-2">
+            <Card key={a.id} className={cn("overflow-hidden transition-[border-color,box-shadow] duration-150 hover:border-c-border-strong hover:shadow-c-lg", a.isImportant && "border-l-[3px] border-l-c-danger")}>
+              <Link href={`/crm/announcements/${a.id}`} className="block p-5 transition-colors hover:bg-c-surface-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {a.isPinned && (
                     <Badge tone="accent">
@@ -46,7 +47,7 @@ export default async function AnnouncementsPage({ searchParams }: PageProps<"/cr
                   {a.status === "draft" && <Badge tone="warning">Draft</Badge>}
                   <span className="text-xs text-c-subtle">{a.publishedAt ? formatDateTime(a.publishedAt, company.timezone) : "Not published"}</span>
                 </div>
-                <h2 className="mt-2 text-base font-semibold">{a.title}</h2>
+                <h2 className="mt-2.5 text-base font-semibold tracking-[-0.01em]">{a.title}</h2>
                 <p className="mt-1 line-clamp-3 text-sm whitespace-pre-line text-c-muted">{a.body}</p>
               </Link>
             </Card>

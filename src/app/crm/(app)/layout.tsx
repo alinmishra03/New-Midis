@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { after } from "next/server";
 import { AppShell } from "@/components/crm/AppShell";
 import { DirectUploadProvider } from "@/components/crm/direct-upload";
@@ -15,6 +16,8 @@ import { runReminders } from "@/crm/services/reminders";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const viewer = await requireViewer();
   const unread = await unreadCount(viewer.userId);
+  // Display preference only (desktop sidebar collapsed or not); has no effect on access.
+  const sidebarCollapsed = (await cookies()).get("crm_sidebar")?.value === "collapsed";
   // Meeting / due-task / birthday reminders, generated after the response is sent.
   after(() => runReminders(viewer).catch((e) => console.error("[crm reminders]", e)));
 
@@ -25,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AppShell
         nav={visibleNav(viewer.permissions)}
         unread={unread}
+        sidebarCollapsed={sidebarCollapsed}
         user={{
           name: viewer.employee?.fullName ?? viewer.email,
           email: viewer.email,

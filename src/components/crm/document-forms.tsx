@@ -3,7 +3,7 @@
 import { Upload } from "lucide-react";
 import { useState } from "react";
 import { uploadDocumentAction } from "@/app/crm/(app)/documents/actions";
-import { ActionForm, Dialog, SelectField, SubmitButton, TextField, inputClass } from "./forms";
+import { ActionForm, FormActions, Dialog, SelectField, SubmitButton, TextField, inputClass } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -53,9 +53,9 @@ export function UploadDocumentDialog({ hr, employees, categories, selfId, defaul
             </label>
             <input id="doc-file" type="file" name="file" data-upload="any" required className={inputClass} />
           </div>
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton pendingLabel="Uploading…">Upload</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>

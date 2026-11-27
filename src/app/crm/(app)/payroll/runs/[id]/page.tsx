@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Banknote, Download, FileText, RefreshCw } from "lucide-react";
+import { BadgeCheck, Banknote, CircleDot, Download, FileText, RefreshCw, Wallet } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
-import { Card, CardHeader, EmptyState, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, buttonClass } from "@/components/crm/ui";
+import { Card, CardHeader, EmptyState, Notice, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, buttonClass } from "@/components/crm/ui";
 import { can, requirePermission } from "@/crm/auth/dal";
 import { formatDateTime } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
@@ -53,12 +53,12 @@ export default async function RunPage({ params }: PageProps<"/crm/payroll/runs/[
           </>
         }
       />
-      {run.status === "draft" && generatedByMe && slips.length > 0 && <p className="mb-4 rounded-lg bg-c-warning-soft px-4 py-3 text-sm text-c-warning">You generated this run, so someone else with approval rights must approve it.</p>}
+      {run.status === "draft" && generatedByMe && slips.length > 0 && <Notice tone="warning" className="mb-4">You generated this run, so someone else with approval rights must approve it.</Notice>}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Status" value={<StatusBadge status={run.status} />} />
-        <StatCard label="Payslips" value={slips.length} />
-        <StatCard label="Gross" value={money(sum("gross"))} />
-        <StatCard label="Net pay" value={money(sum("net"))} tone="success" />
+        <StatCard label="Status" value={<StatusBadge status={run.status} />} icon={<CircleDot />} />
+        <StatCard label="Payslips" value={slips.length} icon={<FileText />} />
+        <StatCard label="Gross" value={money(sum("gross"))} icon={<Wallet />} />
+        <StatCard label="Net pay" value={money(sum("net"))} tone="success" icon={<Banknote />} />
       </div>
       <Card>
         <CardHeader title="Payslips" />
@@ -100,7 +100,7 @@ export default async function RunPage({ params }: PageProps<"/crm/payroll/runs/[
             </TBody>
           </Table>
         ) : (
-          <EmptyState title="No payslips generated yet" description="Generate them from current salary structures." />
+          <EmptyState icon={<FileText />} title="No payslips generated yet" description="Generate them from current salary structures." />
         )}
       </Card>
     </>

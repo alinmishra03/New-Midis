@@ -12,7 +12,7 @@ import {
   scheduleInterviewAction,
   toggleOnboardingAction,
 } from "@/app/crm/(app)/recruitment/actions";
-import { ActionForm, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
+import { ActionForm, FormActions, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -43,9 +43,9 @@ export function JobDialog({ values = {}, departments, people }: { values?: JobVa
             <SelectField label="Status" name="status" defaultValue={values.status ?? "open"} options={[{ value: "draft", label: "Draft" }, { value: "open", label: "Open" }, { value: "on_hold", label: "On hold" }, { value: "closed", label: "Closed" }]} />
           </div>
           <TextAreaField label="Description" name="description" defaultValue={values.description ?? ""} rows={6} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>{editing ? "Save" : "Create opening"}</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -78,9 +78,9 @@ export function CandidateDialog({ jobId }: { jobId: string }) {
             <input id="resume" type="file" name="resume" data-upload="resume" accept=".pdf,.docx,application/pdf" className={inputClass} />
           </div>
           <TextAreaField label="Notes" name="notes" rows={3} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Add candidate</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -142,9 +142,9 @@ export function InterviewDialog({ candidateId, candidateName, people, today }: {
             <TextField label="Minutes" name="durationMinutes" type="number" min={15} max={240} defaultValue={45} />
           </div>
           <TextField label="Location or link" name="location" />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Schedule</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -169,9 +169,9 @@ export function HireDialog({ candidateId, candidateName, designations, people, t
         <TextField label="Joining date" name="joiningDate" type="date" defaultValue={today} required />
         <SelectField label="Designation" name="designationId" options={designations} placeholder="Set later" />
         <SelectField label="Reporting manager" name="managerId" options={people} placeholder="Set later" />
-        <div className="flex justify-end">
+        <FormActions>
           <SubmitButton>Hire and create account</SubmitButton>
-        </div>
+        </FormActions>
       </ActionForm>
     </Dialog>
   );

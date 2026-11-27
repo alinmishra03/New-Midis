@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Check, House, X } from "lucide-react";
+import { Check, History, House, Laptop, X } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
 import { WfhDialog } from "@/components/crm/leave-forms";
 import { MonthGrid } from "@/components/crm/MonthGrid";
-import { Card, CardHeader, EmptyState, PageHeader, PersonCell, StatusBadge, Table, TBody, THead, Tabs } from "@/components/crm/ui";
+import { Badge, Card, CardHeader, EmptyState, PageHeader, PersonCell, StatusBadge, Table, TBody, THead, Tabs } from "@/components/crm/ui";
 import { can, requireViewer, scopeFor } from "@/crm/auth/dal";
 import { yearMonthOr } from "@/crm/lib/params";
 import { addDays, endOfMonth, formatDate, formatDateShort, formatMinutes, formatTime, todayIn } from "@/crm/lib/time";
@@ -45,79 +45,83 @@ export default async function WfhPage({ searchParams }: PageProps<"/crm/wfh">) {
       <Tabs tabs={tabs} active={tab} />
 
       {tab === "mine" && viewer.employee && (
-        <Card>
+        <div className="space-y-6">
           {(async () => {
             const rows = await myWfh(viewer.employee!.id);
             const remote = await remoteAttendance([viewer.employee!.id], addDays(today, -90), today);
             return (
               <>
-                <CardHeader title="Request history" />
-                {rows.length ? (
-                  <Table>
-                    <THead>
-                      <tr>
-                        <th>Dates</th>
-                        <th className="hidden md:table-cell">Reason</th>
-                        <th>Status</th>
-                        <th className="text-right">
-                          <span className="sr-only">Actions</span>
-                        </th>
-                      </tr>
-                    </THead>
-                    <TBody>
-                      {rows.map((r) => (
-                        <tr key={r.id}>
-                          <td>
-                            <Range s={r.startDate} e={r.endDate} />
-                          </td>
-                          <td className="hidden max-w-sm truncate text-c-muted md:table-cell">
-                            {r.reason}
-                            {r.decisionComment && <span className="block text-xs text-c-subtle">Reply: {r.decisionComment}</span>}
-                          </td>
-                          <td>
-                            <StatusBadge status={r.status} />
-                          </td>
-                          <td className="text-right">
-                            {(r.status === "pending" || (r.status === "approved" && r.startDate > today)) && (
-                              <ConfirmAction action={cancelWfhAction} fields={{ id: r.id }} label="Cancel" variant="ghost" confirmVariant="danger" title="Cancel this request?" confirmLabel="Cancel request" />
-                            )}
-                          </td>
+                <Card>
+                  <CardHeader title="Request history" />
+                  {rows.length ? (
+                    <Table>
+                      <THead>
+                        <tr>
+                          <th>Dates</th>
+                          <th className="hidden md:table-cell">Reason</th>
+                          <th>Status</th>
+                          <th className="text-right">
+                            <span className="sr-only">Actions</span>
+                          </th>
                         </tr>
-                      ))}
-                    </TBody>
-                  </Table>
-                ) : (
-                  <EmptyState icon={<House />} title="No work-from-home requests yet" />
-                )}
-                <CardHeader title="Remote days worked" description="Last 90 days" className="border-t" />
-                {remote.length ? (
-                  <Table>
-                    <THead>
-                      <tr>
-                        <th>Date</th>
-                        <th>In</th>
-                        <th>Out</th>
-                        <th>Worked</th>
-                      </tr>
-                    </THead>
-                    <TBody>
-                      {remote.map((r) => (
-                        <tr key={r.id}>
-                          <td className="tabular">{formatDate(r.workDate)}</td>
-                          <td className="tabular">{formatTime(r.checkInAt, tz)}</td>
-                          <td className="tabular">{formatTime(r.checkOutAt, tz)}</td>
-                          <td className="tabular">{formatMinutes(r.workedMinutes)}</td>
+                      </THead>
+                      <TBody>
+                        {rows.map((r) => (
+                          <tr key={r.id}>
+                            <td>
+                              <Range s={r.startDate} e={r.endDate} />
+                            </td>
+                            <td className="hidden max-w-sm truncate text-c-muted md:table-cell">
+                              {r.reason}
+                              {r.decisionComment && <span className="block text-xs text-c-subtle">Reply: {r.decisionComment}</span>}
+                            </td>
+                            <td>
+                              <StatusBadge status={r.status} />
+                            </td>
+                            <td className="text-right">
+                              {(r.status === "pending" || (r.status === "approved" && r.startDate > today)) && (
+                                <ConfirmAction action={cancelWfhAction} fields={{ id: r.id }} label="Cancel" variant="ghost" confirmVariant="danger" title="Cancel this request?" confirmLabel="Cancel request" />
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </TBody>
+                    </Table>
+                  ) : (
+                    <EmptyState icon={<House />} title="No work-from-home requests yet" description="Use the request button above to ask for remote days." />
+                  )}
+                </Card>
+                <Card>
+                  <CardHeader title="Remote days worked" description="Last 90 days" />
+                  {remote.length ? (
+                    <Table>
+                      <THead>
+                        <tr>
+                          <th>Date</th>
+                          <th>In</th>
+                          <th>Out</th>
+                          <th>Worked</th>
                         </tr>
-                      ))}
-                    </TBody>
-                  </Table>
-                ) : (
-                  <EmptyState title="No remote check-ins yet" />
-                )}
+                      </THead>
+                      <TBody>
+                        {remote.map((r) => (
+                          <tr key={r.id}>
+                            <td className="tabular">{formatDate(r.workDate)}</td>
+                            <td className="tabular">{formatTime(r.checkInAt, tz)}</td>
+                            <td className="tabular">{formatTime(r.checkOutAt, tz)}</td>
+                            <td className="tabular">{formatMinutes(r.workedMinutes)}</td>
+                          </tr>
+                        ))}
+                      </TBody>
+                    </Table>
+                  ) : (
+                    <EmptyState icon={<Laptop />} title="No remote check-ins yet" />
+                  )}
+                </Card>
               </>
             );
           })()}
-        </Card>
+        </div>
       )}
 
       {tab === "approvals" && approver && <WfhApprovals />}
@@ -179,7 +183,7 @@ export default async function WfhPage({ searchParams }: PageProps<"/crm/wfh">) {
                   </TBody>
                 </Table>
               ) : (
-                <EmptyState title="No remote check-ins" />
+                <EmptyState icon={<Laptop />} title="No remote check-ins" />
               )}
             </Card>
           );
@@ -194,7 +198,7 @@ async function WfhApprovals() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="Waiting for a decision" />
+        <CardHeader title="Waiting for a decision" action={pending.length ? <Badge tone="warning" dot>{pending.length} pending</Badge> : undefined} />
         {pending.length ? (
           <Table>
             <THead>
@@ -230,7 +234,7 @@ async function WfhApprovals() {
             </TBody>
           </Table>
         ) : (
-          <EmptyState icon={<Check />} title="Nothing waiting" />
+          <EmptyState icon={<Check />} title="Nothing waiting" description="New work-from-home requests from your team appear here." />
         )}
       </Card>
       <Card>
@@ -261,7 +265,7 @@ async function WfhApprovals() {
             </TBody>
           </Table>
         ) : (
-          <EmptyState title="No decisions yet" />
+          <EmptyState icon={<History />} title="No decisions yet" />
         )}
       </Card>
     </div>

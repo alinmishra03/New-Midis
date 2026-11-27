@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, FileText, Trash2, Wallet } from "lucide-react";
+import { Download, FileText, Filter, Trash2, Wallet } from "lucide-react";
 import { UploadDocumentDialog } from "@/components/crm/document-forms";
-import { ConfirmAction, inputClass } from "@/components/crm/forms";
-import { Badge, Card, EmptyState, PageHeader, Table, TBody, THead, Tabs, buttonClass, humanize } from "@/components/crm/ui";
+import { ConfirmAction, inputClass, SearchInput } from "@/components/crm/forms";
+import { Badge, Card, EmptyState, FilterBar, PageHeader, Table, TBody, THead, Tabs, buttonClass, humanize } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
 import { uuidOrUndefined } from "@/crm/lib/params";
 import { formatDate } from "@/crm/lib/time";
@@ -122,10 +122,10 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/crm/do
       {tab === "company" && <Card>{(async () => <DocTable docs={await companyDocuments()} canDelete={() => hr} />)()}</Card>}
       {tab === "manage" && hr && (
         <Card>
-          <form className="flex flex-wrap gap-2 border-b border-c-border p-4">
+          <FilterBar role="search">
             <input type="hidden" name="tab" value="manage" />
-            <input name="q" defaultValue={typeof sp.q === "string" ? sp.q : ""} placeholder="Search title or file name" aria-label="Search documents" className={`${inputClass} max-w-xs`} />
-            <select name="employee" defaultValue={typeof sp.employee === "string" ? sp.employee : ""} className={`${inputClass} w-56`} aria-label="Employee">
+            <SearchInput name="q" defaultValue={typeof sp.q === "string" ? sp.q : ""} placeholder="Search title or file name" aria-label="Search documents" />
+            <select name="employee" defaultValue={typeof sp.employee === "string" ? sp.employee : ""} className={`${inputClass} sm:w-56`} aria-label="Employee">
               <option value="">Everyone</option>
               <option value="company">Company-wide only</option>
               {options!.managers.map((m) => (
@@ -134,7 +134,7 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/crm/do
                 </option>
               ))}
             </select>
-            <select name="category" defaultValue={typeof sp.category === "string" ? sp.category : ""} className={`${inputClass} w-48`} aria-label="Category">
+            <select name="category" defaultValue={typeof sp.category === "string" ? sp.category : ""} className={`${inputClass} sm:w-48`} aria-label="Category">
               <option value="">All categories</option>
               {DOC_CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
@@ -143,9 +143,9 @@ export default async function DocumentsPage({ searchParams }: PageProps<"/crm/do
               ))}
             </select>
             <button type="submit" className={buttonClass("secondary")}>
-              Filter
+              <Filter /> Filter
             </button>
-          </form>
+          </FilterBar>
           {(async () => {
             const docs = await allDocuments(viewer, {
               employeeId: typeof sp.employee === "string" ? sp.employee : undefined,

@@ -3,7 +3,7 @@
 import { CalendarPlus, PartyPopper } from "lucide-react";
 import { useState } from "react";
 import { addHolidayAction, scheduleMeetingAction } from "@/app/crm/(app)/calendar/actions";
-import { ActionForm, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
+import { ActionForm, FormActions, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -61,9 +61,9 @@ export function MeetingDialog({ people, today, canCompany, hasTeam }: { people: 
               </div>
             </fieldset>
           )}
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Schedule</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -90,9 +90,9 @@ export function HolidayDialog() {
             <SelectField label="Type" name="type" options={[{ value: "public", label: "Public" }, { value: "optional", label: "Optional" }]} />
           </div>
           <TextAreaField label="Note" name="description" rows={2} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Add holiday</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>

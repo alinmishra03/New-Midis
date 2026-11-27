@@ -3,7 +3,7 @@
 import { Megaphone, Pencil } from "lucide-react";
 import { useState } from "react";
 import { saveAnnouncementAction } from "@/app/crm/(app)/announcements/actions";
-import { ActionForm, CheckboxField, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
+import { ActionForm, FormActions, CheckboxField, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -36,9 +36,9 @@ export function AnnouncementDialog({ values = {}, categories, departments }: { v
             <CheckboxField name="isPinned" label="Pin to top" defaultChecked={values.isPinned} />
             <CheckboxField name="publish" label={values.status === "published" ? "Published" : "Publish now (notifies the audience)"} defaultChecked={values.status ? values.status === "published" : true} />
           </div>
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>{editing ? "Save" : "Save announcement"}</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>

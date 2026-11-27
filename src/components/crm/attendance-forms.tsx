@@ -2,7 +2,7 @@
 
 import { Pencil, Timer } from "lucide-react";
 import { hrSetAttendanceAction, requestCorrectionAction } from "@/app/crm/(app)/attendance/actions";
-import { ActionForm, Dialog, SubmitButton, TextAreaField, TextField } from "./forms";
+import { ActionForm, FormActions, Dialog, SubmitButton, TextAreaField, TextField } from "./forms";
 import { buttonClass } from "./ui";
 
 export function CorrectionDialog({ today, defaultDate }: { today: string; defaultDate?: string }) {
@@ -25,9 +25,9 @@ export function CorrectionDialog({ today, defaultDate }: { today: string; defaul
             <TextField label="Correct check-out" name="checkOut" type="time" hint="Leave blank to keep" />
           </div>
           <TextAreaField label="Reason" name="reason" rows={3} required placeholder="e.g. Forgot to check out after the client call." />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton pendingLabel="Sending…">Send request</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -56,9 +56,9 @@ export function HrEditDialog({ employeeId, name, date, checkIn, checkOut }: { em
             <TextField label="Check-out" name="checkOut" type="time" defaultValue={checkOut} />
           </div>
           <TextAreaField label="Reason" name="reason" rows={2} required />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Save</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>

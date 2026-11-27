@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { and, eq, gte, lte } from "drizzle-orm";
-import { Check, ChevronLeft, ChevronRight, Clock, Download, X } from "lucide-react";
+import { CalendarDays, CalendarOff, Check, ChevronLeft, ChevronRight, CircleCheck, CircleDashed, Clock, Download, House, Timer, UserCheck, Users, X } from "lucide-react";
 import { CorrectionDialog, HrEditDialog } from "@/components/crm/attendance-forms";
 import { ConfirmAction, inputClass } from "@/components/crm/forms";
 import { AutoCheckoutBadge, Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, Tabs, buttonClass } from "@/components/crm/ui";
@@ -104,12 +104,12 @@ async function MyAttendance({ month }: { month: string }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Working days" value={summary.workingDays} hint="So far this month" />
-        <StatCard label="Present" value={summary.present} tone="success" />
-        <StatCard label="Half days" value={summary.halfDays} tone="warning" />
-        <StatCard label="Late arrivals" value={summary.late} tone="warning" />
-        <StatCard label="Leave" value={summary.leaveDays} tone="info" />
-        <StatCard label="Hours worked" value={formatMinutes(summary.workedMinutes)} />
+        <StatCard label="Working days" value={summary.workingDays} hint="So far this month" icon={<CalendarDays />} />
+        <StatCard label="Present" value={summary.present} tone="success" icon={<CircleCheck />} />
+        <StatCard label="Half days" value={summary.halfDays} tone="warning" icon={<CircleDashed />} />
+        <StatCard label="Late arrivals" value={summary.late} tone="warning" icon={<Timer />} />
+        <StatCard label="Leave" value={summary.leaveDays} tone="info" icon={<CalendarOff />} />
+        <StatCard label="Hours worked" value={formatMinutes(summary.workedMinutes)} icon={<Clock />} />
       </div>
 
       <Card>
@@ -145,8 +145,19 @@ async function MyAttendance({ month }: { month: string }) {
             {days.map((d) => {
               const c = cell(d);
               return (
-                <div key={d} className={cn("flex min-h-14 flex-col rounded-lg border border-c-border p-1.5 text-left sm:min-h-20 sm:p-2", d === today && "ring-2 ring-c-accent/50", d > today && "opacity-60")}>
-                  <span className="tabular text-xs font-semibold text-c-fg">{Number(d.slice(8))}</span>
+                <div
+                  key={d}
+                  className={cn(
+                    "flex min-h-14 flex-col rounded-lg border border-c-border p-1.5 text-left transition-colors sm:min-h-20 sm:p-2",
+                    c.label === "Off" && "bg-c-surface-2",
+                    d === today && "border-c-accent ring-2 ring-c-accent/25",
+                    d > today && "opacity-60",
+                  )}
+                >
+                  <span className={cn("tabular text-xs font-semibold", d === today ? "text-c-accent-text" : "text-c-fg")}>
+                    {Number(d.slice(8))}
+                    {d === today && <span className="sr-only"> (today)</span>}
+                  </span>
                   {c.label && <span className={cn("mt-auto truncate rounded px-1 py-0.5 text-[0.625rem] leading-tight font-medium sm:text-[0.6875rem]", toneCls[c.tone])}>{c.label}</span>}
                   {"r" in c && c.r && (
                     <span className="tabular mt-0.5 hidden truncate text-[0.625rem] text-c-muted sm:block">
@@ -159,6 +170,25 @@ async function MyAttendance({ month }: { month: string }) {
               );
             })}
           </div>
+          {/* Legend: the same labels and colours the calendar cells use. */}
+          <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-c-border pt-3 text-xs text-c-muted">
+            {[
+              { label: "Present", tone: "success" },
+              { label: "Half day / no check-out", tone: "warning" },
+              { label: "Absent / short day", tone: "danger" },
+              { label: "Leave", tone: "info" },
+              { label: "Holiday", tone: "accent" },
+            ].map((l) => (
+              <li key={l.label} className="flex items-center gap-1.5">
+                <span aria-hidden className={cn("size-2.5 rounded-sm", toneCls[l.tone])} />
+                {l.label}
+              </li>
+            ))}
+            <li className="flex items-center gap-1.5">
+              <span aria-hidden className="size-2.5 rounded-sm border border-c-accent" />
+              Today
+            </li>
+          </ul>
         </CardBody>
       </Card>
 
@@ -231,7 +261,7 @@ async function MyAttendance({ month }: { month: string }) {
               ))}
             </ul>
           ) : (
-            <EmptyState title="No correction requests" />
+            <EmptyState icon={<Timer />} title="No correction requests" description="Use “Request correction” if a time is wrong." />
           )}
         </Card>
       </div>
@@ -275,10 +305,10 @@ async function TeamDay({ date }: { date: string }) {
         )}
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Checked in" value={`${present}/${rows.length}`} tone="success" />
-        <StatCard label="Late" value={late} tone="warning" />
-        <StatCard label="On leave" value={leave} tone="info" />
-        <StatCard label="Remote" value={remote} />
+        <StatCard label="Checked in" value={`${present}/${rows.length}`} tone="success" icon={<UserCheck />} />
+        <StatCard label="Late" value={late} tone="warning" icon={<Timer />} />
+        <StatCard label="On leave" value={leave} tone="info" icon={<CalendarOff />} />
+        <StatCard label="Remote" value={remote} icon={<House />} />
       </div>
       <Card>
         <CardHeader title={formatDate(date)} description={`${rows.length} people`} />
@@ -335,7 +365,7 @@ async function TeamDay({ date }: { date: string }) {
             </TBody>
           </Table>
         ) : (
-          <EmptyState title="No one in scope" />
+          <EmptyState icon={<Users />} title="No one in scope" />
         )}
       </Card>
     </div>
@@ -357,7 +387,11 @@ async function Corrections() {
   const pending = rows.filter((c) => c.status === "pending").length;
   return (
     <Card>
-      <CardHeader title={everyone ? "All correction requests" : "Team correction requests"} description={`${pending} pending · pending requests are listed first`} />
+      <CardHeader
+        title={everyone ? "All correction requests" : "Team correction requests"}
+        description="Pending requests are listed first"
+        action={pending ? <Badge tone="warning" dot>{pending} pending</Badge> : <Badge tone="success" dot>All decided</Badge>}
+      />
       <Table>
         <THead>
           <tr>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MapPin, Trash2, Video, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, MapPin, PartyPopper, Trash2, Video, X } from "lucide-react";
 import { HolidayDialog, MeetingDialog } from "@/components/crm/calendar-forms";
 import { ConfirmAction } from "@/components/crm/forms";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, Table, TBody, THead, Tabs, buttonClass } from "@/components/crm/ui";
@@ -156,7 +156,7 @@ async function MonthView({ from, to, today }: { from: string; to: string; today:
             ))}
           </ul>
         ) : (
-          <EmptyState title="No upcoming meetings" />
+          <EmptyState icon={<CalendarDays />} title="No upcoming meetings" />
         )}
       </Card>
     </div>
@@ -202,7 +202,7 @@ async function HolidaysTab({ today }: { today: string }) {
           </TBody>
         </Table>
       ) : (
-        <EmptyState title="No holidays configured" />
+        <EmptyState icon={<PartyPopper />} title="No holidays configured" />
       )}
     </Card>
   );

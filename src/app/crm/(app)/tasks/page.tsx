@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { FolderKanban, ListChecks } from "lucide-react";
+import { Filter, FolderKanban, ListChecks } from "lucide-react";
 import { ProjectCatalog } from "@/components/crm/project-catalog";
-import { inputClass } from "@/components/crm/forms";
+import { inputClass, SearchInput } from "@/components/crm/forms";
 import { ProjectDialog, TaskDialog } from "@/components/crm/task-forms";
 import { TaskBoard, TaskTable } from "@/components/crm/task-views";
-import { Card, EmptyState, PageHeader, Tabs, buttonClass, humanize } from "@/components/crm/ui";
+import { ButtonLink, Card, EmptyState, FilterBar, PageHeader, Tabs, buttonClass, humanize } from "@/components/crm/ui";
 import { can, getTeamEmployeeIds, requireViewer } from "@/crm/auth/dal";
 import { todayIn } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
@@ -54,36 +54,47 @@ export default async function TasksPage({ searchParams }: PageProps<"/crm/tasks"
         <ProjectsView params={{ section: str("section"), q: str("q"), env: str("env"), dev: str("dev"), sort: str("sort"), dir: str("dir"), page: str("page") }} />
       ) : (
         <>
-          {view !== "mine" && (
-            <form className="mb-4 flex flex-wrap gap-2">
-              <input type="hidden" name="view" value={view} />
-              <input name="q" defaultValue={q} placeholder="Search tasks" aria-label="Search tasks" className={`${inputClass} max-w-xs`} />
-              <select name="status" defaultValue={status ?? ""} className={`${inputClass} w-40`} aria-label="Status">
-                <option value="">All statuses</option>
-                {TASK_STATUSES.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-              <select name="priority" defaultValue={priority ?? ""} className={`${inputClass} w-36`} aria-label="Priority">
-                <option value="">Any priority</option>
-                {["low", "medium", "high", "urgent"].map((p) => (
-                  <option key={p} value={p}>
-                    {humanize(p)}
-                  </option>
-                ))}
-              </select>
-              <button type="submit" className={buttonClass("secondary")}>
-                Filter
-              </button>
-            </form>
+          {view === "mine" ? (
+            (async () => {
+              const rows = await listTasks(viewer, view as TaskView, { status, priority, q });
+              return rows.length ? <TaskBoard rows={rows} today={today} editable /> : <Card><EmptyState icon={<ListChecks />} title="No tasks assigned to you" description="Create a personal task, or wait for one to be assigned." /></Card>;
+            })()
+          ) : (
+            <Card>
+              <FilterBar role="search">
+                <input type="hidden" name="view" value={view} />
+                <SearchInput name="q" defaultValue={q} placeholder="Search tasks" aria-label="Search tasks" />
+                <select name="status" defaultValue={status ?? ""} className={`${inputClass} sm:w-40`} aria-label="Status">
+                  <option value="">All statuses</option>
+                  {TASK_STATUSES.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                <select name="priority" defaultValue={priority ?? ""} className={`${inputClass} sm:w-36`} aria-label="Priority">
+                  <option value="">Any priority</option>
+                  {["low", "medium", "high", "urgent"].map((p) => (
+                    <option key={p} value={p}>
+                      {humanize(p)}
+                    </option>
+                  ))}
+                </select>
+                <button type="submit" className={buttonClass("secondary")}>
+                  <Filter /> Filter
+                </button>
+                {(q || status || priority) && (
+                  <ButtonLink href={`/crm/tasks?view=${view}`} variant="ghost">
+                    Clear
+                  </ButtonLink>
+                )}
+              </FilterBar>
+              {(async () => {
+                const rows = await listTasks(viewer, view as TaskView, { status, priority, q });
+                return <TaskTable rows={rows} today={today} filtered={!!(q || status || priority)} />;
+              })()}
+            </Card>
           )}
-          {(async () => {
-            const rows = await listTasks(viewer, view as TaskView, { status, priority, q });
-            if (view === "mine") return rows.length ? <TaskBoard rows={rows} today={today} editable /> : <Card><EmptyState icon={<ListChecks />} title="No tasks assigned to you" description="Create a personal task, or wait for one to be assigned." /></Card>;
-            return <Card><TaskTable rows={rows} today={today} /></Card>;
-          })()}
         </>
       )}
     </>

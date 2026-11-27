@@ -3,7 +3,7 @@
 import { CalendarPlus, House, Scale } from "lucide-react";
 import { useState } from "react";
 import { adjustBalanceAction, applyLeaveAction, requestWfhAction } from "@/app/crm/(app)/leave/actions";
-import { ActionForm, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
+import { ActionForm, FormActions, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
 import { buttonClass } from "./ui";
 
 export type LeaveTypeOption = { id: string; name: string; allowHalfDay: boolean; available: string; documentRequiredAfterDays: number | null };
@@ -61,9 +61,9 @@ export function ApplyLeaveDialog({ types, today, autoOpen }: { types: LeaveTypeO
           </label>
           <input id="leave-doc" type="file" name="document" data-upload="any" accept="application/pdf,image/png,image/jpeg,image/webp" className={inputClass} />
         </div>
-        <div className="flex justify-end">
+        <FormActions>
           <SubmitButton pendingLabel="Submitting…">Submit request</SubmitButton>
-        </div>
+        </FormActions>
       </ActionForm>
     </Dialog>
   );
@@ -88,9 +88,9 @@ export function WfhDialog({ today }: { today: string }) {
             <TextField label="To" name="endDate" type="date" defaultValue={today} required />
           </div>
           <TextAreaField label="Reason" name="reason" rows={3} required />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Submit request</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -115,9 +115,9 @@ export function AdjustBalanceDialog({ employeeId, employeeName, types }: { emplo
           <SelectField label="Leave type" name="leaveTypeId" options={types.map((t) => ({ value: t.id, label: t.name }))} required />
           <TextField label="Days (+/-)" name="delta" type="number" step="0.5" required placeholder="e.g. 2 or -1.5" />
           <TextAreaField label="Reason" name="comment" rows={2} required />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Apply adjustment</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>

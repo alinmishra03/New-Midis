@@ -3,7 +3,7 @@
 import { Plus, Target } from "lucide-react";
 import { useState } from "react";
 import { createCycleAction, createGoalAction, managerReviewAction, selfReviewAction, updateGoalAction } from "@/app/crm/(app)/performance/actions";
-import { ActionForm, Dialog, SelectField, SubmitButton, TextAreaField, TextField, useFieldError } from "./forms";
+import { ActionForm, FormActions, Dialog, SelectField, SubmitButton, TextAreaField, TextField, useFieldError } from "./forms";
 import { buttonClass } from "./ui";
 
 const LABELS = ["", "Needs improvement", "Below expectations", "Meets expectations", "Exceeds expectations", "Outstanding"];
@@ -73,9 +73,9 @@ export function CycleDialog({ today }: { today: string }) {
             <TextField label="Period start" name="periodStart" type="date" required defaultValue={today} />
             <TextField label="Period end" name="periodEnd" type="date" required />
           </div>
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Open cycle</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -99,9 +99,9 @@ export function GoalDialog({ employeeId, label = "Add goal" }: { employeeId: str
           <TextField label="Goal" name="title" required placeholder="Ship the new client onboarding flow" />
           <TextAreaField label="Details / success measure" name="description" rows={3} />
           <TextField label="Target date" name="dueDate" type="date" />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Add goal</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>

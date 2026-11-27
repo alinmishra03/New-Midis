@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Download, FileText } from "lucide-react";
+import { ChartColumn, Download, FileText, Filter } from "lucide-react";
 import { BarList } from "@/components/crm/charts";
 import { inputClass } from "@/components/crm/forms";
-import { Card, CardBody, CardHeader, EmptyState, PageHeader, StatCard, Table, TBody, THead, buttonClass, withParams } from "@/components/crm/ui";
+import { Card, CardBody, CardHeader, EmptyState, FilterBar, PageHeader, StatCard, Table, TBody, THead, buttonClass, withParams } from "@/components/crm/ui";
 import { can, requirePermission } from "@/crm/auth/dal";
 import { isoDateOr, uuidOrUndefined } from "@/crm/lib/params";
 import { addDays, startOfMonth, todayIn } from "@/crm/lib/time";
@@ -52,7 +52,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/crm/repo
       />
 
       <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-        <nav aria-label="Reports" className="flex gap-1 overflow-x-auto lg:flex-col">
+        <nav aria-label="Reports" className="flex gap-1 self-start overflow-x-auto lg:sticky lg:top-20 lg:flex-col lg:rounded-xl lg:border lg:border-c-border lg:bg-c-surface lg:p-2 lg:shadow-c">
           {reports.map((r) => (
             <a
               key={r.key}
@@ -66,37 +66,39 @@ export default async function ReportsPage({ searchParams }: PageProps<"/crm/repo
         </nav>
 
         <div className="min-w-0 space-y-4">
-          <form className="flex flex-wrap items-end gap-2">
-            <input type="hidden" name="r" value={key} />
-            {key !== "headcount" && (
-              <>
+          <Card className="overflow-hidden">
+            <FilterBar className="border-b-0 sm:items-end">
+              <input type="hidden" name="r" value={key} />
+              {key !== "headcount" && (
+                <>
+                  <label className="text-[0.8125rem] font-medium">
+                    <span className="mb-1.5 block">From</span>
+                    <input type="date" name="from" defaultValue={filters.from} max={today} className={inputClass} />
+                  </label>
+                  <label className="text-[0.8125rem] font-medium">
+                    <span className="mb-1.5 block">To</span>
+                    <input type="date" name="to" defaultValue={filters.to} max={today} className={inputClass} />
+                  </label>
+                </>
+              )}
+              {key !== "payroll" && (
                 <label className="text-[0.8125rem] font-medium">
-                  <span className="mb-1.5 block">From</span>
-                  <input type="date" name="from" defaultValue={filters.from} max={today} className={inputClass} />
+                  <span className="mb-1.5 block">Department</span>
+                  <select name="department" defaultValue={filters.departmentId ?? ""} className={`${inputClass} sm:w-52`}>
+                    <option value="">All departments</option>
+                    {options.departments.map((d) => (
+                      <option key={d.value} value={d.value}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
-                <label className="text-[0.8125rem] font-medium">
-                  <span className="mb-1.5 block">To</span>
-                  <input type="date" name="to" defaultValue={filters.to} max={today} className={inputClass} />
-                </label>
-              </>
-            )}
-            {key !== "payroll" && (
-              <label className="text-[0.8125rem] font-medium">
-                <span className="mb-1.5 block">Department</span>
-                <select name="department" defaultValue={filters.departmentId ?? ""} className={`${inputClass} w-52`}>
-                  <option value="">All departments</option>
-                  {options.departments.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <button type="submit" className={buttonClass("secondary")}>
-              Apply
-            </button>
-          </form>
+              )}
+              <button type="submit" className={buttonClass("secondary")}>
+                <Filter /> Apply
+              </button>
+            </FilterBar>
+          </Card>
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {report.summary.map((s) => (
@@ -137,7 +139,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/crm/repo
                 </TBody>
               </Table>
             ) : (
-              <EmptyState title="No data for these filters" />
+              <EmptyState icon={<ChartColumn />} title="No data for these filters" description="Try a wider date range or another department." />
             )}
           </Card>
           <p className="text-xs text-c-subtle">Filters: {JSON.stringify(params).length > 0 && `${filters.from} → ${filters.to}`}. Exports include every row.</p>

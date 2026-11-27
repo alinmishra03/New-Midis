@@ -1,3 +1,4 @@
+import { ListChecks } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
@@ -35,7 +36,7 @@ export default async function OnboardingPage({ params }: PageProps<"/crm/recruit
       </Card>
       {items.length === 0 ? (
         <Card>
-          <EmptyState title="No checklist yet" />
+          <EmptyState icon={<ListChecks />} title="No checklist yet" />
         </Card>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">

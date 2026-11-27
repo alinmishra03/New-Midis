@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { addAdjustmentAction, addStructureAction, createRunAction } from "@/app/crm/(app)/payroll/actions";
-import { ActionForm, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
+import { ActionForm, FormActions, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -21,9 +21,9 @@ export function NewRunDialog({ defaultPeriod }: { defaultPeriod: string }) {
     >
       <ActionForm action={createRunAction} className="space-y-4">
         <TextField label="Month" name="period" type="month" defaultValue={defaultPeriod} required />
-        <div className="flex justify-end">
+        <FormActions>
           <SubmitButton>Create run</SubmitButton>
-        </div>
+        </FormActions>
       </ActionForm>
     </Dialog>
   );
@@ -51,9 +51,9 @@ export function StructureDialog({ employeeId, employeeName, today }: { employeeI
           <TextAreaField label="Allowances" name="allowances" rows={3} placeholder={"Conveyance: 1600\nSpecial allowance: 5000"} hint="One per line, “Label: amount”." />
           <TextAreaField label="Deductions" name="deductions" rows={3} placeholder={"Provident fund: 1800\nProfessional tax: 200"} hint="Only deductions agreed for this employee. Nothing else is deducted automatically." />
           <TextAreaField label="Notes" name="notes" rows={2} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Save structure</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -81,9 +81,9 @@ export function AdjustmentDialog({ employees, defaultPeriod }: { employees: Opt[
           </div>
           <TextField label="Description" name="label" required placeholder="Diwali bonus" />
           <TextField label="Amount" name="amount" inputMode="decimal" required />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Add adjustment</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
