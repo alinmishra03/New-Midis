@@ -89,7 +89,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[0.8125rem] text-c-muted">{formatDate(personal?.today ?? null)}</p>
-          <h1 className="mt-0.5 text-xl font-semibold sm:text-2xl">
+          <h1 className="mt-0.5 text-xl font-semibold tracking-[-0.02em] sm:text-2xl">
             {greeting}, {viewer.employee?.firstName ?? "there"}
           </h1>
           {personal?.profile && (

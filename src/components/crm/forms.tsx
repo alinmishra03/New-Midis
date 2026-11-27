@@ -76,14 +76,18 @@ export function Toaster() {
         <div
           key={t.id}
           role={t.tone === "error" ? "alert" : "status"}
-          className="crm-enter pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-c-border bg-c-surface p-3.5 pr-2.5 text-sm text-c-fg shadow-c-lg"
+          className="crm-enter pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-c-border bg-c-surface p-3 pr-2.5 text-sm text-c-fg shadow-c-lg"
         >
           {t.tone === "error" ? (
-            <CircleAlert className="mt-0.5 size-4 shrink-0 text-c-danger" />
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-c-danger-soft text-c-danger">
+              <CircleAlert className="size-3.5" />
+            </span>
           ) : (
-            <CircleCheck className="mt-0.5 size-4 shrink-0 text-c-success" />
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-c-success-soft text-c-success">
+              <CircleCheck className="size-3.5" />
+            </span>
           )}
-          <p className="min-w-0 flex-1">{t.message}</p>
+          <p className="min-w-0 flex-1 pt-0.5">{t.message}</p>
           <button type="button" onClick={() => dismiss(t.id)} className="rounded p-0.5 text-c-subtle hover:text-c-fg" aria-label="Dismiss">
             <X className="size-4" />
           </button>
@@ -200,8 +204,10 @@ export function SubmitButton({
 
 /* =================================================================== fields */
 
+// `c-input` lets the theme give selects one consistent chevron (globals.css). The vertical padding makes a
+// single-line input exactly the height of a default button (2.25rem), so fields and buttons line up in a row.
 export const inputClass =
-  "block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-fg shadow-c placeholder:text-c-subtle transition-colors hover:border-c-border-strong focus:border-c-accent focus:outline-none focus-visible:outline-none focus:ring-3 focus:ring-c-accent/20 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-c-danger aria-invalid:focus:ring-c-danger/20";
+  "c-input block w-full rounded-lg border border-c-border bg-c-surface px-3 py-[0.4375rem] text-sm text-c-fg shadow-c placeholder:text-c-subtle transition-[border-color,box-shadow,background-color] duration-150 hover:border-c-border-strong focus:border-c-accent focus:outline-none focus-visible:outline-none focus:ring-3 focus:ring-c-accent/20 disabled:cursor-not-allowed disabled:bg-c-surface-2 disabled:opacity-60 aria-invalid:border-c-danger aria-invalid:focus:ring-c-danger/20";
 
 export function Field({
   label,
@@ -232,8 +238,9 @@ export function Field({
       </label>
       {children({ id: fieldId, ...(errors ? { "aria-invalid": true as const } : {}), ...(describedBy ? { "aria-describedby": describedBy } : {}) })}
       {errors ? (
-        <p id={`${fieldId}-error`} className="mt-1.5 text-xs text-c-danger">
-          {errors.join(" ")}
+        <p id={`${fieldId}-error`} className="mt-1.5 flex items-start gap-1 text-xs text-c-danger">
+          <CircleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+          <span>{errors.join(" ")}</span>
         </p>
       ) : hint ? (
         <p id={`${fieldId}-hint`} className="mt-1.5 text-xs text-c-subtle">
@@ -378,7 +385,7 @@ export function Dialog({
           if (e.target === ref.current) close();
         }}
         className={cn(
-          "m-auto w-[calc(100%-2rem)] rounded-2xl border border-c-border bg-c-surface p-0 text-c-fg shadow-c-lg backdrop:bg-black/40 backdrop:backdrop-blur-[2px]",
+          "c-dialog m-auto w-[calc(100%-2rem)] rounded-2xl border border-c-border bg-c-surface p-0 text-c-fg shadow-c-lg backdrop:bg-black/45 backdrop:backdrop-blur-[2px]",
           size === "sm" && "max-w-md",
           size === "md" && "max-w-xl",
           size === "lg" && "max-w-3xl",
@@ -387,11 +394,11 @@ export function Dialog({
         {open && (
           <div className="max-h-[85dvh] overflow-y-auto">
             <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-c-border bg-c-surface px-5 py-4">
-              <div>
-                <h2 className="text-base font-semibold">{title}</h2>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold tracking-[-0.01em]">{title}</h2>
                 {description && <p className="mt-0.5 text-[0.8125rem] text-c-muted">{description}</p>}
               </div>
-              <button type="button" onClick={close} className="rounded-md p-1 text-c-subtle hover:bg-c-hover hover:text-c-fg" aria-label="Close">
+              <button type="button" onClick={close} className="-mr-1 rounded-lg p-1.5 text-c-subtle transition-colors hover:bg-c-hover hover:text-c-fg" aria-label="Close">
                 <X className="size-4" />
               </button>
             </header>
@@ -458,7 +465,7 @@ export function ConfirmAction({
           <input key={k} type="hidden" name={k} value={v} />
         ))}
         {withComment && <TextAreaField name="comment" label={commentLabel} rows={3} required={commentRequired} />}
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
           <button type="button" onClick={() => setOpen(false)} className={buttonClass("secondary")}>
             Cancel
           </button>

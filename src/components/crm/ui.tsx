@@ -1,5 +1,6 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ buttons */
@@ -9,16 +10,16 @@ export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 export function buttonClass(variant: ButtonVariant = "secondary", size: ButtonSize = "md", className?: string) {
   return cn(
-    "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+    "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap select-none transition-[background-color,border-color,color,box-shadow,transform] duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
     size === "sm" && "h-8 px-3 text-[0.8125rem]",
     size === "md" && "h-9 px-3.5 text-sm",
     size === "lg" && "h-11 px-5 text-sm",
     size === "icon" && "size-9",
-    variant === "primary" && "bg-c-accent text-c-on-accent shadow-c hover:bg-c-accent-hover",
+    variant === "primary" && "bg-c-accent text-c-on-accent shadow-c hover:bg-c-accent-hover hover:shadow-[0_1px_2px_rgb(0_0_0/0.08),0_4px_12px_-4px_rgb(239_135_22/0.45)]",
     variant === "secondary" && "border border-c-border bg-c-surface text-c-fg shadow-c hover:border-c-border-strong hover:bg-c-hover",
     variant === "ghost" && "text-c-muted hover:bg-c-hover hover:text-c-fg",
     variant === "subtle" && "bg-c-hover text-c-fg hover:bg-c-border",
-    variant === "danger" && "border border-c-danger/30 bg-c-danger-soft text-c-danger hover:border-c-danger/60",
+    variant === "danger" && "border border-c-danger/30 bg-c-danger-soft text-c-danger hover:border-c-danger/60 hover:bg-c-danger/15",
     className,
   );
 }
@@ -62,7 +63,7 @@ export function CardHeader({
   return (
     <header className={cn("flex items-start justify-between gap-3 border-b border-c-border px-5 py-4", className)}>
       <div className="min-w-0">
-        <h2 className="text-[0.9375rem] font-semibold text-c-fg">{title}</h2>
+        <h2 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-c-fg">{title}</h2>
         {description && <p className="mt-0.5 text-[0.8125rem] text-c-muted">{description}</p>}
       </div>
       {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
@@ -89,7 +90,8 @@ const toneClass: Record<Tone, string> = {
 
 export function Badge({ tone = "neutral", children, className, dot }: { tone?: Tone; children: ReactNode; className?: string; dot?: boolean }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap", toneClass[tone], className)}>
+    // The faint inset ring (in the badge's own colour) keeps soft badges defined on white and on hovered rows.
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-current/15 ring-inset", toneClass[tone], className)}>
       {dot && <span aria-hidden className="size-1.5 rounded-full bg-current" />}
       {children}
     </span>
@@ -189,7 +191,7 @@ export function PageHeader({
             ))}
           </nav>
         )}
-        <h1 className="text-xl font-semibold text-c-fg sm:text-2xl">{title}</h1>
+        <h1 className="text-xl font-semibold tracking-[-0.02em] text-c-fg sm:text-2xl">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-c-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -212,7 +214,7 @@ export function EmptyState({
 }) {
   return (
     <div className={cn("flex flex-col items-center justify-center px-6 py-10 text-center", className)}>
-      {icon && <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-c-hover text-c-subtle [&_svg]:size-5">{icon}</div>}
+      {icon && <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-c-hover text-c-subtle ring-4 ring-c-surface-2 [&_svg]:size-5">{icon}</div>}
       <p className="text-sm font-medium text-c-fg">{title}</p>
       {description && <p className="mt-1 max-w-sm text-[0.8125rem] text-c-muted">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
@@ -241,13 +243,13 @@ export function StatCard({
         <p className="text-[0.8125rem] font-medium text-c-muted">{label}</p>
         {icon && <span className={cn("flex size-8 items-center justify-center rounded-lg [&_svg]:size-4", toneClass[tone])}>{icon}</span>}
       </div>
-      <p className="tabular mt-2 text-2xl font-semibold tracking-tight text-c-fg">{value}</p>
-      {hint && <p className="mt-1 text-xs text-c-subtle">{hint}</p>}
+      <p className="tabular mt-2 text-2xl leading-none font-semibold tracking-[-0.02em] text-c-fg">{value}</p>
+      {hint && <p className="mt-2 text-xs text-c-subtle">{hint}</p>}
     </>
   );
   const cls = "block rounded-xl border border-c-border bg-c-surface p-4 shadow-c";
   return href ? (
-    <Link href={href} className={cn(cls, "transition-colors hover:border-c-border-strong")}>
+    <Link href={href} className={cn(cls, "transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-c-border-strong hover:shadow-c-lg motion-reduce:hover:translate-y-0")}>
       {inner}
     </Link>
   ) : (
@@ -372,11 +374,21 @@ export function Table({ children, className }: { children: ReactNode; className?
     </div>
   );
 }
+// Header labels are small caps-style for a calm, scannable header row. The first and last columns line up with
+// the card's own 1.25rem padding, so a table sits flush under its CardHeader.
 export function THead({ children }: { children: ReactNode }) {
-  return <thead className="border-b border-c-border bg-c-surface-2 text-xs font-medium text-c-muted [&_th]:px-4 [&_th]:py-2.5 [&_th]:font-medium [&_th]:whitespace-nowrap">{children}</thead>;
+  return (
+    <thead className="border-b border-c-border bg-c-surface-2 text-[0.6875rem] font-semibold tracking-[0.04em] text-c-subtle uppercase [&_th]:px-4 [&_th]:py-2.5 [&_th]:font-semibold [&_th]:whitespace-nowrap [&_th:first-child]:pl-5 [&_th:last-child]:pr-5">
+      {children}
+    </thead>
+  );
 }
 export function TBody({ children }: { children: ReactNode }) {
-  return <tbody className="divide-y divide-c-border [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_tr]:transition-colors [&_tr:hover]:bg-c-surface-2">{children}</tbody>;
+  return (
+    <tbody className="divide-y divide-c-border [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_tr]:transition-colors [&_tr:hover]:bg-c-surface-2">
+      {children}
+    </tbody>
+  );
 }
 
 /* ---------------------------------------------------------------- key/value */
@@ -407,15 +419,18 @@ export function Tabs({ tabs, active }: { tabs: { key: string; label: string; hre
             href={t.href}
             aria-current={on ? "page" : undefined}
             className={cn(
-              "relative flex items-center gap-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
+              "group relative flex items-center gap-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
               on ? "text-c-fg" : "text-c-muted hover:text-c-fg",
             )}
           >
             {t.label}
             {typeof t.count === "number" && t.count > 0 && (
-              <span className="tabular rounded-full bg-c-hover px-1.5 text-xs text-c-muted">{t.count}</span>
+              <span className={cn("tabular rounded-full px-1.5 text-xs transition-colors", on ? "bg-c-accent-soft text-c-accent-text" : "bg-c-hover text-c-muted")}>{t.count}</span>
             )}
-            {on && <span aria-hidden className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-c-accent" />}
+            <span
+              aria-hidden
+              className={cn("absolute inset-x-2 -bottom-px h-0.5 rounded-full transition-colors", on ? "bg-c-accent" : "bg-transparent group-hover:bg-c-border-strong")}
+            />
           </Link>
         );
       })}
@@ -431,32 +446,42 @@ export function Pagination({ page, pageSize, total, hrefFor }: { page: number; p
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-c-border px-4 py-3 text-[0.8125rem] text-c-muted">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-c-border px-5 py-3 text-[0.8125rem] text-c-muted">
       <span className="tabular">
-        {from}–{to} of {total}
+        Showing <span className="font-medium text-c-fg">{from}–{to}</span> of <span className="font-medium text-c-fg">{total}</span>
       </span>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        <span className="tabular hidden text-xs text-c-subtle sm:inline">
+          Page {page} of {pages}
+        </span>
         {page > 1 ? (
           <ButtonLink href={hrefFor(page - 1)} size="sm">
-            Previous
+            <ChevronLeft /> Previous
           </ButtonLink>
         ) : (
           <Button size="sm" disabled>
-            Previous
+            <ChevronLeft /> Previous
           </Button>
         )}
         {page < pages ? (
           <ButtonLink href={hrefFor(page + 1)} size="sm">
-            Next
+            Next <ChevronRight />
           </ButtonLink>
         ) : (
           <Button size="sm" disabled>
-            Next
+            Next <ChevronRight />
           </Button>
         )}
       </div>
     </div>
   );
+}
+
+/* ----------------------------------------------------------------- loading */
+
+/** A loading placeholder block. Decorative: the surrounding loading screen announces "Loading…". */
+export function Skeleton({ className, style }: { className?: string; style?: CSSProperties }) {
+  return <div aria-hidden className={cn("c-skeleton rounded-md", className)} style={style} />;
 }
 
 /** Builds a URL with updated search params (server-side helper for filter links). */

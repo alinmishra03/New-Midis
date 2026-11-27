@@ -17,6 +17,8 @@ import {
   Menu,
   Monitor,
   Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
   Settings,
   Sun,
@@ -35,7 +37,7 @@ import type { NavKey } from "@/crm/nav";
 import { formatRelative } from "@/crm/lib/time";
 import { cn } from "@/lib/utils";
 import { Brand } from "./Brand";
-import { Avatar } from "./ui";
+import { Avatar, Skeleton } from "./ui";
 
 const ICONS: Record<NavKey, typeof Users> = {
   dashboard: LayoutDashboard,
@@ -66,34 +68,76 @@ function isActive(pathname: string, href: string) {
   return href === "/crm" ? pathname === "/crm" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavList({ items, onNavigate }: { items: { key: NavKey; label: string; href: string }[]; onNavigate?: () => void }) {
+/*
+ * Visual sections for the sidebar. They only add headings: the items keep
+ * exactly the order, labels and links of NAV (crm/nav.ts), and only the
+ * items the server already allowed for this user are passed in, so a
+ * section with nothing visible is simply not shown. Any module not listed
+ * here still appears, in a final section.
+ */
+const SECTIONS: { label: string | null; keys: NavKey[] }[] = [
+  { label: null, keys: ["dashboard"] },
+  { label: "People", keys: ["employees", "attendance", "leave", "wfh"] },
+  { label: "Work", keys: ["tasks"] },
+  { label: "HR & Finance", keys: ["payroll", "performance", "recruitment"] },
+  { label: "Company", keys: ["documents", "calendar", "announcements"] },
+  { label: "Insights & Admin", keys: ["reports", "settings"] },
+];
+
+type NavItem = { key: NavKey; label: string; href: string };
+
+function groupNav(items: NavItem[]) {
+  const listed = new Set(SECTIONS.flatMap((s) => s.keys));
+  const groups = SECTIONS.map((s) => ({ label: s.label, items: items.filter((i) => s.keys.includes(i.key)) }));
+  const rest = items.filter((i) => !listed.has(i.key));
+  if (rest.length) groups.push({ label: "More", items: rest });
+  return groups.filter((g) => g.items.length);
+}
+
+function NavList({ items, onNavigate, collapsed = false }: { items: NavItem[]; onNavigate?: () => void; collapsed?: boolean }) {
   const pathname = usePathname();
   return (
-    <ul className="space-y-0.5">
-      {items.map((item) => {
-        const Icon = ICONS[item.key];
-        const active = isActive(pathname, item.href);
-        return (
-          <li key={item.key}>
-            <Link
-              href={item.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active ? "bg-c-accent-soft text-c-fg" : "text-c-muted hover:bg-c-hover hover:text-c-fg",
-              )}
-            >
-              <Icon className={cn("size-[1.05rem] shrink-0", active ? "text-c-accent-text" : "text-c-subtle group-hover:text-c-muted")} />
-              {item.label}
-              {active && <span aria-hidden className="absolute top-2 bottom-2 -left-3 w-[3px] rounded-r-full bg-c-accent" />}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="space-y-4">
+      {groupNav(items).map((group, gi) => (
+        <div key={group.label ?? gi}>
+          {group.label &&
+            (collapsed ? (
+              <div aria-hidden className="mx-auto mb-2 h-px w-6 bg-c-border" />
+            ) : (
+              <p className="mb-1 px-3 text-[0.6875rem] font-semibold tracking-[0.06em] text-c-subtle uppercase">{group.label}</p>
+            ))}
+          <ul className="space-y-0.5">
+            {group.items.map((item) => {
+              const Icon = ICONS[item.key] ?? LayoutDashboard;
+              const active = isActive(pathname, item.href);
+              return (
+                <li key={item.key}>
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "group relative flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150",
+                      collapsed ? "justify-center px-0" : "px-3",
+                      active ? "bg-c-accent-soft text-c-fg" : "text-c-muted hover:bg-c-hover hover:text-c-fg",
+                    )}
+                  >
+                    <Icon className={cn("size-[1.05rem] shrink-0 transition-colors", active ? "text-c-accent-text" : "text-c-subtle group-hover:text-c-muted")} />
+                    <span className={cn("min-w-0 truncate", collapsed && "sr-only")}>{item.label}</span>
+                    {active && <span aria-hidden className={cn("absolute top-2 bottom-2 w-[3px] rounded-r-full bg-c-accent", collapsed ? "-left-2" : "-left-3")} />}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
+
+const SIDEBAR_COOKIE = "crm_sidebar";
 
 /* ------------------------------------------------------------- dropdowns */
 
@@ -183,7 +227,18 @@ function NotificationBell({ initialUnread }: { initialUnread: number }) {
           </div>
           <ul className="max-h-[22rem] overflow-y-auto">
             {items === null ? (
-              <li className="px-4 py-8 text-center text-[0.8125rem] text-c-subtle">Loading…</li>
+              <li role="status" aria-busy="true" className="space-y-4 px-4 py-4">
+                <span className="sr-only">Loading…</span>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex gap-3">
+                    <Skeleton className="mt-1 size-2 rounded-full" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-3.5" style={{ width: `${80 - i * 15}%` }} />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                ))}
+              </li>
             ) : items.length === 0 ? (
               <li className="px-4 py-8 text-center text-[0.8125rem] text-c-subtle">You&apos;re all caught up.</li>
             ) : (
@@ -317,14 +372,23 @@ export function AppShell({
   nav,
   user,
   unread,
+  sidebarCollapsed = false,
   children,
 }: {
-  nav: { key: NavKey; label: string; href: string }[];
+  nav: NavItem[];
   user: ShellUser;
   unread: number;
+  /** Desktop sidebar shown as icons only; remembered in a cookie so the first paint is already right. */
+  sidebarCollapsed?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(sidebarCollapsed);
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    document.cookie = `${SIDEBAR_COOKIE}=${next ? "collapsed" : "expanded"}; path=/crm; max-age=31536000; samesite=lax`;
+  };
   // The drawer is open only for the page it was opened on, so navigating closes it.
   const [drawerPath, setDrawerPath] = useState<string | null>(null);
   const drawer = drawerPath === pathname;
@@ -336,17 +400,33 @@ export function AppShell({
     };
   }, [drawer]);
 
-  const sidebar = (onNavigate?: () => void) => (
+  // `rail` = the collapsed desktop sidebar (icons only). The mobile drawer is always full width.
+  const sidebar = (onNavigate?: () => void, rail = false) => (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 shrink-0 items-center px-5">
-        <Link href="/crm" onClick={onNavigate} aria-label="Dashboard">
-          <Brand />
+      <div className={cn("flex h-16 shrink-0 items-center border-b border-c-border", rail ? "justify-center px-2" : "px-5")}>
+        <Link href="/crm" onClick={onNavigate} aria-label="Dashboard" className="rounded-lg">
+          <Brand compact={rail} />
         </Link>
       </div>
-      <nav aria-label="Modules" className="flex-1 overflow-y-auto px-3 pb-6">
-        <NavList items={nav} onNavigate={onNavigate} />
+      <nav aria-label="Modules" className={cn("flex-1 overflow-x-hidden overflow-y-auto pt-4 pb-6", rail ? "px-2" : "px-3")}>
+        <NavList items={nav} onNavigate={onNavigate} collapsed={rail} />
       </nav>
-      <div className="border-t border-c-border px-5 py-3 text-[0.6875rem] text-c-subtle">MIDIS Employee Portal</div>
+      {onNavigate ? (
+        <div className="border-t border-c-border px-5 py-3 text-[0.6875rem] text-c-subtle">MIDIS Employee Portal</div>
+      ) : (
+        <div className={cn("flex items-center border-t border-c-border py-2", rail ? "justify-center px-2" : "justify-between pr-2 pl-5")}>
+          {!rail && <span className="truncate text-[0.6875rem] text-c-subtle">MIDIS Employee Portal</span>}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg text-c-subtle transition-colors hover:bg-c-hover hover:text-c-fg"
+            aria-label={rail ? "Expand sidebar" : "Collapse sidebar"}
+            title={rail ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {rail ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -356,7 +436,9 @@ export function AppShell({
         Skip to content
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 border-r border-c-border bg-c-surface lg:block">{sidebar()}</aside>
+      <aside className={cn("c-sidebar sticky top-0 hidden h-dvh shrink-0 border-r border-c-border bg-c-surface lg:block", collapsed ? "w-[4.25rem]" : "w-64")}>
+        {sidebar(undefined, collapsed)}
+      </aside>
 
       {drawer && (
         <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
