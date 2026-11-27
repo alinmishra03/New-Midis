@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/crm/login"
 
   return (
     <div className="crm-enter">
-      <h1 className="text-2xl font-semibold">Sign in</h1>
+      <h1 className="text-2xl font-semibold tracking-[-0.02em]">Sign in</h1>
       <p className="mt-1.5 text-sm text-c-muted">Use your official MIDIS email address.</p>
 
       <ActionForm action={login} className="mt-8 space-y-4">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ClipboardList, Target } from "lucide-react";
+import { ClipboardList, Target, TriangleAlert } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
 import { CycleDialog, GoalDialog, GoalProgress } from "@/components/crm/performance-forms";
 import { Card, CardHeader, EmptyState, PageHeader, PersonCell, ProgressBar, StatusBadge, Table, TBody, THead, Tabs } from "@/components/crm/ui";
@@ -40,7 +40,7 @@ export default async function PerformancePage({ searchParams }: PageProps<"/crm/
 
 async function Mine() {
   const viewer = await requireViewer();
-  if (!viewer.employee) return <Card><EmptyState title="Your account isn't linked to an employee record" /></Card>;
+  if (!viewer.employee) return <Card><EmptyState icon={<TriangleAlert />} title="Your account isn't linked to an employee record" /></Card>;
   const [reviews, goals] = await Promise.all([myReviews(viewer), goalsFor(viewer, viewer.employee.id)]);
   return (
     <div className="grid gap-4 lg:grid-cols-2">

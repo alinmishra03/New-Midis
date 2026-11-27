@@ -12,7 +12,7 @@ import {
   rolePermissionsAction,
   scheduleAction,
 } from "@/app/crm/(app)/settings/actions";
-import { ActionForm, CheckboxField, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
+import { ActionForm, FormActions, CheckboxField, Dialog, SelectField, SubmitButton, TextAreaField, TextField } from "./forms";
 import { buttonClass } from "./ui";
 
 type Opt = { value: string; label: string };
@@ -73,9 +73,9 @@ export function DepartmentDialog({ values }: { values?: { id: string; name: stri
           </div>
           <TextAreaField label="Description" name="description" defaultValue={values?.description ?? ""} rows={2} />
           <CheckboxField name="isActive" label="Active" defaultChecked={values?.isActive ?? true} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Save</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -102,9 +102,9 @@ export function DesignationDialog({ departments, values }: { departments: Opt[];
             <TextField label="Level" name="level" type="number" min={1} max={10} defaultValue={values?.level ?? 1} />
           </div>
           <CheckboxField name="isActive" label="Active" defaultChecked={values?.isActive ?? true} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Save</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -155,9 +155,9 @@ export function ScheduleDialog({ values }: { values?: ScheduleValues }) {
             <CheckboxField name="allowUnplannedRemote" label="Allow remote check-in without approved WFH" defaultChecked={values?.allowUnplannedRemote} />
             <CheckboxField name="isDefault" label="Company default schedule" defaultChecked={values?.isDefault} />
           </div>
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Save schedule</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -196,9 +196,9 @@ export function LeaveTypeDialog({ values }: { values?: LeaveTypeValues }) {
             <CheckboxField name="allowHalfDay" label="Half days allowed" defaultChecked={values?.allowHalfDay ?? true} />
             <CheckboxField name="isActive" label="Active" defaultChecked={values?.isActive ?? true} />
           </div>
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Save leave type</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>
@@ -283,9 +283,9 @@ export function NewRoleDialog() {
         <ActionForm action={createRoleAction} onSuccess={close} className="space-y-4">
           <TextField label="Name" name="name" required placeholder="Team Lead" />
           <TextAreaField label="Description" name="description" rows={2} />
-          <div className="flex justify-end">
+          <FormActions>
             <SubmitButton>Create role</SubmitButton>
-          </div>
+          </FormActions>
         </ActionForm>
       )}
     </Dialog>

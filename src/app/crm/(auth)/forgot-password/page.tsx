@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
       <Link href="/crm/login" className="mb-6 inline-flex items-center gap-1.5 text-[0.8125rem] text-c-muted hover:text-c-fg">
         <ArrowLeft className="size-4" /> Back to sign in
       </Link>
-      <h1 className="text-2xl font-semibold">Reset your password</h1>
+      <h1 className="text-2xl font-semibold tracking-[-0.02em]">Reset your password</h1>
       <p className="mt-1.5 text-sm text-c-muted">
         Enter your company email. HR will be notified and will send you a one-time link to set a new password.
       </p>

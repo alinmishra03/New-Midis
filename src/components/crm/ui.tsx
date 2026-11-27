@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Info, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -508,6 +508,21 @@ export function Pagination({ page, pageSize, total, hrefFor }: { page: number; p
           </Button>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ notice */
+
+const NOTICE_ICON = { info: Info, success: CircleCheck, warning: TriangleAlert, danger: CircleAlert } as const;
+
+/** An inline message box (information, success, warning or error), with a matching icon. */
+export function Notice({ tone = "info", children, className }: { tone?: keyof typeof NOTICE_ICON; children: ReactNode; className?: string }) {
+  const Icon = NOTICE_ICON[tone];
+  return (
+    <div role={tone === "danger" || tone === "warning" ? "alert" : "status"} className={cn("flex items-start gap-2.5 rounded-lg px-3.5 py-2.5 text-[0.8125rem] ring-1 ring-current/15 ring-inset", toneClass[tone], className)}>
+      <Icon aria-hidden className="mt-px size-4 shrink-0" />
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

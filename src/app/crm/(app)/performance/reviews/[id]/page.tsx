@@ -1,8 +1,8 @@
+import { Hourglass, Target } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GoalDialog, GoalProgress, ManagerReviewForm, SelfReviewForm } from "@/components/crm/performance-forms";
-import { Card, CardBody, CardHeader, EmptyState, ProgressBar, StatusBadge } from "@/components/crm/ui";
+import { Breadcrumb, Card, CardBody, CardHeader, EmptyState, ProgressBar, StatusBadge } from "@/components/crm/ui";
 import { requireViewer } from "@/crm/auth/dal";
 import { formatDate, formatDateShort } from "@/crm/lib/time";
 import { getReview, goalsFor } from "@/crm/services/performance";
@@ -32,14 +32,10 @@ export default async function ReviewPage({ params }: PageProps<"/crm/performance
 
   return (
     <>
-      <nav aria-label="Breadcrumb" className="mb-3 text-[0.8125rem] text-c-subtle">
-        <Link href={r.isSelf ? "/crm/performance" : "/crm/performance?tab=team"} className="hover:text-c-fg">
-          Performance
-        </Link>
-      </nav>
+      <Breadcrumb className="mb-3" items={[{ label: "Performance", href: r.isSelf ? "/crm/performance" : "/crm/performance?tab=team" }, { label: r.isSelf ? "My review" : `${r.firstName} ${r.lastName}` }]} />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold sm:text-2xl">
+          <h1 className="text-xl font-semibold tracking-[-0.02em] sm:text-2xl">
             {r.isSelf ? "My review" : `${r.firstName} ${r.lastName}`} · {r.cycleName}
           </h1>
           <p className="mt-1 text-sm text-c-muted">
@@ -58,7 +54,7 @@ export default async function ReviewPage({ params }: PageProps<"/crm/performance
               r.isSelf && r.cycleOpen ? (
                 <SelfReviewForm id={r.id} />
               ) : (
-                <EmptyState title="Not submitted yet" />
+                <EmptyState icon={<Hourglass />} title="Not submitted yet" />
               )
             ) : (
               <div className="space-y-4">
@@ -88,7 +84,7 @@ export default async function ReviewPage({ params }: PageProps<"/crm/performance
                 <ManagerReviewForm id={r.id} />
               </>
             ) : (
-              <EmptyState title={r.status === "manager_review" ? "Waiting for the manager" : "After the self-assessment"} />
+              <EmptyState icon={<Hourglass />} title={r.status === "manager_review" ? "Waiting for the manager" : "After the self-assessment"} />
             )}
           </CardBody>
         </Card>
@@ -110,7 +106,7 @@ export default async function ReviewPage({ params }: PageProps<"/crm/performance
             ))}
           </ul>
         ) : (
-          <EmptyState title="No goals set" />
+          <EmptyState icon={<Target />} title="No goals set" />
         )}
       </Card>
     </>

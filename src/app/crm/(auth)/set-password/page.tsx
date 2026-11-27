@@ -17,7 +17,7 @@ export default async function SetPasswordPage({ searchParams }: PageProps<"/crm/
   if (!row) {
     return (
       <div className="crm-enter">
-        <h1 className="text-2xl font-semibold">This link can&apos;t be used</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.02em]">This link can&apos;t be used</h1>
         <p className="mt-2 text-sm text-c-muted">
           It has expired or has already been used. Ask HR to issue a new one — invite links last 7 days, reset links 1 hour.
         </p>
@@ -33,7 +33,7 @@ export default async function SetPasswordPage({ searchParams }: PageProps<"/crm/
 
   return (
     <div className="crm-enter">
-      <h1 className="text-2xl font-semibold">{invite ? `Welcome${emp ? `, ${emp.firstName}` : ""}` : "Choose a new password"}</h1>
+      <h1 className="text-2xl font-semibold tracking-[-0.02em]">{invite ? `Welcome${emp ? `, ${emp.firstName}` : ""}` : "Choose a new password"}</h1>
       <p className="mt-1.5 text-sm text-c-muted">
         {invite
           ? "Set a password to activate your MIDIS employee account."

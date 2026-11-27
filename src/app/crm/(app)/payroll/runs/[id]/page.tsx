@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Banknote, CircleDot, Download, FileText, RefreshCw, TriangleAlert, Wallet } from "lucide-react";
+import { BadgeCheck, Banknote, CircleDot, Download, FileText, RefreshCw, Wallet } from "lucide-react";
 import { ConfirmAction } from "@/components/crm/forms";
-import { Card, CardHeader, EmptyState, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, buttonClass } from "@/components/crm/ui";
+import { Card, CardHeader, EmptyState, Notice, PageHeader, PersonCell, StatCard, StatusBadge, Table, TBody, THead, buttonClass } from "@/components/crm/ui";
 import { can, requirePermission } from "@/crm/auth/dal";
 import { formatDateTime } from "@/crm/lib/time";
 import { getCompany } from "@/crm/services/company";
@@ -53,7 +53,7 @@ export default async function RunPage({ params }: PageProps<"/crm/payroll/runs/[
           </>
         }
       />
-      {run.status === "draft" && generatedByMe && slips.length > 0 && <p role="note" className="mb-4 flex items-start gap-2 rounded-lg bg-c-warning-soft px-4 py-3 text-sm text-c-warning ring-1 ring-current/15 ring-inset"><TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" /> You generated this run, so someone else with approval rights must approve it.</p>}
+      {run.status === "draft" && generatedByMe && slips.length > 0 && <Notice tone="warning" className="mb-4">You generated this run, so someone else with approval rights must approve it.</Notice>}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Status" value={<StatusBadge status={run.status} />} icon={<CircleDot />} />
         <StatCard label="Payslips" value={slips.length} icon={<FileText />} />

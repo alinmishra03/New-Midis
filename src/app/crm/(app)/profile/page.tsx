@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, TriangleAlert } from "lucide-react";
 import { PersonalForm, PhotoUpload } from "@/components/crm/employee-forms";
 import { ChangePasswordForm } from "@/components/crm/profile-forms";
 import { Avatar, Card, CardBody, CardHeader, DescriptionList, EmptyState, PageHeader, StatusBadge } from "@/components/crm/ui";
@@ -26,7 +26,7 @@ export default async function ProfilePage() {
       <>
         <PageHeader title="My profile" />
         <Card className="mb-6">
-          <EmptyState title="Your account isn't linked to an employee record" description="Ask HR to link it." />
+          <EmptyState icon={<TriangleAlert />} title="Your account isn't linked to an employee record" description="Ask HR to link it." />
         </Card>
         <Card>
           <CardHeader title="Change password" />

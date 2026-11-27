@@ -12,7 +12,7 @@ import {
   uploadPhotoAction,
 } from "@/app/crm/(app)/employees/actions";
 import { ActionForm, FormActions, CheckboxField, CopyField, Dialog, SelectField, SubmitButton, TextAreaField, TextField, inputClass } from "./forms";
-import { buttonClass } from "./ui";
+import { buttonClass, Notice } from "./ui";
 
 type Opt = { value: string; label: string };
 export type EmployeeFormOptions = { departments: Opt[]; designations: Opt[]; managers: Opt[]; roles: Opt[]; schedules: Opt[] };
@@ -240,9 +240,9 @@ export function AccessLinkButton({ userId, invited, autoOpen = false }: { userId
       {link ? (
         <div className="space-y-3">
           {mailed === "sent" ? (
-            <p className="rounded-lg bg-c-success-soft px-3 py-2 text-[0.8125rem] text-c-success">Emailed to the employee&apos;s company address. You only need the link below if it doesn&apos;t arrive.</p>
+            <Notice tone="success">Emailed to the employee&apos;s company address. You only need the link below if it doesn&apos;t arrive.</Notice>
           ) : mailed ? (
-            <p className="rounded-lg bg-c-warning-soft px-3 py-2 text-[0.8125rem] text-c-warning">Not emailed: {mailed} Send the link below to them directly.</p>
+            <Notice tone="warning">Not emailed: {mailed} Send the link below to them directly.</Notice>
           ) : null}
           <CopyField label="Send this link to the employee directly (e.g. company chat). Don't post it anywhere shared." value={link} />
           <p className="text-xs text-c-subtle">For security it isn&apos;t stored and can&apos;t be shown again. Create a new one if it&apos;s lost.</p>

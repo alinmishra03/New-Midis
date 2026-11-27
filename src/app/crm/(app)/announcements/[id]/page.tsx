@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { AnnouncementDialog } from "@/components/crm/announcement-forms";
 import { ConfirmAction } from "@/components/crm/forms";
-import { Badge, Card, CardBody, humanize } from "@/components/crm/ui";
+import { Badge, Breadcrumb, Card, CardBody, humanize } from "@/components/crm/ui";
 import { can, requireViewer } from "@/crm/auth/dal";
 import { formatDateTime } from "@/crm/lib/time";
 import { ANNOUNCEMENT_CATEGORIES, getAnnouncement } from "@/crm/services/announcements";
@@ -25,11 +24,7 @@ export default async function AnnouncementPage({ params }: PageProps<"/crm/annou
 
   return (
     <article className="mx-auto max-w-3xl">
-      <nav aria-label="Breadcrumb" className="mb-3 text-[0.8125rem] text-c-subtle">
-        <Link href="/crm/announcements" className="hover:text-c-fg">
-          Announcements
-        </Link>
-      </nav>
+      <Breadcrumb className="mb-3" items={[{ label: "Announcements", href: "/crm/announcements" }, { label: a.title }]} />
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {a.isImportant && <Badge tone="danger">Important</Badge>}
         <Badge>{humanize(a.category)}</Badge>
@@ -38,7 +33,7 @@ export default async function AnnouncementPage({ params }: PageProps<"/crm/annou
       </div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">{a.title}</h1>
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] break-words">{a.title}</h1>
           <p className="mt-1 text-[0.8125rem] text-c-muted">
             {a.publishedAt ? `Published ${formatDateTime(a.publishedAt, company.timezone)}` : "Draft"}
             {publisher && a.authorEmail && ` · by ${a.authorEmail}`}
